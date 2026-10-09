@@ -1,0 +1,21 @@
+[
+  {
+    "branchId": "fresco-kuji",
+    "chain": "fresco",
+    "name": "Fresco Venga Venga",
+    "ja": "フレスコ ベンガベンガ 久地店",
+    "address": "神奈川県川崎市多摩区堰3-6-8",
+    "hours": "10:00–22:00",
+    "lat": 35.6116018,
+    "lon": 139.5929635,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://www.google.com/maps/d/kml?mid=1F272s-XS7Xgy6eTZ592altJYeeg&forcekml=1",
+    "url": "https://fresco-kanto.com/store/kuji/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/21837/leaflet_widget",
+    "verifiedPrograms": [],
+    "checkedAt": "2026-10-09T16:30:16Z",
+    "provenance": "manual-official-web-review",
+    "category": "supermarket",
+    "membershipNote": "Fresco has a store point card. Current earning and redemption terms are not verified. Open the branch flyer for promotions; old Friday multiplier claims are not treated as current."
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "branchId": "top-inadazutsumi",
+    "chain": "top",
+    "name": "Top / Parque / New Yahiro",
+    "ja": "ニューヤヒロ パルケ 稲田堤駅前店",
+    "address": "214-0001 神奈川県川崎市多摩区菅1-2-4",
+    "hours": "10:00〜22:00",
+    "url": "https://super-tops.com/shop/inadazutsumi/",
+    "flyerUrl": "https://super-tops.com/shop/inadazutsumi/",
+    "stationIds": [
+      "inadazutsumi"
+    ],
+    "accessText": "JR南武線 稲田堤駅[出口]から徒歩約2分",
+    "verifiedPrograms": [],
+    "checkedAt": "2026-10-09T16:30:53.318842+00:00",
+    "sourceHash": "010d9ccfb0a79002c5b816fd1dc34b5c0133d4d83f1ba93a33c3b9b89417a4f8",
+    "provenance": "official",
+    "category": "supermarket",
+    "membershipNote": "Top CoGCa point card is listed on the official branch page. Rates and redemption conditions have not been verified; payment logos do not establish d POINT or PayPay rewards."
+  },
+  {
+    "branchId": "top-kuji",
+    "chain": "top",
+    "name": "Top / Parque / New Yahiro",
+    "ja": "トップパルケ 久地店",
+    "address": "213-0032 神奈川県川崎市高津区久地4-24-5 新川屋センタービル",
+    "hours": "9:00〜22:30",
+    "url": "https://super-tops.com/shop/kuji/",
+    "flyerUrl": "https://super-tops.com/shop/kuji/",
+    "stationIds": [
+      "kuji"
+    ],
+    "accessText": "JR南武線 久地駅[出口]から徒歩約1分",
+    "verifiedPrograms": [],
+    "checkedAt": "2026-10-09T16:29:31.205364+00:00",
+    "sourceHash": "5b8e6f959559f28be281c47c85084acf6ffbc698ff4f5128ad2a25331bc6d1e1",
+    "provenance": "official",
+    "category": "supermarket",
+    "membershipNote": "Top CoGCa point card is listed on the official branch page. Rates and redemption conditions have not been verified; payment logos do not establish d POINT or PayPay rewards."
+  }
+]

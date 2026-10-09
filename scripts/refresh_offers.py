@@ -61,7 +61,7 @@ def main():
  parser=argparse.ArgumentParser();parser.add_argument('--offline',action='store_true');parser.add_argument('--force',action='store_true');args=parser.parse_args()
  cache=SourceCache(args.offline,args.force);out=[];errors=[]
  previous=json.loads((ROOT/'data/flyers.json').read_text(encoding='utf-8')) if (ROOT/'data/flyers.json').exists() else []
- for chain in ['life','tokyu','sanwa']:
+ for chain in ['life','tokyu','sanwa','fresco']:
   path=ROOT/'data'/f'branches-{chain}.json';branches=json.loads(path.read_text(encoding='utf-8'))
   for branch in branches:
    try:out.extend(tokubai(cache,branch) if 'widgets.tokubai.co.jp' in branch.get('flyerUrl','') else shufoo(cache,branch))

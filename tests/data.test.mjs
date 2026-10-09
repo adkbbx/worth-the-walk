@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';import {readFile} from 'node:fs/promises';
 import {stations,stores,researchSummary} from '../data/catalog.mjs';
 import {branches} from '../data/researched.mjs';
-import {currentFlyers,storePrograms,rulesUsable,nextWelciaDay} from '../src/rules.mjs';
+import {currentFlyers,storePrograms,rulesUsable,nextWelciaDay,retailerGroups} from '../src/rules.mjs';
 const flyers=JSON.parse(await readFile(new URL('../data/flyers.json',import.meta.url),'utf8'));
 test('unique branches and valid station associations without pharmacy-only recommendations',()=>{
  assert.equal(new Set(branches.map(b=>b.branchId)).size,branches.length);
@@ -13,6 +13,17 @@ test('similar station names never borrow walking times',()=>{
  assert.equal(stores.find(s=>s.station==='koenji'&&s.branchId==='mybasket-4270').walk,null,'東高円寺 is not 高円寺');
  assert.equal(stores.find(s=>s.station==='koenji'&&s.branchId==='mybasket-8155').walk,3);
  assert.equal(stores.filter(s=>s.station==='koenji'&&s.ja.normalize('NFKC').replace(/\s/g,'')==='まいばすけっと高円寺南5丁目店').length,1);
+ assert.equal(stores.find(s=>s.station==='kuji'&&s.ja==='まいばすけっと 久地２丁目店').walk,null,'Bus-stop walk is not a walk from Kuji station');
+});
+test('Kuji includes missing local retailers and repeats remain expandable',()=>{
+ const local=stores.filter(s=>s.station==='kuji');const groups=retailerGroups(local,[],'2026-10-10');
+ assert.ok(groups.slice(0,5).some(g=>g[0].chain==='top'));
+ assert.ok(groups.slice(0,5).some(g=>g[0].chain==='fresco'));
+ assert.equal(groups.filter(g=>g[0].chain==='mybasket').length,1);
+ assert.equal(groups.reduce((n,g)=>n+g.length,0),local.length);
+ const eligible=retailerGroups(local,['dpoint'],'2026-10-10',true);
+ assert.equal(eligible.length,1);assert.equal(eligible[0][0].chain,'life');
+ assert.equal(stores.find(s=>s.station==='kuji'&&s.chain==='top').walk,1);
 });
 test('flyer validity uses dates, branch scope and original check time',()=>{
  const f={branchId:'x',start:'2026-10-09',end:'2026-10-13',checkedAt:'2026-10-09T12:00:00+09:00'};

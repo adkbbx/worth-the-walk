@@ -3,10 +3,10 @@ import {stations,stores,railLines,stationsOnLine,researchSummary} from '../data/
 for(const s of stations){const count=stores.filter(x=>x.station===s.id).length;if(count===0)throw new Error(`${s.id}: missing researched shop coverage`);}
 if(new Set(stations.map(s=>s.id)).size!==stations.length)throw new Error('Duplicate station IDs');
 for(const store of stores)if(!stations.some(s=>s.id===store.station))throw new Error('Store references unknown station');
-let coverage=`# Station coverage\n\n${stations.length} stations; ${researchSummary.branches} distinct source-linked branches. ${researchSummary.stationsWithFive} stations have at least five candidates within 2.5 km or with explicit official station access. The app displays up to ten, prioritized by selected cards and distance. This is a directory sample, not every shop. Straight-line distances are not walking-route distances. Shitte counts once.\n`;
+let coverage=`# Station coverage\n\n${stations.length} stations; ${researchSummary.branches} distinct source-linked branches. ${researchSummary.stationsWithFive} stations have at least five candidates within 2.5 km or with explicit official station access. The app displays up to ten distinct retailers, with other branches expandable, prioritized by selected cards and distance. Five branches can still mean only one retailer. This is a directory sample, not every shop. Straight-line distances are not walking-route distances. Shitte counts once.\n`;
 for(const line of railLines){
-  coverage+=`\n## ${line.name}\n\n[Official operator source](${line.source})\n\n| Code | Station | Japanese | Checked shop records |\n| --- | --- | --- | ---: |\n`;
-  for(const s of stationsOnLine(stations,line.id))coverage+=`| ${s.code} | ${s.name} | ${s.ja} | ${stores.filter(x=>x.station===s.id).length} |\n`;
+  coverage+=`\n## ${line.name}\n\n[Official operator source](${line.source})\n\n| Code | Station | Japanese | Checked branches | Retailers |\n| --- | --- | --- | ---: | ---: |\n`;
+  for(const s of stationsOnLine(stations,line.id))coverage+=`| ${s.code} | ${s.name} | ${s.ja} | ${stores.filter(x=>x.station===s.id).length} | ${new Set(stores.filter(x=>x.station===s.id).map(x=>x.chain)).size} |\n`;
 }
 await writeFile('STATIONS.md',coverage);
 await mkdir('dist/fonts',{recursive:true});

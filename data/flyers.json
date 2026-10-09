@@ -1,5 +1,17 @@
 [
   {
+    "id": "tokubai-106889560",
+    "branchId": "fresco-kuji",
+    "kind": "flyer",
+    "title": "お得いっぱい日替わ特売！",
+    "start": "2026-10-09",
+    "end": "2026-10-15",
+    "windowKind": "advertised",
+    "source": "https://widgets.tokubai.co.jp/21837/leaflet_widget/click?id=106889560&type=spweb",
+    "checkedAt": "2026-10-09T16:32:44.069334+00:00",
+    "sourceHash": "877d5959e221c15f379562cec59074506391ab3f5f3bd476c21c460b811bdc0b"
+  },
+  {
     "id": "tokubai-106838469",
     "branchId": "life-east611",
     "kind": "flyer",

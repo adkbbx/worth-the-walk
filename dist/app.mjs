@@ -1,5 +1,5 @@
 import {stations,stores as directoryStores,walletOptions,sources,railLines,stationsOnLine,researchSummary} from './catalog.mjs';
-import {SNAPSHOT,japanToday,nextBonus,storePrograms,matches,orderStores,reward,currentFlyers,nextWelciaDay,rulesUsable} from './rules.mjs';
+import {SNAPSHOT,japanToday,nextBonus,storePrograms,matches,retailerGroups,reward,currentFlyers,nextWelciaDay,rulesUsable} from './rules.mjs';
 const flyers=await fetch('/flyers.json').then(r=>{if(!r.ok)throw new Error('No flyer snapshot');return r.json();}).catch(()=>[]);
 const ruleStatus=await fetch('/rule-status.json').then(r=>{if(!r.ok)throw new Error('No rule snapshot');return r.json();}).catch(()=>({}));
 const stores=directoryStores.map(s=>({...s,ruleStatus:sources[s.chain]?(ruleStatus[s.chain]||{status:'unavailable'}):undefined}));
@@ -24,7 +24,7 @@ function stationOptions(){
   $('station').value=selected;
 }
 stationOptions();$('visit-date').value=date;
-$('coverage').textContent=`${stations.length} stations · ${researchSummary.branches} sourced branches · up to 10 per stop`;
+$('coverage').textContent=`${stations.length} stations · ${researchSummary.branches} sourced branches · retailers grouped per stop`;
 $('wallet').innerHTML=walletOptions.map(p=>`<label class="checkbox"><input type="checkbox" value="${p.id}" ${wallet.includes(p.id)?'checked':''}><span>${p.name}${p.note?`<small>${p.note}</small>`:''}</span></label>`).join('');
 function lines(chain){
   if(chain==='life')return [
@@ -69,7 +69,15 @@ function lines(chain){
   ];
   return [['Points','Program support not yet verified','Payment logos do not establish loyalty-card earning or redemption.'],['Sale','Item prices not verified','Check the official branch page for notices and flyers.']];
 }
-function renderStore(s){
+function walkingLink(s){
+ const origin=stations.find(x=>x.id===selected);
+ return 'https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin.ja+'駅 '+origin.region+' '+origin.line)+'&destination='+encodeURIComponent(s.ja+' '+s.address)+'&travelmode=walking';
+}
+function branchAlternatives(branches){
+ if(!branches.length)return '';
+ return `<details class="branch-alternatives"><summary>Other branches nearby (${branches.length})</summary><div class="branch-list">${branches.map(s=>`<div class="branch-row"><strong lang="ja">${escape(s.ja)}</strong><span>${s.distanceMeters===null?'Distance not calculated':(s.distanceMeters/1000).toFixed(1)+' km direct'} · ${escape(s.hours)}</span><span lang="ja">${escape(s.address)}</span><span>${storePrograms(s,date).map(id=>walletOptions.find(p=>p.id===id).name).join(' / ')||'Point support not verified'}</span><div><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Official branch</a> · <a href="${escape(s.flyerUrl||s.url)}" target="_blank" rel="noopener noreferrer">Branch flyer</a> · <a href="${escape(walkingLink(s))}" target="_blank" rel="noopener noreferrer">Directions</a></div>${currentFlyers(flyers,s.branchId,date).slice(0,3).map(f=>`<a class="alternative-flyer" href="${escape(f.source)}" target="_blank" rel="noopener noreferrer">${escape(f.title)} · ${f.windowKind==='advertised'?'Advertised':'Published'} ${fmt(f.start)}–${fmt(f.end)}</a>`).join('')}</div>`).join('')}</div></details>`;
+}
+function renderStore(s,alternatives=[]){
   const supported=storePrograms(s,date);
   const chips=supported.map(id=>`<span class="point-chip ${wallet.includes(id)?'owned':''}">${walletOptions.find(p=>p.id===id).name}${wallet.includes(id)?' · yours':''}</span>`).join('');
   const walk=s.walk===null?(s.distanceMeters===null?'See directions':`${(s.distanceMeters/1000).toFixed(1)} km direct`):s.walk===0?'Station-connected':`${s.walk} min walk`;
@@ -77,10 +85,10 @@ function renderStore(s){
   const origin=stations.find(x=>x.id===selected);
   const direction='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin.ja+'駅 '+origin.region+' '+origin.line)+'&destination='+encodeURIComponent(s.ja+' '+s.address)+'&travelmode=walking';
   const active=currentFlyers(flyers,s.branchId,date);
-  const pointLines=rulesUsable(s)?lines(s.chain).filter(([label])=>label!=='Sale'&&(label!=='Flyer'||s.chain==='ok')):[['Points','Current terms need checking','The rule source changed, could not be refreshed, or is over fourteen days old. Use the official rules link before relying on points.']];
+  const pointLines=rulesUsable(s)?(s.membershipNote?[['Membership',s.chain==='top'?'Top CoGCa card':'Fresco store point card',s.membershipNote]]:lines(s.chain)).filter(([label])=>label!=='Sale'&&(label!=='Flyer'||s.chain==='ok')):[['Points','Current terms need checking','The rule source changed, could not be refreshed, or is over fourteen days old. Use the official rules link before relying on points.']];
   const flyerLines=active.slice(0,3).map(f=>`<div class="offer-line flyer-line"><span class="offer-label">Flyer</span><div><a href="${escape(f.source)}" target="_blank" rel="noopener noreferrer">${escape(f.title)}</a><span class="condition">${f.windowKind==='advertised'?'Advertised period':'Published online'}: ${fmt(f.start)}–${fmt(f.end)}. ${f.windowKind==='publication'?'Item sale dates may differ. ':''}Prices and stock: open the original flyer.</span></div></div>`).join('');
   const availability=active.length?'':`<div class="offer-line"><span class="offer-label">Flyer</span><div><strong>No fresh dated flyer checked for this visit</strong><span class="condition">Use the official flyer link for the latest sale dates and item prices.</span></div></div>`;
-  return `<article class="store" data-walk="${s.walk===null?'unknown':'known'}" aria-labelledby="name-${s.id}"><div class="store-top"><div><h3 id="name-${s.id}">${escape(s.name)}</h3><p class="store-ja" lang="ja">${escape(s.ja)}</p></div><span class="walk">${walk}<small>${escape(s.access)}</small></span></div><div class="store-location"><span>${escape(s.hours)}</span><span lang="ja">${escape(s.address)}</span></div><div class="store-body">${chips?`<div class="points-row">${chips}</div>`:''}${pointLines.map(([label,title,condition])=>`<div class="offer-line"><span class="offer-label">${label}</span><div><strong class="${label==='Discount'?'discount':''}">${escape(title)}</strong><span class="condition">${escape(condition)}</span></div></div>`).join('')}${flyerLines}${availability}</div><details><summary>Sources &amp; checkout details<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="source-detail"><p>Branch checked ${fmt(japanToday(new Date(s.checkedAt)))}. Branch facts, flyer dates and point rules use separate sources. Special hours, exclusions and stock can change.</p><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Official branch page</a>${source?`<a href="${escape(source)}" target="_blank" rel="noopener noreferrer">Point / membership rules</a>`:''}${s.chain==='life'?'<a href="https://www.lifecorp.jp/service/lacuca/" target="_blank" rel="noopener noreferrer">LaCuCa rates &amp; conditions</a>':''}${s.chain==='welcia'?'<a href="https://welcia.tayori.com/q/yk-01/detail/682253/" target="_blank" rel="noopener noreferrer">20th WAON POINT conditions</a>':''}${s.chain==='mybasket'?`<a href="${sources.mybasketFaq}" target="_blank" rel="noopener noreferrer">Payment &amp; exclusions FAQ</a>`:''}<p>Blue labels identify your selected memberships, not a guarantee that your payment qualifies.</p></div></details><div class="store-bottom"><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Store information</a><a href="${escape(s.flyerUrl||s.url)}" target="_blank" rel="noopener noreferrer">Flyer / notices</a><a class="directions" href="${escape(direction)}" target="_blank" rel="noopener noreferrer" aria-label="Walking directions to ${escape(s.ja)}">Directions</a></div></article>`;
+  return `<article class="store" data-chain="${escape(s.chain)}" data-walk="${s.walk===null?'unknown':'known'}" aria-labelledby="name-${s.id}"><div class="store-top"><div><h3 id="name-${s.id}">${escape(s.name)}</h3><p class="store-ja" lang="ja">${escape(s.ja)}</p></div><span class="walk">${walk}<small>${escape(s.access)}</small></span></div><div class="store-location"><span>${escape(s.hours)}</span><span lang="ja">${escape(s.address)}</span></div><div class="store-body">${chips?`<div class="points-row">${chips}</div>`:''}${pointLines.map(([label,title,condition])=>`<div class="offer-line"><span class="offer-label">${label}</span><div><strong class="${label==='Discount'?'discount':''}">${escape(title)}</strong><span class="condition">${escape(condition)}</span></div></div>`).join('')}${flyerLines}${availability}</div><details><summary>Sources &amp; checkout details<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="source-detail"><p>Branch checked ${fmt(japanToday(new Date(s.checkedAt)))}. Branch facts, flyer dates and point rules use separate sources. Special hours, exclusions and stock can change.</p><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Official branch page</a>${source?`<a href="${escape(source)}" target="_blank" rel="noopener noreferrer">Point / membership rules</a>`:''}${s.chain==='life'?'<a href="https://www.lifecorp.jp/service/lacuca/" target="_blank" rel="noopener noreferrer">LaCuCa rates &amp; conditions</a>':''}${s.chain==='welcia'?'<a href="https://welcia.tayori.com/q/yk-01/detail/682253/" target="_blank" rel="noopener noreferrer">20th WAON POINT conditions</a>':''}${s.chain==='mybasket'?`<a href="${sources.mybasketFaq}" target="_blank" rel="noopener noreferrer">Payment &amp; exclusions FAQ</a>`:''}<p>Blue labels identify your selected memberships, not a guarantee that your payment qualifies.</p></div></details><div class="store-bottom"><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Store information</a><a href="${escape(s.flyerUrl||s.url)}" target="_blank" rel="noopener noreferrer">Flyer / notices</a><a class="directions" href="${escape(direction)}" target="_blank" rel="noopener noreferrer" aria-label="Walking directions to ${escape(s.ja)}">Directions</a></div>${branchAlternatives(alternatives)}</article>`;
 }
 function render(){
   const station=stations.find(s=>s.id===selected);
@@ -91,16 +99,16 @@ function render(){
   const all=stores.filter(s=>s.station===selected);
   const programList=walletOptions.filter(p=>p.url&&(!wallet.length||wallet.includes(p.id)));
   $('program-guide').innerHTML=programList.map(p=>`<p><a target="_blank" rel="noopener noreferrer" href="${escape(p.url)}">${escape(p.name)} · official guide</a><span>${escape(p.guide)}</span></p>`).join('')||'<p>Select a major point program to see its official guide.</p>';
-  let list=orderStores(all,wallet,date);
   const only=$('only-matches').checked;
-  if(only)list=list.filter(s=>matches(s,wallet,date));
-  const matchingCount=list.length;list=list.slice(0,10);
-  $('result-count').textContent=`${list.length} shown · ${matchingCount} ${only?'matches':'sourced options'}`;
-  $('sort-label').textContent=wallet.length?'Your cards first, then distance':'Nearest sourced options first';
+  const groups=retailerGroups(all,wallet,date,only);
+  const list=groups.slice(0,10);
+  const branchCount=groups.reduce((sum,g)=>sum+g.length,0);
+  $('result-count').textContent=`${list.length} retailers · ${branchCount} ${only?'matching':'sourced'} branches`;
+  $('sort-label').textContent=wallet.length?'Your cards first · one card per retailer':'Nearest branch per retailer';
   $('date-note').textContent=`${fmt(date)} · 2.5 km direct / official station access`;
   const localSearch='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(station.ja+'駅 '+station.region+' スーパーマーケット');
-  const coverageNote=all.length<5?`<div class="coverage-note"><strong>Shop research is incomplete here.</strong><p>${all.length?'These are the branches checked so far; this is not the full local selection.':'This station is available, but nearby branches and their point conditions have not been checked yet.'}</p><a href="${escape(localSearch)}" target="_blank" rel="noopener noreferrer">Look for supermarkets around this station</a> · <a href="${escape(station.source)}" target="_blank" rel="noopener noreferrer">Official line information</a></div>`:'';
-  $('stores').innerHTML=coverageNote+(list.length?list.map(renderStore).join(''):all.length?`<div class="empty"><h3>${wallet.length?'No verified card matches here':'Choose a card to filter shops'}</h3><p>${wallet.length?'Other shops may support your points, but this pilot has not verified them. Check the point-program guide for official partners.':'Select memberships on the left, or show all researched shops.'}</p><button class="secondary" id="show-all">Show all shops</button></div>`:'');
+  const coverageNote=`<p class="coverage-disclosure">Researched sample, not every local shop. <a href="${escape(localSearch)}" target="_blank" rel="noopener noreferrer">Find more nearby shops</a></p>`;
+  $('stores').innerHTML=(list.length?list.map(([primary,...others])=>renderStore(primary,others)).join(''):all.length?`<div class="empty"><h3>${wallet.length?'No verified card matches here':'Choose a card to filter shops'}</h3><p>Show the researched shops to compare other memberships and unverified point support.</p><button class="secondary" id="show-all">Show all shops</button></div>`:'')+coverageNote;
   $('show-all')?.addEventListener('click',()=>{$('only-matches').checked=false;render();});
   const bonus=nextBonus(date);
   $('next-bonus').innerHTML=all.some(s=>s.chain==='mybasket'&&rulesUsable(s))?`<div class="bonus-date">${fmt(bonus.date)}</div><p>My Basket · ${bonus.multiplier}× WAON POINT<br>Eligible payments; exclusions apply.</p><button type="button" id="use-bonus">Compare shops on this date</button>`:'<p>No My Basket bonus date has been verified here.</p>';

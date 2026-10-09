@@ -1,7 +1,7 @@
 {
   "errors": [],
-  "flyers": 207,
-  "branches": 87,
+  "flyers": 208,
+  "branches": 88,
   "sources": [
     {
       "url": "https://widgets.tokubai.co.jp/2521/leaflet_widget?count=4&type=spweb",
@@ -812,6 +812,16 @@
       "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=907171&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
       "status": "cached",
       "checkedAt": "2026-10-09T15:11:52.174607+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/21837/leaflet_widget?count=4&type=spweb",
+      "status": "changed",
+      "checkedAt": "2026-10-09T16:32:43.618204+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/21837/leaflet_widget/click?id=106889560&type=spweb",
+      "status": "changed",
+      "checkedAt": "2026-10-09T16:32:44.069334+00:00"
     }
   ]
 }

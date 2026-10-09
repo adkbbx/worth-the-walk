@@ -6,7 +6,7 @@ Unpublished working draft for the DEV Hacktoberfest Open-Source AI Challenge, We
 
 Station Points compares grocery shops around a selected Japanese train station. Choose the point cards you own, pick a visit date, and see which shops match, what payment conditions apply, and when recurring bonus days occur. Open the original flyer or walking directions when you are ready to go.
 
-The station selector covers 74 stations, including the full JR Nambu and Tokyu Den-en-toshi lines and Tobu Skytree through Takenotsuka. There are 544 source-linked branches; every station has at least five candidates within 2.5 km direct distance or explicit official access. Up to ten appear per station. Separately refreshed metadata includes 207 flyers across 87 branches. It is a directory sample, not a nationwide census or live stock service.
+The station selector covers 74 stations, including the full JR Nambu and Tokyu Den-en-toshi lines and Tobu Skytree through Takenotsuka. There are 547 source-linked branches; every station has at least five candidates within 2.5 km direct distance or explicit official access. Up to ten appear per station. Separately refreshed metadata includes 207 flyers across 87 branches. It is a directory sample, not a nationwide census or live stock service.
 
 ## Why this belongs in “Touch Grass”
 

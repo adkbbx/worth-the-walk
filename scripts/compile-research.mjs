@@ -11,7 +11,7 @@ function distance(a,b){const rad=n=>n*Math.PI/180;const dlat=rad(b.lat-a.lat),dl
 function publishedWalk(s,b){
  const ja=s.ja.split('〈')[0];
  const escaped=ja.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
- const match=b.accessText?.match(new RegExp('(?:線|(?<![一-龯ぁ-んァ-ヶ]))'+escaped+'駅[^。;]{0,45}?徒歩(?:約)?\\s*(\\d+)\\s*分'));
+ const match=b.accessText?.match(new RegExp('(?:線|(?<![一-龯ぁ-んァ-ヶ]))'+escaped+'駅(?:(?!駅|バス|。|;).){0,45}?徒歩(?:約)?\\s*(\\d+)\\s*分'));
  return match ? Number(match[1]) : null;
 }
 const byUrl=new Map(branches.map(b=>[canonical(b.url),b]));
@@ -30,7 +30,7 @@ for(const s of coordinates){
   associations.push({branchId:b.branchId,station:s.id,walk,distanceMeters:b.lat?Math.round(distance(s,b)):null,access:legacy?.access||(walk!==null?'Official walking estimate':b.coordinatePrecision==='map-center'?'Approximate map vicinity':'Straight-line estimate; walking route may be longer')});
  }
 }
-const counts=stations.map(s=>({id:s.id,name:s.name,ja:s.ja,shops:associations.filter(a=>a.station===s.id).length}));
+const counts=stations.map(s=>({id:s.id,name:s.name,ja:s.ja,shops:associations.filter(a=>a.station===s.id).length,retailers:new Set(associations.filter(a=>a.station===s.id).map(a=>unique.find(b=>b.branchId===a.branchId).chain)).size}));
 const latestCheck=new Date(Math.max(...unique.map(b=>Date.parse(b.checkedAt)),...flyers.map(f=>Date.parse(f.checkedAt)))).toISOString();
 const summary={branches:unique.length,stations:stations.length,stationsWithFive:counts.filter(s=>s.shops>=5).length,stationCounts:counts,flyers:flyers.length,flyerBranches:new Set(flyers.map(f=>f.branchId)).size,radiusMeters:2500,checkedAt:latestCheck};
 // Branch facts are stored once; station-specific distance/access is a separate relation.

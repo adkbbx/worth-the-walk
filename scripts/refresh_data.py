@@ -195,7 +195,7 @@ def fuji_directory(cache,stations):
   result.append({'branchId':'fuji-'+re.search(r'shop_(\d+)',url)[1],'chain':'fuji','name':'FUJI','ja':'FUJI '+title_name,'address':facts['住所'],'hours':facts.get('営業時間','See official hours'),**point,'coordinatePrecision':'map-center','url':url,'flyerUrl':url,'accessText':facts.get('アクセス','Official map vicinity; approximate distance'),'verifiedPrograms':[],'checkedAt':dm['checkedAt'],'sourceHash':dm['sha256'],'provenance':'official','category':'supermarket'})
  print('FUJI nearby branches:',len(result),flush=True);return result
 def main():
- parser=argparse.ArgumentParser();parser.add_argument('--offline',action='store_true');parser.add_argument('--force',action='store_true');parser.add_argument('--stage',choices=['stations','life','mybasket','ok','tokyu','welcia','sanwa','seiyu','fuji','all'],default='all');args=parser.parse_args()
+ parser=argparse.ArgumentParser();parser.add_argument('--offline',action='store_true');parser.add_argument('--force',action='store_true');parser.add_argument('--stage',choices=['stations','life','mybasket','ok','tokyu','welcia','sanwa','seiyu','fuji','top','all'],default='all');args=parser.parse_args()
  cache=SourceCache(args.offline,args.force)
  inputs=json.loads(subprocess.run(['node','scripts/export-refresh-input.mjs'],cwd=ROOT,check=True,capture_output=True,encoding='utf-8').stdout)
  station_path=ROOT/'data/station-coordinates.json'
@@ -203,7 +203,8 @@ def main():
   stations=station_coordinates(cache,inputs['stations']);write_json(station_path,stations);print('Station coordinates:',len(stations),flush=True)
  else:stations=json.loads(station_path.read_text(encoding='utf-8'))
  failures=[]
- adapters={'life':life_directory,'mybasket':mybasket_directory,'ok':ok_directory,'tokyu':tokyu_directory,'welcia':welcia_directory,'sanwa':sanwa_directory,'seiyu':seiyu_directory,'fuji':fuji_directory}
+ from refresh_top import top_directory
+ adapters={'life':life_directory,'mybasket':mybasket_directory,'ok':ok_directory,'tokyu':tokyu_directory,'welcia':welcia_directory,'sanwa':sanwa_directory,'seiyu':seiyu_directory,'fuji':fuji_directory,'top':top_directory}
  for stage,adapter in adapters.items():
   if args.stage not in [stage,'all']:continue
   try:

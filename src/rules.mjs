@@ -40,6 +40,15 @@ export function orderStores(stores,wallet,date) {
   // Unknown walks come last. Wallet match is preference, not predicted savings.
   return [...stores].sort((a,b)=>Number(matches(b,wallet,date))-Number(matches(a,wallet,date)) || (a.distanceMeters??(a.walk??999)*80)-(b.distanceMeters??(b.walk??999)*80));
 }
+export function retailerGroups(stores,wallet,date,onlyMatches=false) {
+  const groups=new Map();
+  for(const store of orderStores(stores,wallet,date)) {
+    if(onlyMatches&&!matches(store,wallet,date))continue;
+    if(!groups.has(store.chain))groups.set(store.chain,[]);
+    groups.get(store.chain).push(store);
+  }
+  return [...groups.values()];
+}
 export function currentFlyers(flyers,branchId,date,today=japanToday()) {
   return flyers.filter(f=>f.branchId===branchId&&f.start<=date&&f.end>=date&&(new Date(today+'T12:00:00+09:00')-new Date(f.checkedAt))<=3*86400000);
 }

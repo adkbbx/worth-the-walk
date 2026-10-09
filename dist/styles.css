@@ -36,3 +36,10 @@
 .program-guide summary{min-height:44px;font-weight:600}
 .program-guide p{margin:0 0 16px}.program-guide p span{display:block;margin-top:4px;color:var(--muted)}
 @media(max-width:680px){.program-guide{grid-column:1/-1;margin:0}.station-controls select{font-size:16px}.station-heading{align-items:flex-start}.station-heading h2{overflow-wrap:anywhere}.station-heading h2 span{display:block;margin-left:0}.coverage-note{padding:18px}}
+/* Compare retailers first; keep branch-specific facts in flat expandable rows. */
+.branch-alternatives {border-top:1px solid var(--line,#d9e0e5)}
+.branch-alternatives summary {font-weight:600}
+.branch-list {padding:0 24px 20px}
+.branch-row {display:grid;gap:7px;padding:18px 0;border-top:1px solid #d9e0e5;font-size:14px;line-height:1.6}
+.branch-row a {text-underline-offset:3px}
+.coverage-disclosure {font-size:14px;line-height:1.6;margin:20px 0}

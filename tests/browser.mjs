@@ -14,12 +14,20 @@ try{
   for(const station of stationsOnLine(stations,line.id)){
    await page.locator('#station').selectOption(station.id);
    const count=await page.locator('.store').count();
-   assert.equal(count,Math.min(10,stores.filter(s=>s.station===station.id).length),station.id);
-   assert.ok(count>=5,station.id);
+   assert.equal(count,Math.min(10,new Set(stores.filter(s=>s.station===station.id).map(s=>s.chain)).size),station.id);
+   assert.ok(count>=1,station.id);
    const links=await page.locator('.directions').all();
    for(const link of links)assert.match(await link.getAttribute('href'),/travelmode=walking/);
   }
  }
+ await page.locator('#line').selectOption('nambu');await page.locator('#station').selectOption('kuji');
+ assert.equal(await page.locator('.store[data-chain=mybasket]').count(),1);
+ assert.equal(await page.locator('.store[data-chain=top]').count(),1);
+ assert.equal(await page.locator('.store[data-chain=fresco]').count(),1);
+ const repeats=page.locator('.store[data-chain=mybasket] .branch-alternatives');
+ await repeats.locator('summary').click();assert.ok(await repeats.locator('.branch-row').first().isVisible());
+ assert.ok(await repeats.getByRole('link',{name:'Branch flyer',exact:true}).first().isVisible());
+ await repeats.locator('summary').click();
  assert.equal(await page.locator('#wallet input').count(),14);
  await page.locator('#wallet input[value=paypay]').check();await page.locator('#only-matches').check();
  assert.equal(await page.locator('.store').count(),0);await page.getByRole('button',{name:'Show all shops'}).click();
@@ -43,8 +51,8 @@ try{
  assert.match(await page.locator('article').filter({hasText:'西友高円寺店'}).innerText(),/scheduled to have ended/);
  assert.equal(await page.locator('.flyer-line').count(),0,'Expired flyers disappear');
  await page.locator('#visit-date').fill('2026-10-10');await page.locator('#visit-date').dispatchEvent('change');
- const ok=page.locator('article').filter({hasText:'オーケー 高円寺店'});await ok.locator('summary').click();
- assert.ok(await ok.getByRole('link',{name:'Point / membership rules'}).isVisible());await ok.locator('summary').click();
+ const ok=page.locator('article').filter({hasText:'オーケー 高円寺店'});await ok.locator('summary').first().click();
+ assert.ok(await ok.getByRole('link',{name:'Point / membership rules'}).isVisible());await ok.locator('summary').first().click();
  if(process.env.TEST_AI==='1'){
   await page.locator('.ai-panel summary').click();await page.locator('#load-ai').click();
   await page.locator('#semantic-form').waitFor({state:'visible',timeout:240000});
@@ -72,5 +80,5 @@ try{
  await page.goto(base+'/?station=takatsu');await page.locator('.store').first().waitFor();assert.equal(await page.locator('#line').inputValue(),'den-en-toshi');
  await page.goto(base+'/data-status.html');assert.equal(await page.locator('tbody tr').count(),74);assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  await page.goto(base+'/evaluation.html');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
- assert.deepEqual(errors,[]);console.log('Browser passed: all 74 stations, 5–10 shops, card filters, flyer expiry, Welcia date, directions, source links, mobile/desktop and data status.');
+ assert.deepEqual(errors,[]);console.log('Browser passed: all 74 stations, distinct retailers, Kuji missing shops and branch expansion, card filters, flyer expiry, Welcia date, directions, source links, mobile/desktop and data status.');
 }finally{await browser.close();}
