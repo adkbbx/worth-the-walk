@@ -25,7 +25,7 @@ for q in queries:
     baseline=sorted(range(len(notices)),key=lambda i:(-lexical(q['query'],notices[i]['text']),notices[i]['id']))
     row={**q,'semantic_order':[notices[i]['id'] for i in semantic], 'lexical_order':[notices[i]['id'] for i in baseline]}
     results.append(row)
-report={'protocol':'30 author-written EN/JA queries against 14 source-reviewed Japanese paraphrases. No training or tuning on these queries. Full-corpus evaluation; UI station filtering can differ. Not a real-user or OCR benchmark.',
+report={'protocol':f'{len(queries)} author-written EN/JA queries against {len(notices)} source-reviewed Japanese paraphrases. No training or tuning on these queries. Full-corpus evaluation; UI station and freshness filtering can differ. Not a real-user or OCR benchmark.',
         'model':encoder.manifest,'baseline':'Japanese-compatible character bigram Jaccard, stable id tie-break',
         'runtime':{'platform':platform.platform(),'python':platform.python_version(),'onnxruntime':__import__('onnxruntime').__version__,'threads':2,'load_ms':round(load_ms,2),'median_single_query_ms':round(statistics.median(latencies),2)},'metrics':{},'results':results}
 for method in ['semantic','lexical']:

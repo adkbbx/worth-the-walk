@@ -14,10 +14,20 @@ export function nextBonus(date) {
 }
 export function programs(chain,date) {
   if (chain === 'seiyu') return date <= '2027-04-04' ? ['rakuten'] : [];
-  return ({tokyu:['rakuten','tokyu'],mybasket:['waon'],ok:['ok'],keio:['rakuten','keio'],life:['dpoint','ponta','lacuca'],welcia:['vpoint','waon']})[chain] || [];
+  return ({tokyu:['rakuten','tokyu'],mybasket:['waon'],ok:['ok'],keio:['rakuten','keio'],life:['dpoint','ponta','lacuca'],welcia:['vpoint','waon'],sanwa:['sanwa']})[chain] || [];
+}
+export function storePrograms(store,date) {
+  if(!rulesUsable(store))return [];
+  const listed=programs(store.chain,date);
+  return store.verifiedPrograms ? listed.filter(p=>store.verifiedPrograms.includes(p)) : listed;
+}
+export function rulesUsable(store,today=japanToday()) {
+  if(!store.ruleStatus)return true;
+  const rule=store.ruleStatus;
+  return rule.status==='verified'&&Number.isFinite(Date.parse(rule.checkedAt))&&(new Date(today+'T12:00:00+09:00')-new Date(rule.checkedAt))<=14*86400000;
 }
 export function matches(store,wallet,date) {
-  return wallet.some(p=>programs(store.chain,date).includes(p));
+  return wallet.some(p=>storePrograms(store,date).includes(p));
 }
 export function reward(chain,date) {
   if (chain==='mybasket') {
@@ -28,5 +38,13 @@ export function reward(chain,date) {
 }
 export function orderStores(stores,wallet,date) {
   // Unknown walks come last. Wallet match is preference, not predicted savings.
-  return [...stores].sort((a,b)=>Number(matches(b,wallet,date))-Number(matches(a,wallet,date)) || (a.walk??999)-(b.walk??999));
+  return [...stores].sort((a,b)=>Number(matches(b,wallet,date))-Number(matches(a,wallet,date)) || (a.distanceMeters??(a.walk??999)*80)-(b.distanceMeters??(b.walk??999)*80));
+}
+export function currentFlyers(flyers,branchId,date,today=japanToday()) {
+  return flyers.filter(f=>f.branchId===branchId&&f.start<=date&&f.end>=date&&(new Date(today+'T12:00:00+09:00')-new Date(f.checkedAt))<=3*86400000);
+}
+export function nextWelciaDay(date){
+ const day=Number(date.slice(-2));
+ if(day<=20)return date.slice(0,8)+'20';
+ const d=new Date(date+'T12:00:00+09:00');d.setUTCDate(1);d.setUTCMonth(d.getUTCMonth()+1);return japanToday(d).slice(0,8)+'20';
 }

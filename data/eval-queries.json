@@ -1,32 +1,295 @@
 [
- {"query":"Which shop gives cheaper food when I pay with banknotes?","language":"en","relevant":["ok-cash"]},
- {"query":"Does tapping my credit card remove my OK membership saving?","language":"en","relevant":["ok-card"]},
- {"query":"When can I get five times WAON rewards?","language":"en","relevant":["waon-bonus"]},
- {"query":"Tell me the dates for double WAON rewards","language":"en","relevant":["waon-double"]},
- {"query":"Can I earn WAON with my unrelated Visa card?","language":"en","relevant":["waon-card"]},
- {"query":"Is AEON's five percent off day valid at My Basket?","language":"en","relevant":["waon-no-sale"]},
- {"query":"Do I need to register before spending my WAON balance?","language":"en","relevant":["waon-redeem"]},
- {"query":"How much is one Rakuten point worth at SEIYU?","language":"en","relevant":["seiyu-earn"]},
- {"query":"Will SEIYU still accept Rakuten points next March?","language":"en","relevant":["seiyu-end","seiyu-earn"]},
- {"query":"Are the SEIYU campaign and card service finishing on different dates?","language":"en","relevant":["seiyu-campaign-end","seiyu-end"]},
- {"query":"Can I collect Tokyu points with another credit card?","language":"en","relevant":["tokyu-earn"]},
- {"query":"Does Kitchen Court let me earn both Keio and Rakuten?","language":"en","relevant":["keio-earn"]},
- {"query":"Which payment stops me receiving Keio rewards?","language":"en","relevant":["keio-card"]},
- {"query":"How much is the frozen vegetable rice topping advertised for?","language":"en","relevant":["ok-flyer"]},
- {"query":"Can I get the OK member rate on beer?","language":"en","relevant":["ok-cash"]},
- {"query":"電子決済にしたらオーケーの会員特典はなくなりますか","language":"ja","relevant":["ok-card"]},
- {"query":"現金を使うと食品を安く買える会員制度はありますか","language":"ja","relevant":["ok-cash"]},
- {"query":"まいばすでポイントが五倍になるのはいつ","language":"ja","relevant":["waon-bonus"]},
- {"query":"WAONの特典が二倍になる日に行きたい","language":"ja","relevant":["waon-double"]},
- {"query":"まいばすで他社のクレカを使ってもポイントもらえる？","language":"ja","relevant":["waon-card"]},
- {"query":"お客さま感謝デーでまいばすも値引きされる？","language":"ja","relevant":["waon-no-sale"]},
- {"query":"WAONの残高のポイントを使うための手続きは","language":"ja","relevant":["waon-redeem"]},
- {"query":"西友で楽天の貯めたポイントをいくらで使える","language":"ja","relevant":["seiyu-earn"]},
- {"query":"西友で楽天カードのポイント利用ができなくなる日は","language":"ja","relevant":["seiyu-end","seiyu-earn"]},
- {"query":"西友のキャンペーンが年内に終わるって本当？","language":"ja","relevant":["seiyu-campaign-end"]},
- {"query":"東急のポイントカードはお会計の前に見せる？","language":"ja","relevant":["tokyu-earn"]},
- {"query":"キッチンコートでポイントカードを二枚出せる？","language":"ja","relevant":["keio-earn"]},
- {"query":"京王以外のクレカだと京王ポイントはつかない？","language":"ja","relevant":["keio-card"]},
- {"query":"今週オーケーの中華丼の冷凍食品の価格は","language":"ja","relevant":["ok-flyer"]},
- {"query":"お酒でもオーケーカードの割引は受けられる？","language":"ja","relevant":["ok-cash"]}
+  {
+    "query": "Which shop gives cheaper food when I pay with banknotes?",
+    "language": "en",
+    "relevant": [
+      "ok-cash"
+    ]
+  },
+  {
+    "query": "Does tapping my credit card remove my OK membership saving?",
+    "language": "en",
+    "relevant": [
+      "ok-card"
+    ]
+  },
+  {
+    "query": "When can I get five times WAON rewards?",
+    "language": "en",
+    "relevant": [
+      "waon-bonus"
+    ]
+  },
+  {
+    "query": "Tell me the dates for double WAON rewards",
+    "language": "en",
+    "relevant": [
+      "waon-double"
+    ]
+  },
+  {
+    "query": "Can I earn WAON with my unrelated Visa card?",
+    "language": "en",
+    "relevant": [
+      "waon-card"
+    ]
+  },
+  {
+    "query": "Is AEON's five percent off day valid at My Basket?",
+    "language": "en",
+    "relevant": [
+      "waon-no-sale"
+    ]
+  },
+  {
+    "query": "Do I need to register before spending my WAON balance?",
+    "language": "en",
+    "relevant": [
+      "waon-redeem"
+    ]
+  },
+  {
+    "query": "How much is one Rakuten point worth at SEIYU?",
+    "language": "en",
+    "relevant": [
+      "seiyu-earn"
+    ]
+  },
+  {
+    "query": "Will SEIYU still accept Rakuten points next March?",
+    "language": "en",
+    "relevant": [
+      "seiyu-end",
+      "seiyu-earn"
+    ]
+  },
+  {
+    "query": "Are the SEIYU campaign and card service finishing on different dates?",
+    "language": "en",
+    "relevant": [
+      "seiyu-campaign-end",
+      "seiyu-end"
+    ]
+  },
+  {
+    "query": "Can I collect Tokyu points with another credit card?",
+    "language": "en",
+    "relevant": [
+      "tokyu-earn"
+    ]
+  },
+  {
+    "query": "Does Kitchen Court let me earn both Keio and Rakuten?",
+    "language": "en",
+    "relevant": [
+      "keio-earn"
+    ]
+  },
+  {
+    "query": "Which payment stops me receiving Keio rewards?",
+    "language": "en",
+    "relevant": [
+      "keio-card"
+    ]
+  },
+  {
+    "query": "How much is the frozen vegetable rice topping advertised for?",
+    "language": "en",
+    "relevant": [
+      "ok-flyer"
+    ]
+  },
+  {
+    "query": "Can I get the OK member rate on beer?",
+    "language": "en",
+    "relevant": [
+      "ok-cash"
+    ]
+  },
+  {
+    "query": "電子決済にしたらオーケーの会員特典はなくなりますか",
+    "language": "ja",
+    "relevant": [
+      "ok-card"
+    ]
+  },
+  {
+    "query": "現金を使うと食品を安く買える会員制度はありますか",
+    "language": "ja",
+    "relevant": [
+      "ok-cash"
+    ]
+  },
+  {
+    "query": "まいばすでポイントが五倍になるのはいつ",
+    "language": "ja",
+    "relevant": [
+      "waon-bonus"
+    ]
+  },
+  {
+    "query": "WAONの特典が二倍になる日に行きたい",
+    "language": "ja",
+    "relevant": [
+      "waon-double"
+    ]
+  },
+  {
+    "query": "まいばすで他社のクレカを使ってもポイントもらえる？",
+    "language": "ja",
+    "relevant": [
+      "waon-card"
+    ]
+  },
+  {
+    "query": "お客さま感謝デーでまいばすも値引きされる？",
+    "language": "ja",
+    "relevant": [
+      "waon-no-sale"
+    ]
+  },
+  {
+    "query": "WAONの残高のポイントを使うための手続きは",
+    "language": "ja",
+    "relevant": [
+      "waon-redeem"
+    ]
+  },
+  {
+    "query": "西友で楽天の貯めたポイントをいくらで使える",
+    "language": "ja",
+    "relevant": [
+      "seiyu-earn"
+    ]
+  },
+  {
+    "query": "西友で楽天カードのポイント利用ができなくなる日は",
+    "language": "ja",
+    "relevant": [
+      "seiyu-end",
+      "seiyu-earn"
+    ]
+  },
+  {
+    "query": "西友のキャンペーンが年内に終わるって本当？",
+    "language": "ja",
+    "relevant": [
+      "seiyu-campaign-end"
+    ]
+  },
+  {
+    "query": "東急のポイントカードはお会計の前に見せる？",
+    "language": "ja",
+    "relevant": [
+      "tokyu-earn"
+    ]
+  },
+  {
+    "query": "キッチンコートでポイントカードを二枚出せる？",
+    "language": "ja",
+    "relevant": [
+      "keio-earn"
+    ]
+  },
+  {
+    "query": "京王以外のクレカだと京王ポイントはつかない？",
+    "language": "ja",
+    "relevant": [
+      "keio-card"
+    ]
+  },
+  {
+    "query": "今週オーケーの中華丼の冷凍食品の価格は",
+    "language": "ja",
+    "relevant": [
+      "ok-flyer"
+    ]
+  },
+  {
+    "query": "お酒でもオーケーカードの割引は受けられる？",
+    "language": "ja",
+    "relevant": [
+      "ok-cash"
+    ]
+  },
+  {
+    "id": "expanded-1",
+    "language": "en",
+    "query": "Can I combine Ponta with the Life electronic money card?",
+    "relevant": [
+      "life-common"
+    ]
+  },
+  {
+    "id": "expanded-2",
+    "language": "ja",
+    "query": "ライフでdポイント払いした分にもポイントが付きますか",
+    "relevant": [
+      "life-redeem"
+    ]
+  },
+  {
+    "id": "expanded-3",
+    "language": "en",
+    "query": "How much is one d point worth at Life?",
+    "relevant": [
+      "life-redeem"
+    ]
+  },
+  {
+    "id": "expanded-4",
+    "language": "ja",
+    "query": "ライフの電子マネー払いで追加ポイントはありますか",
+    "relevant": [
+      "life-lacuca"
+    ]
+  },
+  {
+    "id": "expanded-5",
+    "language": "en",
+    "query": "How can I spend my WAON balance for more value at Welcia?",
+    "relevant": [
+      "welcia-20"
+    ]
+  },
+  {
+    "id": "expanded-6",
+    "language": "ja",
+    "query": "ウエルシアの20日にVポイントで1.5倍になりますか",
+    "relevant": [
+      "welcia-20"
+    ]
+  },
+  {
+    "id": "expanded-7",
+    "language": "en",
+    "query": "How many V points do I earn at Welcia?",
+    "relevant": [
+      "welcia-base"
+    ]
+  },
+  {
+    "id": "expanded-8",
+    "language": "ja",
+    "query": "ウエルシアの通常のWAONとVの還元率の違い",
+    "relevant": [
+      "welcia-base"
+    ]
+  },
+  {
+    "id": "expanded-9",
+    "language": "en",
+    "query": "Does Food One give its own points if I pay by credit card?",
+    "relevant": [
+      "sanwa-cash"
+    ]
+  },
+  {
+    "id": "expanded-10",
+    "language": "ja",
+    "query": "三和は現金以外でもポイントが付きますか",
+    "relevant": [
+      "sanwa-cash"
+    ]
+  }
 ]

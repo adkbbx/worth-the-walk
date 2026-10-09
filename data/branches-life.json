@@ -1,0 +1,3104 @@
+[
+  {
+    "branchId": "life-east834",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ浅草店",
+    "address": "東京都台東区西浅草3丁目18-17",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.71582078,
+    "lon": 139.7923863,
+    "url": "https://store.lifecorp.jp/detail/east834/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2521/leaflet_widget",
+    "accessText": "つくばエクスプレス「浅草」駅 下車 ビューホテル側出口 徒歩1分、東武、東京メトロ銀座線、都営浅草線「浅草」駅 中央口下車 徒歩12分 新仲見世通りを行く、東武「浅草」駅 北口下車 徒歩10分 伝法院通りを行く、東京メトロ銀座線「田原町」駅 下車 3番出口 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:42.675514+00:00",
+    "sourceHash": "3026cb9b9c560ea4901541af775eb52a38d80ef4869d94ce395b769b63ad0824",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east627",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ鵜の木店",
+    "address": "東京都大田区鵜の木3丁目24-2",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.57658996,
+    "lon": 139.6777068,
+    "url": "https://store.lifecorp.jp/detail/east627/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/80550/leaflet_widget",
+    "accessText": "東急多摩川線「鵜の木駅」徒歩6分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:43.040092+00:00",
+    "sourceHash": "356bdf4b2b49d8ab016bfc4f79fc37dd6a39fa8f2adf717c28647846ae0f4662",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east666",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ梅島駅前店",
+    "address": "東京都足立区梅島1丁目13-12",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.77315195,
+    "lon": 139.797672,
+    "url": "https://store.lifecorp.jp/detail/east666/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/258850/leaflet_widget",
+    "accessText": "東武スカイツリーライン梅島駅下車(改札口より徒歩1分)",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:43.360149+00:00",
+    "sourceHash": "8c09c52559b56991a3029504c1937880c48b01b700b1990bed3ef7eccf85df07",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east867",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ扇大橋駅前店",
+    "address": "東京都足立区扇2-26-1",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.76449235,
+    "lon": 139.7701263,
+    "url": "https://store.lifecorp.jp/detail/east867/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2549/leaflet_widget",
+    "accessText": "日暮里舎人ライナー「扇大橋」駅 下車 すぐ、都営バス 里48系統：「舎人二ツ橋」、「足立流通センター」、「江北六丁目団地」行⇒「扇大橋北詰」下車 徒歩1分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:43.715733+00:00",
+    "sourceHash": "ab397f15bb238684871d5abffc097981fb8821a0762975ea2dfd18188cc7f096",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east656",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフカメイドクロック店",
+    "address": "東京都江東区亀戸6丁目31-6 ｶﾒｲﾄﾞｸﾛｯｸ地下 1階",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.69533511,
+    "lon": 139.8292249,
+    "url": "https://store.lifecorp.jp/detail/east656/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/230226/leaflet_widget",
+    "accessText": "JR総武線「亀戸駅」下車（東口徒歩2分）、東武亀戸線「亀戸駅」下車（徒歩4分） 都営バス（亀21）亀戸駅前~東陽町駅前、（亀26）亀戸駅前~今井、（錦25）錦糸町駅前~葛西駅前、（錦27）両国駅前~小岩駅前、（FL01）錦糸町駅前~葛西駅前の水神森バス停下車 お客様用トイレ（入口エレベーター横）",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:44.085608+00:00",
+    "sourceHash": "8f1247ef6cf735de3ef7cd055fcb67504db913e8aca2d39ab194b54cb79d70eb",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east874",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ神田和泉町店",
+    "address": "東京都千代田区神田和泉町2-13",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.6998694,
+    "lon": 139.7801593,
+    "url": "https://store.lifecorp.jp/detail/east874/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2349/leaflet_widget",
+    "accessText": "JR山手線、京浜東北線、総武線、「秋葉原」駅 中央口下車 徒歩10分、東京メトロ日比谷線「秋葉原」駅 下車 1番出口 徒歩10分、JR総武線「浅草橋」駅 西口下車 徒歩10分、都営浅草線「浅草橋」駅 下車 A4出口 徒歩15分、つくばエクスプレス線、都営大江戸「新御徒町」駅 下車 A2出口 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:44.429063+00:00",
+    "sourceHash": "1d93eb99995cea29ab17ec4ee68ce9b54b433200f080f63debf97b10a73db7d3",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east882",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ菊川店",
+    "address": "東京都墨田区菊川1丁目18-5",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.6900571,
+    "lon": 139.802143,
+    "url": "https://store.lifecorp.jp/detail/east882/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2332/leaflet_widget",
+    "accessText": "都営新宿線、大江戸線「森下」駅 下車 A5出口 徒歩5分・都営新宿線「菊川」駅 下車 A1出口 徒歩4分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:44.774668+00:00",
+    "sourceHash": "177002adf1360bd129b741dfd46dfed023d4f9ecad79ab79cf5b0999beaf4aa3",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east676",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ吉祥寺駅前店",
+    "address": "東京都武蔵野市吉祥寺南町二丁目3-15",
+    "hours": "10:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "10:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.70268335,
+    "lon": 139.5808311,
+    "url": "https://store.lifecorp.jp/detail/east676/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/277935/leaflet_widget",
+    "accessText": "JR中央線・京王線 吉祥寺駅公園口下車、徒歩１分（0.1ｋｍ）",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:45.133755+00:00",
+    "sourceHash": "a7a56ca8ccaf0113b5c2d30b0dfff81730ff8053d0208dc465416043f979464d",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east821",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ経堂店",
+    "address": "東京都世田谷区経堂5丁目32-6",
+    "hours": "09:00–00:00 / 09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.6480375,
+    "lon": 139.6323275,
+    "url": "https://store.lifecorp.jp/detail/east821/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2523/leaflet_widget",
+    "accessText": "小田急線「経堂」駅 南口下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:45.849077+00:00",
+    "sourceHash": "2fddcc99aad1a4cba39335483f5b514f7c2517ddf6a9e09ca0cf772e0b4fb646",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east613",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ錦糸町駅前店",
+    "address": "東京都墨田区錦糸2丁目2-1 ｱﾙｶｷｯﾄ錦糸町 地下1階",
+    "hours": "09:30–23:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "23:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.69731436,
+    "lon": 139.8124272,
+    "url": "https://store.lifecorp.jp/detail/east613/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/13929/leaflet_widget",
+    "accessText": "JR総武線「錦糸町」駅 北口下車 徒歩1分・東京メトロ半蔵門線「錦糸町」駅 下車 3番出口 徒歩1分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:46.174979+00:00",
+    "sourceHash": "2d8b6aa48137c68804af1529c037efe996e7a1a7f3506840d5a7c681d756c92d",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east869",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ江北駅前店",
+    "address": "東京都足立区西新井本町2丁目31-20",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.77454598,
+    "lon": 139.7712398,
+    "url": "https://store.lifecorp.jp/detail/east869/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2550/leaflet_widget",
+    "accessText": "日暮里舎人ライナー「江北」駅 下車 すぐ、東武伊勢崎線「西新井」駅 西口下車後 都営バス「池袋東口」、「豊島5丁目」行⇒「阿弥陀橋」 下車",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:46.532673+00:00",
+    "sourceHash": "8392e6c2b8ac8d2fc606785ce0f8fd47b45e32514c50a9bb227a5c95dd0c094b",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east639",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ桜新町店",
+    "address": "東京都世田谷区桜新町2丁目23-1",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.63257819,
+    "lon": 139.6397968,
+    "url": "https://store.lifecorp.jp/detail/east639/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/173002/leaflet_widget",
+    "accessText": "東急田園都市線 「桜新町」駅より0.7ｋｍ 徒歩8分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:46.890253+00:00",
+    "sourceHash": "838022f7b86f43541432048fdaa39ca8f68a23198d1a95abfdc10512cac6bd87",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east829",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ渋谷東店",
+    "address": "東京都渋谷区東1-26-22",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.65483448,
+    "lon": 139.7075633,
+    "url": "https://store.lifecorp.jp/detail/east829/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2527/leaflet_widget",
+    "accessText": "JR、東急、東京メトロ「渋谷」駅 東口下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:47.237013+00:00",
+    "sourceHash": "12f42a981bdd737f861d412fb8122f12c494cbc5bd811198c0ea10c5858e5a56",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east617",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ新御徒町店",
+    "address": "東京都台東区小島2-8-7",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.70602373,
+    "lon": 139.78477,
+    "url": "https://store.lifecorp.jp/detail/east617/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/18998/leaflet_widget",
+    "accessText": "都営大江戸線、つくばエクスプレス「新御徒町」駅 下車 A4出口 徒歩2分 ※A4出口を右へ直進し交番の交差点を右折して100m進む",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:47.579323+00:00",
+    "sourceHash": "f45a2e84839c7e8de15a5e2de066be4a81f1aa97e60877035a205347559671a3",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east650",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ竹の塚店",
+    "address": "東京都足立区西伊興4丁目1-22",
+    "hours": "09:00–21:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.80139122,
+    "lon": 139.7833386,
+    "url": "https://store.lifecorp.jp/detail/east650/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2553/leaflet_widget",
+    "accessText": "東武伊勢崎線「竹ノ塚」駅 西口下車 徒歩15分後 東武バス「入谷循環」行→「伊興町吉浜」下車 すぐ 東武伊勢崎線「竹ノ塚」駅 西口下車 徒歩15分後 東武バス「見沼代親水公園駅」行→「聖一之橋」下車 すぐ",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:47.933181+00:00",
+    "sourceHash": "7899770fd97722a046530ed0faa7156ddc9cf3c2f964c704463ef43470cd37a5",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east812",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ中野新井店",
+    "address": "東京都中野区新井3-8-12",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.71549415,
+    "lon": 139.6648797,
+    "url": "https://store.lifecorp.jp/detail/east812/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2513/leaflet_widget",
+    "accessText": "西武新宿線「沼袋」駅 下車 徒歩5分 JR中央線、総武線、東京メトロ東西線「中野」駅 下車 徒歩15分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:48.290371+00:00",
+    "sourceHash": "511909ca26dbc760ece625cf2d51580917e4fdfce8e3920e9f657f46a4fa5a30",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east833",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ中野駅前店",
+    "address": "東京都中野区中野5丁目33-13",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.70683516,
+    "lon": 139.6671314,
+    "url": "https://store.lifecorp.jp/detail/east833/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2516/leaflet_widget",
+    "accessText": "JR中央線、総武線、東京メトロ東西線「中野」駅 北口下車 徒歩3分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:48.627585+00:00",
+    "sourceHash": "b730b9a2aa73ac7cc5522490cdd5beeddb41cf0b5723f987028382a7de60d46d",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east670",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ中目黒店",
+    "address": "東京都目黒区上目黒3丁目8-7",
+    "hours": "09:30–21:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "21:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.64439901,
+    "lon": 139.6978715,
+    "url": "https://store.lifecorp.jp/detail/east670/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2505/leaflet_widget",
+    "accessText": "東京メトロ日比谷線、東急東横線「中目黒」駅 下車 徒歩1分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:49.074970+00:00",
+    "sourceHash": "bf754bf6653b8b67d209b4e19da4cef79f4ac586d3eeaf260fba7bd63360e856",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east658",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ西荻窪店",
+    "address": "東京都杉並区西荻北5丁目8-22",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.70909278,
+    "lon": 139.6016549,
+    "url": "https://store.lifecorp.jp/detail/east658/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/230805/leaflet_widget",
+    "accessText": "JR（中央・総武線）西荻窪駅北口下車徒歩８分、0.7ｋｍ バス西荻北５丁目停留所下車１分 （西武バス） 西０３ 関東・大泉学園駅南口~西荻窪駅 （関東バス） 荻４０・荻窪駅北口~荻窪駅北口 西０２・上石神井駅~西荻窪駅 西０３・大泉学園駅南口~西荻窪駅 西１０・吉祥寺駅北口~西荻窪駅 西２０・立教女学院~青梅街道営業所 西５０・西荻窪駅~井荻駅/西荻窪駅~青梅街道営業所 西５１・西荻窪駅~荻窪駅北口 西０１・青梅街道営業所~西荻窪駅",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:49.332833+00:00",
+    "sourceHash": "a4993f1eeefec18f607616d8af90568eebe2f49bb97f072be373214d388b9832",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east647",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ東日暮里店",
+    "address": "東京都荒川区東日暮里4丁目36-20",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.72519925,
+    "lon": 139.7795228,
+    "url": "https://store.lifecorp.jp/detail/east647/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/192908/leaflet_widget",
+    "accessText": "JR山手線 鶯谷駅下車徒歩7分0.4ｋｍ、JR山手線・常磐線・京成線日暮里駅下車徒歩14分0.9ｋｍ、東京メトロ日比谷線入谷駅下車徒歩8分0.7ｋｍ",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:50.065687+00:00",
+    "sourceHash": "abe47490e61055eae931b126b7404bec4d01cedb7673ce09668b1da30d3d385a",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east634",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ東府中店",
+    "address": "東京都府中市若松町2丁目1-10",
+    "hours": "09:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.67060796,
+    "lon": 139.4951293,
+    "url": "https://store.lifecorp.jp/detail/east634/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/169751/leaflet_widget",
+    "accessText": "京王線「東府中」駅北口下車徒歩3分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:50.395000+00:00",
+    "sourceHash": "d58e615d8ff3a54d967c3afbdd4a168f98a2e5cee97c86d487284255a9042958",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east841",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ東向島店",
+    "address": "東京都墨田区東向島4-3-7",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.72757982,
+    "lon": 139.8151875,
+    "url": "https://store.lifecorp.jp/detail/east841/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2524/leaflet_widget",
+    "accessText": "東武伊勢崎線「東向島」駅 下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:50.838427+00:00",
+    "sourceHash": "a3daa2610d66babbaf30cbff7241c6201601249534a88207eef0148228a2523d",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east685",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ府中中河原店",
+    "address": "東京都府中市住吉町1丁目84-1",
+    "hours": "09:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.65999107,
+    "lon": 139.4584203,
+    "url": "https://store.lifecorp.jp/detail/east685/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2506/leaflet_widget",
+    "accessText": "京王線「中河原」駅 下車 すぐ",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:51.093028+00:00",
+    "sourceHash": "fe92bb78635e8070fcaf0fe8a0c49025f3a52b6b3093e4d2fe1ea4f016a2a77e",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east611",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフポンテポルタ千住店",
+    "address": "東京都足立区千住橋戸町1-13",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.74251334,
+    "lon": 139.7951578,
+    "url": "https://store.lifecorp.jp/detail/east611/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/13363/leaflet_widget",
+    "accessText": "京成本線「千住大橋」駅 下車 徒歩1分、はるかぜ5号（北千住西側地域循環）「千住大橋駅」 徒歩1分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:51.477650+00:00",
+    "sourceHash": "38cb32285cc3483e6a7556d982cc3d47725fc0155cae23c659a26827f950674a",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east875",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ南千住店",
+    "address": "東京都荒川区南千住6丁目43-13",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.73683901,
+    "lon": 139.7935706,
+    "url": "https://store.lifecorp.jp/detail/east875/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2346/leaflet_widget",
+    "accessText": "JR常磐線、東京メトロ日比谷線、つくばエクスプレス線「南千住」駅 下車 徒歩10分、都電荒川線「三ノ輪橋」駅 下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:51.869130+00:00",
+    "sourceHash": "bfa6c96aad21f5c542c250b794838d68c4a2bac0066fa366283cb8a6bfc244e6",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east888",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ目黒大橋店",
+    "address": "東京都目黒区大橋1-5-1",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.65146409,
+    "lon": 139.6884289,
+    "url": "https://store.lifecorp.jp/detail/east888/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/9730/leaflet_widget",
+    "accessText": "東急田園都市線「池尻大橋」駅 東口下車 徒歩5分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:52.142298+00:00",
+    "sourceHash": "e03fa5e16fb34032ca3a43a854e0175f4f60da0db959b27518dae906e2af8205",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east674",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ目黒八雲店",
+    "address": "東京都目黒区八雲3-12-13",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.61420434,
+    "lon": 139.6669391,
+    "url": "https://store.lifecorp.jp/detail/east674/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/269602/leaflet_widget",
+    "accessText": "東急東横線・東急大井町線 自由が丘駅下車、徒歩12分（0.9ｋｍ）",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:52.497872+00:00",
+    "sourceHash": "27cab846ef0cc6486333e42636adab6c226ba7a5a9366c888c6aec4a67dc1b56",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east863",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ六町駅前店",
+    "address": "東京都足立区六町4丁目3-1",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.78562721,
+    "lon": 139.8221646,
+    "url": "https://store.lifecorp.jp/detail/east863/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2554/leaflet_widget",
+    "accessText": "つくばエクスプレス「六町」駅 下車 A3出口 すぐ",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:52.847958+00:00",
+    "sourceHash": "f19272602ee8a7f95d440597ad5225ff5b380d60690efe384ab1670d9b7f5601",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east631",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ青葉しらとり台店",
+    "address": "神奈川県横浜市青葉区しらとり台50-3",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.5336634,
+    "lon": 139.5170645,
+    "url": "https://store.lifecorp.jp/detail/east631/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/123892/leaflet_widget",
+    "accessText": "東急田園都市線「青葉台」駅徒歩12分 ・JR横浜線「十日市場」駅徒歩12分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:53.553020+00:00",
+    "sourceHash": "8ec3dd5ea8867ffc7e0c4e8ea3c62d81599fa241b593b0e3d0d44810b816479f",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east619",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ有馬五丁目店",
+    "address": "神奈川県川崎市宮前区有馬5丁目21-15",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.57203039,
+    "lon": 139.5815607,
+    "url": "https://store.lifecorp.jp/detail/east619/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/22178/leaflet_widget",
+    "accessText": "東急田園都市線「鷺沼」駅 中央改札口下車 徒歩12分 バス系統：鷺1~5「武蔵小杉駅」、「センター北」行きなど→「神明社前」下車 すぐ",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:53.895978+00:00",
+    "sourceHash": "8d478d0bc5593142569068d6df86e0d90a0db39ecd4e8fcd5c8ec93d11fa0ab3",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east893",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ上鶴間店",
+    "address": "神奈川県相模原市南区上鶴間1丁目16-2",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.52501928,
+    "lon": 139.4458396,
+    "url": "https://store.lifecorp.jp/detail/east893/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/11003/leaflet_widget",
+    "accessText": "小田急線「相模大野」駅 南口下車 徒歩15分 小田急江ノ島線「東林間」駅 下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:54.277453+00:00",
+    "sourceHash": "f20d7098b98725194267673cb999e7ce07a72d062d5d44a92f50021458f0482a",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east624",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ川崎大島店",
+    "address": "神奈川県川崎市川崎区大島4-3-1",
+    "hours": "09:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.52397344,
+    "lon": 139.7137313,
+    "url": "https://store.lifecorp.jp/detail/east624/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/80548/leaflet_widget",
+    "accessText": "JR東海道線、京浜東北線、南武線「川崎」駅 下車 東口バスターミナル（１）（２）バス乗り場、「臨港バス」乗車、「大島四丁目」下車 徒歩2分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:54.610623+00:00",
+    "sourceHash": "fa007f5dfb965af82c0eb9fa9859d27d4f6e6a7b00cba86aeb014c45b9ff7c53",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east861",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ川崎京町店",
+    "address": "神奈川県川崎市川崎区京町3丁目21-1",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.50788145,
+    "lon": 139.6980297,
+    "url": "https://store.lifecorp.jp/detail/east861/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2489/leaflet_widget",
+    "accessText": "JR東海道線、京浜東北線、南武線「川崎」駅 東口下車後 臨港バス 4番乗場 系統：川28「京町循環」行→「浅田三丁目」下車",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:54.941864+00:00",
+    "sourceHash": "e18e828dc2725f393c2bab3fea454695f5254041b6871b7fa19281b06e0f490f",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east813",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ川崎桜本店",
+    "address": "神奈川県川崎市川崎区桜本2-16-1",
+    "hours": "09:00–21:30",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "21:30:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.52118352,
+    "lon": 139.723525,
+    "url": "https://store.lifecorp.jp/detail/east813/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2490/leaflet_widget",
+    "accessText": "JR東海道線、京浜東北線、南武線「川崎」駅 下車後 臨港バス「大師」行→「桜本」下車 徒歩2分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:55.303432+00:00",
+    "sourceHash": "a9c1e923440ed504f2de01e39aaf133c0c5644a01b62b42bc791a6af0788dcda",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east664",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ川崎塚越店",
+    "address": "神奈川県川崎市幸区塚越4-298-1",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.54230599,
+    "lon": 139.6838002,
+    "url": "https://store.lifecorp.jp/detail/east664/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/257595/leaflet_widget",
+    "accessText": "JR南武線 矢向駅下車500ｍ徒歩8分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:55.655297+00:00",
+    "sourceHash": "4c7fdb62f362c46afcb5153dbf282f3a404f6a87b52e02d5307052d2d0a0373b",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east815",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ川崎御幸店",
+    "address": "神奈川県川崎市幸区小向西町4丁目93",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.5470868,
+    "lon": 139.6867131,
+    "url": "https://store.lifecorp.jp/detail/east815/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2488/leaflet_widget",
+    "accessText": "JR南武線「鹿島田」駅 下車 徒歩15分、JR南武線「矢向」駅 下車 徒歩15分 JR東海道線、京浜東北線、南武線「川崎」駅西口・「川崎駅ラゾーナ広場」85番のりば「川71」小杉駅前行または上平間行→「小向西町」下車 徒歩2分 ・「川崎駅西口」53番のりば「川81」上平間（川崎市）行→「小向西町」下車 徒歩2分 東急東横線「武蔵小杉」駅 下車後 川崎市営バス「（川71）川崎駅ラゾーナ広場行」行→「小向西町」下車 徒歩2分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:55.996134+00:00",
+    "sourceHash": "e59c7aa3e3faa79ab3de28fd608b8d56acc89d3afbe09befc90778abeaa10063",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east642",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ川崎ルフロン店",
+    "address": "神奈川県川崎市川崎区日進町1-11 川崎ﾙﾌﾛﾝ 1F",
+    "hours": "09:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.52968199,
+    "lon": 139.6964373,
+    "url": "https://store.lifecorp.jp/detail/east642/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/174464/leaflet_widget",
+    "accessText": "JR線（南武線・京浜東北線・東海道本線・上野東京ライン）「川崎」駅より0.1ｋｍ徒歩４分/京浜急行線 「京急川崎」駅より0.5ｋｍ徒歩７分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:56.351347+00:00",
+    "sourceHash": "4520ce5f4090a08635604e5fc0cde886fa4d8392450748ed0b7d3d54821d7b60",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east887",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ子母口店",
+    "address": "神奈川県川崎市高津区子母口２８４",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.571385,
+    "lon": 139.6300921,
+    "url": "https://store.lifecorp.jp/detail/east887/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/9359/leaflet_widget",
+    "accessText": "JR南武線「武蔵新城」駅 下車後 東急バス「綱島」行→「子母口住宅」下車 徒歩5分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:56.708563+00:00",
+    "sourceHash": "04cb0a149c01b4324d2594f1c951b11f50fec9cf41e9c935229f9de4f46e008c",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east823",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ宿河原店",
+    "address": "神奈川県川崎市多摩区宿河原1丁目22-37",
+    "hours": "09:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.61743401,
+    "lon": 139.5762478,
+    "url": "https://store.lifecorp.jp/detail/east823/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2484/leaflet_widget",
+    "accessText": "JR南武線「宿河原」駅 下車 徒歩5分 小田急小田原線・JR南武線「登戸」駅 下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:57.059560+00:00",
+    "sourceHash": "c9a7e8eb1735bdf4ed40fce154d2531058316ae459f327f1b186a19c327215a1",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east806",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ高津新作店",
+    "address": "神奈川県川崎市高津区新作5丁目4-28",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.58686889,
+    "lon": 139.6223819,
+    "url": "https://store.lifecorp.jp/detail/east806/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2486/leaflet_widget",
+    "accessText": "JR南武線「武蔵新城」駅 南口下車 徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:57.406614+00:00",
+    "sourceHash": "eca748e41c4527956c0c05b3ef4f728ba33f724d2db662de828fce6ccf867069",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east795",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ鶴見店",
+    "address": "神奈川県横浜市鶴見区北寺尾２丁目１９−１９",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.51552911,
+    "lon": 139.6651059,
+    "url": "https://store.lifecorp.jp/detail/east795/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2481/leaflet_widget",
+    "accessText": "JR京浜東北線「鶴見」駅 西口下車後 臨港バス「寺谷循環」行または「東寺尾循環」行→「別所」下車",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:57.775397+00:00",
+    "sourceHash": "8c29f9c4db00a29be2c9b26dbb47905bad8d388141dc2c9c478ff946e39008c9",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east891",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ中原井田店",
+    "address": "神奈川県川崎市中原区井田1丁目33-16",
+    "hours": "09:30–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.5647608,
+    "lon": 139.6411923,
+    "url": "https://store.lifecorp.jp/detail/east891/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/9943/leaflet_widget",
+    "accessText": "東急東横線「元住吉」駅 西口下車 徒歩15分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:58.107821+00:00",
+    "sourceHash": "ff7ad763c155ff7c865bd86444a4566739718f2acd9dfc3f421d95653bc92391",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east715",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ東有馬店",
+    "address": "神奈川県川崎市宮前区東有馬2丁目2-28",
+    "hours": "09:00–22:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "22:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.57832899,
+    "lon": 139.5924067,
+    "url": "https://store.lifecorp.jp/detail/east715/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2483/leaflet_widget",
+    "accessText": "東急田園都市線「鷺沼」駅 下車後 バス「梶ヶ谷駅」行→「寺台」下車",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:58.450701+00:00",
+    "sourceHash": "4c2a88fd64fc289564e8b5b662c70ee71b80d63c659ad859279708ec2eab9231",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east648",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ溝口店",
+    "address": "神奈川県川崎市高津区溝口5丁目24-8",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.60628966,
+    "lon": 139.6111765,
+    "url": "https://store.lifecorp.jp/detail/east648/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/224224/leaflet_widget",
+    "accessText": "東急田園都市線 「高津」駅より0.6ｋｍ徒歩10分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:58.813851+00:00",
+    "sourceHash": "f3c678d05808ad3e89484c9a49d31e57757702d50e937fbc3ed997b6873986e7",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east614",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ宮内二丁目店",
+    "address": "神奈川県川崎市中原区宮内2-1-1",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.58722681,
+    "lon": 139.6409929,
+    "url": "https://store.lifecorp.jp/detail/east614/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2487/leaflet_widget",
+    "accessText": "JR南武線「武蔵中原」駅 北口下車 徒歩10分 JR「武蔵小杉」駅 下車後 東急バス系統:31「溝の口駅」行→「宮内」下車 JR「武蔵溝ノ口」東急「溝の口」駅 下車後 東急バス系統：溝02、溝03「小杉駅前」行→「宮内」下車",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:59.165731+00:00",
+    "sourceHash": "9e20955098faff4d064ea944ed8b7c5d70886908ae406a2a36ec6b14d22a08aa",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east895",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ宮崎台店",
+    "address": "神奈川県川崎市宮前区宮崎2-3-8",
+    "hours": "09:00–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:00:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.58877971,
+    "lon": 139.5926751,
+    "url": "https://store.lifecorp.jp/detail/east895/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/11168/leaflet_widget",
+    "accessText": "東急田園都市線「宮崎台」駅 北口下車 徒歩3分",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:59.547317+00:00",
+    "sourceHash": "64dbbca9773cf505f0dcef587990488728fde23e440696152e7217bad6dfe35a",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "life-east855",
+    "chain": "life",
+    "name": "Life",
+    "ja": "ライフ向ヶ丘遊園店",
+    "address": "神奈川県川崎市多摩区登戸2735",
+    "hours": "09:30–00:00",
+    "hoursByDay": [
+      {
+        "name": "SUNDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "MONDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "TUESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "WEDNESDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "THURSDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "FRIDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      },
+      {
+        "name": "SATURDAY",
+        "openTime": "09:30:00",
+        "closeTime": "00:00:00",
+        "hourType": 1
+      }
+    ],
+    "lat": 35.61617449,
+    "lon": 139.5646995,
+    "url": "https://store.lifecorp.jp/detail/east855/",
+    "flyerUrl": "https://widgets.tokubai.co.jp/2485/leaflet_widget",
+    "accessText": "小田急線「向ケ丘遊園」駅 南口下車 すぐ",
+    "verifiedPrograms": [
+      "dpoint",
+      "ponta",
+      "lacuca"
+    ],
+    "checkedAt": "2026-10-09T14:51:59.876866+00:00",
+    "sourceHash": "acc73d3350fd83dab532a483b8b6872bc60829bdda9c13ec41d71bdd334bc377",
+    "provenance": "official",
+    "category": "supermarket"
+  }
+]

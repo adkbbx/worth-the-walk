@@ -1,0 +1,242 @@
+[
+  {
+    "branchId": "seiyu-206",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友吉祥寺店",
+    "address": "〒180-0004 東京都武蔵野市吉祥寺本町1-12-10",
+    "hours": "See official floor hours",
+    "lat": 35.7057125,
+    "lon": 139.581239,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%90%89%e7%a5%a5%e5%af%ba%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%90%89%e7%a5%a5%e5%af%ba%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:07.884491+00:00",
+    "sourceHash": "b3b4f9f586be42bf0daca8aca05ceb25435972ae12db95165ff9a5745e846638",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-2242",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友国立店",
+    "address": "〒186-0004 東京都国立市中1-9-30",
+    "hours": "See official floor hours",
+    "lat": 35.6978931,
+    "lon": 139.4457648,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%9b%bd%e7%ab%8b%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%9b%bd%e7%ab%8b%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:08.575099+00:00",
+    "sourceHash": "235f5ce3d46c1d5af26fa17f108e1434472c523615ccce59af5a9ca4a997a505",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-203",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友富士見ヶ丘店",
+    "address": "〒168-0071 東京都杉並区高井戸西2-10-13",
+    "hours": "See official floor hours",
+    "lat": 35.6861723,
+    "lon": 139.6084569,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%af%8c%e5%a3%ab%e8%a6%8b%e3%83%b6%e4%b8%98%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%af%8c%e5%a3%ab%e8%a6%8b%e3%83%b6%e4%b8%98%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:10.840736+00:00",
+    "sourceHash": "b6eb78e7ab59cfd108f8306e65ff2743afb89175d051552e982a789b28d578e4",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-2018",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友府中四谷店",
+    "address": "〒183-0035 東京都府中市四谷5-23-12",
+    "hours": "See official floor hours",
+    "lat": 35.6669454,
+    "lon": 139.4370431,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%ba%9c%e4%b8%ad%e5%9b%9b%e8%b0%b7%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%ba%9c%e4%b8%ad%e5%9b%9b%e8%b0%b7%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:13.688128+00:00",
+    "sourceHash": "69b2703383bc2632b079da04a116e8343074922dc2365408c24581322afb815e",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-301",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友浅草ROX食品館",
+    "address": "〒111-0032 東京都台東区浅草1-25-15 ROXビルB1",
+    "hours": "See official floor hours",
+    "lat": 35.7130064,
+    "lon": 139.7924806,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b5%85%e8%8d%89rox%e9%a3%9f%e5%93%81%e9%a4%a8/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b5%85%e8%8d%89rox%e9%a3%9f%e5%93%81%e9%a4%a8/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:18.142103+00:00",
+    "sourceHash": "6dd3ae27287cc57d4d8c02f92cb30c9362355e7e8f20bcffcb1746041502a045",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-205",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友荻窪店",
+    "address": "〒167-0043 東京都杉並区上荻1-9-1 タウンセブン",
+    "hours": "See official floor hours",
+    "lat": 35.7051352,
+    "lon": 139.6197083,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%8d%bb%e7%aa%aa%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%8d%bb%e7%aa%aa%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:22.900084+00:00",
+    "sourceHash": "8046d3202785ce2d664f0af2b7accfa2231a7e315818c80a25af509df96dea0b",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-4",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友調布店",
+    "address": "〒182-0026 東京都調布市小島町1-10-1",
+    "hours": "See official floor hours",
+    "lat": 35.653619,
+    "lon": 139.543939,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%aa%bf%e5%b8%83%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%aa%bf%e5%b8%83%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:26.687713+00:00",
+    "sourceHash": "e2cba1b978df425fb200a2fab330e0256d1a6e1c56710df41d7f9d9330d03c58",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-5262",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友豊玉南店",
+    "address": "〒176-0014 東京都練馬区豊玉南2丁目24-5",
+    "hours": "See official floor hours",
+    "lat": 35.7274325,
+    "lon": 139.6546003,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%b1%8a%e7%8e%89%e5%8d%97%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%b1%8a%e7%8e%89%e5%8d%97%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:27.158737+00:00",
+    "sourceHash": "d90c5ac6875bab59e452c330500a577eef6f4720c8ac4e5207bd8e1230ec1be0",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-2213",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友青柳店",
+    "address": "〒186-0013 東京都国立市青柳3-8-3",
+    "hours": "See official floor hours",
+    "lat": 35.6861111,
+    "lon": 139.4216667,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%9d%92%e6%9f%b3%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%9d%92%e6%9f%b3%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:31.168601+00:00",
+    "sourceHash": "4cfc4a703630657c36f943ac0dad834ef4e81f44fbf8cba6be9e3e59ae096478",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-2225",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友高井戸東店",
+    "address": "〒168-0072 東京都杉並区高井戸東4-11-26",
+    "hours": "See official floor hours",
+    "lat": 35.6921681,
+    "lon": 139.6171959,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e4%ba%95%e6%88%b8%e6%9d%b1%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e4%ba%95%e6%88%b8%e6%9d%b1%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:32.308952+00:00",
+    "sourceHash": "d4ae317ace779044c1c125d4dcd8d29f11d768700a6051dcfb998f47cee80f6d",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-191",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友高円寺店",
+    "address": "〒166-0003 東京都杉並区高円寺南3-47-8",
+    "hours": "See official floor hours",
+    "lat": 35.7036421,
+    "lon": 139.6478827,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e5%86%86%e5%af%ba%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e5%86%86%e5%af%ba%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:32.810155+00:00",
+    "sourceHash": "1053ffff6ad1ea6ece76efe6a84a033608ced5bf82bb0a4d4845c149f512f47e",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "seiyu-211",
+    "chain": "seiyu",
+    "name": "SEIYU",
+    "ja": "西友鶴見店",
+    "address": "〒230-0062 神奈川県横浜市鶴見区豊岡町2-1",
+    "hours": "See official floor hours",
+    "lat": 35.5085208,
+    "lon": 139.6751081,
+    "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%b6%b4%e8%a6%8b%e5%ba%97/",
+    "flyerUrl": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%b6%b4%e8%a6%8b%e5%ba%97/#flyer",
+    "accessText": "Check grocery-floor hours",
+    "verifiedPrograms": [
+      "rakuten"
+    ],
+    "checkedAt": "2026-10-09T15:04:34.507967+00:00",
+    "sourceHash": "3ad20bcb80996c4a436230b07df3ae050ea604b2fd2ca00084dcf25a757c0ed6",
+    "provenance": "official",
+    "category": "supermarket"
+  }
+]

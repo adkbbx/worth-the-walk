@@ -1,16 +1,164 @@
 [
-  {"id":"ok-cash","chain":"ok","title":"Food discount with OK Club + cash","text":"オーケークラブ会員が現金で食料品を買う場合、本体価格の3/103を割り引きます。お酒は対象外です。","summary":"Member discount: pre-tax food price × 3/103. Cash required; alcohol excluded.","source":"https://ok-corporation.jp/shop/koenji.html"},
-  {"id":"ok-card","chain":"ok","title":"OK cashless payments: member discount excluded","text":"オーケーでクレジットカード、電子マネー、QRコード決済を使う場合、食料品の会員割引は受けられません。","summary":"Paying by credit card, e-money or QR code does not qualify for the OK Club food discount.","source":"https://ok-corporation.jp/shop/koenji.html"},
-  {"id":"waon-bonus","chain":"mybasket","title":"My Basket: 5× points on the 20th and 30th","text":"まいばすけっとの首都圏店舗では毎月20日と30日に、対象の支払いで税込200円につき5 WAON POINTがたまります。値引きではありません。","summary":"20th / 30th: 5 points per ¥200 including tax. Eligible payment methods and exclusions apply.","source":"https://www.mybasket.co.jp/service/point/"},
-  {"id":"waon-double","chain":"mybasket","title":"My Basket: 2× points on days ending in 5","text":"まいばすけっとでは毎月5日、15日、25日に税込200円につき2 WAON POINTがたまります。対象の支払い方法をご確認ください。","summary":"5th / 15th / 25th: 2 points per ¥200 including tax, with eligible payment methods.","source":"https://www.mybasket.co.jp/service/point/"},
-  {"id":"waon-card","chain":"mybasket","title":"My Basket: other credit cards earn no WAON POINT","text":"まいばすけっとでイオンカード以外のクレジットカードを使うと、WAON POINTは付与されません。ポイントカードの提示だけでは対象になりません。","summary":"An unrelated credit card does not earn WAON POINT, even if you present a point card.","source":"https://www.mybasket.co.jp/faq/"},
-  {"id":"waon-no-sale","chain":"mybasket","title":"My Basket: AEON’s 5% discount does not apply","text":"まいばすけっとはイオンのお客さま感謝デーの対象外です。20日と30日の5パーセント割引やG.G.感謝デーは実施していません。","summary":"The AEON 20th / 30th 5% discount and G.G. discount do not apply here.","source":"https://www.mybasket.co.jp/faq/"},
-  {"id":"waon-redeem","chain":"mybasket","title":"Use WAON POINT after membership registration","text":"まいばすけっとでWAON POINTを使うには会員登録が必要です。電子マネーWAONポイントは電子マネーへの交換が必要です。","summary":"Register before redeeming WAON POINT. Electronic WAON points need conversion to e-money.","source":"https://www.mybasket.co.jp/faq/"},
-  {"id":"seiyu-earn","chain":"seiyu","title":"SEIYU: earn and spend Rakuten points","text":"西友では楽天ポイントカードで税抜200円につき1ポイントがたまります。1ポイントを1円として使えます。サービス終了日は2027年4月4日です。","summary":"Earn 1 point per ¥200 before tax; redeem 1 point as ¥1. Available through 4 April 2027.","source":"https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf"},
-  {"id":"seiyu-end","chain":"seiyu","title":"SEIYU: scheduled Rakuten service end","text":"西友の楽天ポイントカードの利用、ポイント付与、楽天チェックは2027年4月4日で終了する予定です。告知は2026年10月ですが、即時終了ではありません。","summary":"Rakuten point-card earn / spend and Rakuten Check end after 4 April 2027, not on the October notice date.","source":"https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf"},
-  {"id":"seiyu-campaign-end","chain":"seiyu","title":"SEIYU: related promotions end separately","text":"西友の楽天ポイントに関するキャンペーンは、それぞれの終了日まで実施し、2026年12月31日までに終了します。カードサービス終了日とは異なります。","summary":"Related campaigns have their own end dates, no later than 31 December 2026. This differs from the card-service end date.","source":"https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf"},
-  {"id":"tokyu-earn","chain":"tokyu","title":"Tokyu Store: present a point card before payment","text":"東急ストアでは精算前にTOKYU POINTカードまたは楽天ポイントカードを提示します。税抜200円につき1ポイントがたまります。他社クレジットカード払いでもポイントがたまります。","summary":"Present TOKYU POINT or Rakuten point card before checkout. 1 point per ¥200 before tax; other credit cards can still earn.","source":"https://www.tokyu-store.co.jp/contact/faq.html"},
-  {"id":"keio-earn","chain":"keio","title":"Kitchen Court: Keio and Rakuten earning","text":"キッチンコートでは精算前に京王パスポートカード、楽天ポイントカードを提示すると、それぞれ税抜200円につき1ポイントがたまります。","summary":"Present cards before paying; 1 point per ¥200 before tax for each eligible program.","source":"https://www.keiostore.co.jp/service/point.html"},
-  {"id":"keio-card","chain":"keio","title":"Kitchen Court: other credit cards exclude Keio points","text":"キッチンコートで京王パスポートカード以外のクレジットカードを使うと、京王ポイントは付与されません。","summary":"Non-Keio credit-card payment does not earn Keio points.","source":"https://www.keiostore.co.jp/service/point.html"},
-  {"id":"ok-flyer","chain":"ok","title":"OK: advertised food prices, 5–11 October","text":"オーケーの関東商品情報紙10月5日号は10月5日から11日までです。野菜たっぷり中華丼の具200グラム2袋は非会員で税抜368円、現金払いの会員で税抜358円です。","summary":"5–11 Oct: AJINOMOTO vegetable chūka-don topping, 200g × 2. ¥368 before tax; member cash price ¥358 before tax. Availability varies.","source":"https://ok-corporation.jp/media-download/1737/fdd79ce358b2e6ea/PDF/"}
+  {
+    "id": "ok-cash",
+    "chain": "ok",
+    "title": "Food discount with OK Club + cash",
+    "text": "オーケークラブ会員が現金で食料品を買う場合、本体価格の3/103を割り引きます。お酒は対象外です。",
+    "summary": "Member discount: pre-tax food price × 3/103. Cash required; alcohol excluded.",
+    "source": "https://ok-corporation.jp/shop/koenji.html"
+  },
+  {
+    "id": "ok-card",
+    "chain": "ok",
+    "title": "OK cashless payments: member discount excluded",
+    "text": "オーケーでクレジットカード、電子マネー、QRコード決済を使う場合、食料品の会員割引は受けられません。",
+    "summary": "Paying by credit card, e-money or QR code does not qualify for the OK Club food discount.",
+    "source": "https://ok-corporation.jp/shop/koenji.html"
+  },
+  {
+    "id": "waon-bonus",
+    "chain": "mybasket",
+    "title": "My Basket: 5× points on the 20th and 30th",
+    "text": "まいばすけっとの首都圏店舗では毎月20日と30日に、対象の支払いで税込200円につき5 WAON POINTがたまります。値引きではありません。",
+    "summary": "20th / 30th: 5 points per ¥200 including tax. Eligible payment methods and exclusions apply.",
+    "source": "https://www.mybasket.co.jp/service/point/"
+  },
+  {
+    "id": "waon-double",
+    "chain": "mybasket",
+    "title": "My Basket: 2× points on days ending in 5",
+    "text": "まいばすけっとでは毎月5日、15日、25日に税込200円につき2 WAON POINTがたまります。対象の支払い方法をご確認ください。",
+    "summary": "5th / 15th / 25th: 2 points per ¥200 including tax, with eligible payment methods.",
+    "source": "https://www.mybasket.co.jp/service/point/"
+  },
+  {
+    "id": "waon-card",
+    "chain": "mybasket",
+    "title": "My Basket: other credit cards earn no WAON POINT",
+    "text": "まいばすけっとでイオンカード以外のクレジットカードを使うと、WAON POINTは付与されません。ポイントカードの提示だけでは対象になりません。",
+    "summary": "An unrelated credit card does not earn WAON POINT, even if you present a point card.",
+    "source": "https://www.mybasket.co.jp/faq/"
+  },
+  {
+    "id": "waon-no-sale",
+    "chain": "mybasket",
+    "title": "My Basket: AEON’s 5% discount does not apply",
+    "text": "まいばすけっとはイオンのお客さま感謝デーの対象外です。20日と30日の5パーセント割引やG.G.感謝デーは実施していません。",
+    "summary": "The AEON 20th / 30th 5% discount and G.G. discount do not apply here.",
+    "source": "https://www.mybasket.co.jp/faq/"
+  },
+  {
+    "id": "waon-redeem",
+    "chain": "mybasket",
+    "title": "Use WAON POINT after membership registration",
+    "text": "まいばすけっとでWAON POINTを使うには会員登録が必要です。電子マネーWAONポイントは電子マネーへの交換が必要です。",
+    "summary": "Register before redeeming WAON POINT. Electronic WAON points need conversion to e-money.",
+    "source": "https://www.mybasket.co.jp/faq/"
+  },
+  {
+    "id": "seiyu-earn",
+    "chain": "seiyu",
+    "title": "SEIYU: earn and spend Rakuten points",
+    "text": "西友では楽天ポイントカードで税抜200円につき1ポイントがたまります。1ポイントを1円として使えます。サービス終了日は2027年4月4日です。",
+    "summary": "Earn 1 point per ¥200 before tax; redeem 1 point as ¥1. Available through 4 April 2027.",
+    "source": "https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf"
+  },
+  {
+    "id": "seiyu-end",
+    "chain": "seiyu",
+    "title": "SEIYU: scheduled Rakuten service end",
+    "text": "西友の楽天ポイントカードの利用、ポイント付与、楽天チェックは2027年4月4日で終了する予定です。告知は2026年10月ですが、即時終了ではありません。",
+    "summary": "Rakuten point-card earn / spend and Rakuten Check end after 4 April 2027, not on the October notice date.",
+    "source": "https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf"
+  },
+  {
+    "id": "seiyu-campaign-end",
+    "chain": "seiyu",
+    "title": "SEIYU: related promotions end separately",
+    "text": "西友の楽天ポイントに関するキャンペーンは、それぞれの終了日まで実施し、2026年12月31日までに終了します。カードサービス終了日とは異なります。",
+    "summary": "Related campaigns have their own end dates, no later than 31 December 2026. This differs from the card-service end date.",
+    "source": "https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf"
+  },
+  {
+    "id": "tokyu-earn",
+    "chain": "tokyu",
+    "title": "Tokyu Store: present a point card before payment",
+    "text": "東急ストアでは精算前にTOKYU POINTカードまたは楽天ポイントカードを提示します。税抜200円につき1ポイントがたまります。他社クレジットカード払いでもポイントがたまります。",
+    "summary": "Present TOKYU POINT or Rakuten point card before checkout. 1 point per ¥200 before tax; other credit cards can still earn.",
+    "source": "https://www.tokyu-store.co.jp/contact/faq.html"
+  },
+  {
+    "id": "keio-earn",
+    "chain": "keio",
+    "title": "Kitchen Court: Keio and Rakuten earning",
+    "text": "キッチンコートでは精算前に京王パスポートカード、楽天ポイントカードを提示すると、それぞれ税抜200円につき1ポイントがたまります。",
+    "summary": "Present cards before paying; 1 point per ¥200 before tax for each eligible program.",
+    "source": "https://www.keiostore.co.jp/service/point.html"
+  },
+  {
+    "id": "keio-card",
+    "chain": "keio",
+    "title": "Kitchen Court: other credit cards exclude Keio points",
+    "text": "キッチンコートで京王パスポートカード以外のクレジットカードを使うと、京王ポイントは付与されません。",
+    "summary": "Non-Keio credit-card payment does not earn Keio points.",
+    "source": "https://www.keiostore.co.jp/service/point.html"
+  },
+  {
+    "id": "ok-flyer",
+    "chain": "ok",
+    "title": "OK: advertised food prices, 5–11 October",
+    "text": "オーケーの関東商品情報紙10月5日号は10月5日から11日までです。野菜たっぷり中華丼の具200グラム2袋は非会員で税抜368円、現金払いの会員で税抜358円です。",
+    "summary": "5–11 Oct: AJINOMOTO vegetable chūka-don topping, 200g × 2. ¥368 before tax; member cash price ¥358 before tax. Availability varies.",
+    "source": "https://ok-corporation.jp/media-download/1737/fdd79ce358b2e6ea/PDF/",
+    "validFrom": "2026-10-05",
+    "validUntil": "2026-10-11"
+  },
+  {
+    "id": "life-common",
+    "chain": "life",
+    "title": "Life: d POINT or Ponta, one program at checkout",
+    "text": "ライフではdポイントまたはPontaポイントが税抜200円ごとに1ポイントたまります。精算前にカードを提示します。LaCuCa、LC JCBと併用できません。",
+    "summary": "d POINT or Ponta: 1 per ¥200 before tax. Present one program before checkout; cannot combine with LaCuCa / LC JCB.",
+    "source": "https://www.lifecorp.jp/service/point/index.html"
+  },
+  {
+    "id": "life-redeem",
+    "chain": "life",
+    "title": "Life: spend d POINT or Ponta as yen",
+    "text": "ライフでdポイント、Pontaポイントは1ポイント1円として使えます。ポイント利用額にはポイントが付かず、ネットスーパーは対象外です。",
+    "summary": "1 d POINT / Ponta point = ¥1 in store. Point-paid amounts do not earn points; online grocery service excluded.",
+    "source": "https://www.lifecorp.jp/service/point/index.html"
+  },
+  {
+    "id": "life-lacuca",
+    "chain": "life",
+    "title": "Life: LaCuCa payment adds its own points",
+    "text": "LaCuCaは税抜200円ごとに1ライフポイントがたまり、LaCuCa電子マネー支払いなら税抜300円ごとに1決済ポイントが加算されます。dポイント、Pontaとは併用できません。",
+    "summary": "LaCuCa base: 1 / ¥200 before tax. LaCuCa e-money payment adds 1 / ¥300 before tax. Cannot stack with d POINT or Ponta.",
+    "source": "https://www.lifecorp.jp/service/lacuca/"
+  },
+  {
+    "id": "welcia-base",
+    "chain": "welcia",
+    "title": "Welcia: different V POINT and WAON POINT base rates",
+    "text": "ウエルシアの基本ポイントはVポイントが税抜200円ごとに1ポイント、WAON POINTが税抜100円ごとに1ポイントです。カード提示と登録、対象商品の条件があります。",
+    "summary": "Base rates: V POINT 1 / ¥200; WAON POINT 1 / ¥100 before tax. Card, registration and exclusions apply.",
+    "source": "https://welcia.tayori.com/q/yk-01/detail/1150044/"
+  },
+  {
+    "id": "welcia-20",
+    "chain": "welcia",
+    "title": "Welcia: the 20th increases WAON POINT spending value",
+    "text": "毎月20日ウエルシアのお客様感謝デーでは、WAON POINTを200ポイント以上使うと通常の1.5倍分のお買い物ができます。Vポイントはこの特典の対象ではありません。",
+    "summary": "20th: spend at least 200 WAON POINT for 1.5× normal value. V POINT does not qualify. Registration, limits and exclusions apply.",
+    "source": "https://welcia.tayori.com/q/yk-01/detail/682253/"
+  },
+  {
+    "id": "sanwa-cash",
+    "chain": "sanwa",
+    "title": "Sanwa / Food One: points usually require cash or store vouchers",
+    "text": "三和・フードワンではカード提示で税抜200円ごとに1ポイントたまります。現金と対象の商品券でポイントが付き、キャッシュレス決済では原則ポイントが付きません。一部店舗は例外です。",
+    "summary": "Own card: 1 / ¥200 before tax with eligible cash/store vouchers. Cashless generally does not earn; branch exceptions apply.",
+    "source": "https://www.heartful-sanwa.co.jp/point"
+  }
 ]

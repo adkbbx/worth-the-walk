@@ -1,0 +1,455 @@
+{
+  "branches": 544,
+  "stations": 74,
+  "stationsWithFive": 74,
+  "stationCounts": [
+    {
+      "id": "koenji",
+      "name": "Koenji",
+      "ja": "高円寺",
+      "shops": 31
+    },
+    {
+      "id": "ogikubo",
+      "name": "Ogikubo",
+      "ja": "荻窪",
+      "shops": 26
+    },
+    {
+      "id": "kichijoji",
+      "name": "Kichijoji",
+      "ja": "吉祥寺",
+      "shops": 21
+    },
+    {
+      "id": "kawasaki",
+      "name": "Kawasaki",
+      "ja": "川崎",
+      "shops": 38
+    },
+    {
+      "id": "shitte",
+      "name": "Shitte",
+      "ja": "尻手",
+      "shops": 32
+    },
+    {
+      "id": "yako",
+      "name": "Yako",
+      "ja": "矢向",
+      "shops": 29
+    },
+    {
+      "id": "kashimada",
+      "name": "Kashimada",
+      "ja": "鹿島田",
+      "shops": 24
+    },
+    {
+      "id": "hirama",
+      "name": "Hirama",
+      "ja": "平間",
+      "shops": 31
+    },
+    {
+      "id": "mukaigawara",
+      "name": "Mukaigawara",
+      "ja": "向河原",
+      "shops": 30
+    },
+    {
+      "id": "musashi-kosugi",
+      "name": "Musashi-Kosugi",
+      "ja": "武蔵小杉",
+      "shops": 37
+    },
+    {
+      "id": "musashi-nakahara",
+      "name": "Musashi-Nakahara",
+      "ja": "武蔵中原",
+      "shops": 41
+    },
+    {
+      "id": "musashi-shinjo",
+      "name": "Musashi-Shinjo",
+      "ja": "武蔵新城",
+      "shops": 37
+    },
+    {
+      "id": "musashi-mizonokuchi",
+      "name": "Musashi-Mizonokuchi",
+      "ja": "武蔵溝ノ口",
+      "shops": 39
+    },
+    {
+      "id": "tsudayama",
+      "name": "Tsudayama",
+      "ja": "津田山",
+      "shops": 30
+    },
+    {
+      "id": "kuji",
+      "name": "Kuji",
+      "ja": "久地",
+      "shops": 22
+    },
+    {
+      "id": "shukugawara",
+      "name": "Shukugawara",
+      "ja": "宿河原",
+      "shops": 12
+    },
+    {
+      "id": "noborito",
+      "name": "Noborito",
+      "ja": "登戸",
+      "shops": 13
+    },
+    {
+      "id": "nakanoshima",
+      "name": "Nakanoshima",
+      "ja": "中野島",
+      "shops": 15
+    },
+    {
+      "id": "inadazutsumi",
+      "name": "Inadazutsumi",
+      "ja": "稲田堤",
+      "shops": 15
+    },
+    {
+      "id": "yanokuchi",
+      "name": "Yanokuchi",
+      "ja": "矢野口",
+      "shops": 11
+    },
+    {
+      "id": "inagi-naganuma",
+      "name": "Inagi-Naganuma",
+      "ja": "稲城長沼",
+      "shops": 10
+    },
+    {
+      "id": "minami-tama",
+      "name": "Minami-Tama",
+      "ja": "南多摩",
+      "shops": 7
+    },
+    {
+      "id": "fuchu-hommachi",
+      "name": "Fuchu-Hommachi",
+      "ja": "府中本町",
+      "shops": 12
+    },
+    {
+      "id": "bubaigawara",
+      "name": "Bubaigawara",
+      "ja": "分倍河原",
+      "shops": 9
+    },
+    {
+      "id": "nishifu",
+      "name": "Nishifu",
+      "ja": "西府",
+      "shops": 9
+    },
+    {
+      "id": "yaho",
+      "name": "Yaho",
+      "ja": "谷保",
+      "shops": 8
+    },
+    {
+      "id": "yagawa",
+      "name": "Yagawa",
+      "ja": "矢川",
+      "shops": 14
+    },
+    {
+      "id": "nishi-kunitachi",
+      "name": "Nishi-Kunitachi",
+      "ja": "西国立",
+      "shops": 12
+    },
+    {
+      "id": "tachikawa",
+      "name": "Tachikawa",
+      "ja": "立川",
+      "shops": 11
+    },
+    {
+      "id": "hatcho-nawate",
+      "name": "Hatcho-Nawate",
+      "ja": "八丁畷",
+      "shops": 36
+    },
+    {
+      "id": "kawasaki-shinmachi",
+      "name": "Kawasaki-Shinmachi",
+      "ja": "川崎新町",
+      "shops": 36
+    },
+    {
+      "id": "odasakae",
+      "name": "Odasakae",
+      "ja": "小田栄",
+      "shops": 34
+    },
+    {
+      "id": "hama-kawasaki",
+      "name": "Hama-Kawasaki",
+      "ja": "浜川崎",
+      "shops": 28
+    },
+    {
+      "id": "shibuya",
+      "name": "Shibuya",
+      "ja": "渋谷",
+      "shops": 34
+    },
+    {
+      "id": "ikejiri-ohashi",
+      "name": "Ikejiri-Ohashi",
+      "ja": "池尻大橋",
+      "shops": 49
+    },
+    {
+      "id": "sangen-jaya",
+      "name": "Sangen-jaya",
+      "ja": "三軒茶屋",
+      "shops": 40
+    },
+    {
+      "id": "komazawa-daigaku",
+      "name": "Komazawa-daigaku",
+      "ja": "駒沢大学",
+      "shops": 33
+    },
+    {
+      "id": "sakura-shimmachi",
+      "name": "Sakura-shimmachi",
+      "ja": "桜新町",
+      "shops": 27
+    },
+    {
+      "id": "yoga",
+      "name": "Yoga",
+      "ja": "用賀",
+      "shops": 27
+    },
+    {
+      "id": "futako-tamagawa",
+      "name": "Futako-Tamagawa",
+      "ja": "二子玉川",
+      "shops": 33
+    },
+    {
+      "id": "futako-shinchi",
+      "name": "Futako-Shinchi",
+      "ja": "二子新地",
+      "shops": 37
+    },
+    {
+      "id": "takatsu",
+      "name": "Takatsu",
+      "ja": "高津",
+      "shops": 34
+    },
+    {
+      "id": "mizonokuchi",
+      "name": "Mizonokuchi",
+      "ja": "溝の口",
+      "shops": 38
+    },
+    {
+      "id": "kajigaya",
+      "name": "Kajigaya",
+      "ja": "梶が谷",
+      "shops": 37
+    },
+    {
+      "id": "miyazakidai",
+      "name": "Miyazakidai",
+      "ja": "宮崎台",
+      "shops": 23
+    },
+    {
+      "id": "miyamaedaira",
+      "name": "Miyamaedaira",
+      "ja": "宮前平",
+      "shops": 21
+    },
+    {
+      "id": "saginuma",
+      "name": "Saginuma",
+      "ja": "鷺沼",
+      "shops": 20
+    },
+    {
+      "id": "tama-plaza",
+      "name": "Tama-Plaza",
+      "ja": "たまプラーザ",
+      "shops": 16
+    },
+    {
+      "id": "azamino",
+      "name": "Azamino",
+      "ja": "あざみ野",
+      "shops": 16
+    },
+    {
+      "id": "eda",
+      "name": "Eda",
+      "ja": "江田",
+      "shops": 14
+    },
+    {
+      "id": "ichigao",
+      "name": "Ichigao",
+      "ja": "市が尾",
+      "shops": 20
+    },
+    {
+      "id": "fujigaoka",
+      "name": "Fujigaoka",
+      "ja": "藤が丘",
+      "shops": 19
+    },
+    {
+      "id": "aobadai",
+      "name": "Aobadai",
+      "ja": "青葉台",
+      "shops": 18
+    },
+    {
+      "id": "tana",
+      "name": "Tana",
+      "ja": "田奈",
+      "shops": 18
+    },
+    {
+      "id": "nagatsuta",
+      "name": "Nagatsuta",
+      "ja": "長津田",
+      "shops": 13
+    },
+    {
+      "id": "tsukushino",
+      "name": "Tsukushino",
+      "ja": "つくし野",
+      "shops": 9
+    },
+    {
+      "id": "suzukakedai",
+      "name": "Suzukakedai",
+      "ja": "すずかけ台",
+      "shops": 7
+    },
+    {
+      "id": "minami-machida",
+      "name": "Minami-Machida Grandberry Park",
+      "ja": "南町田グランベリーパーク",
+      "shops": 8
+    },
+    {
+      "id": "tsukimino",
+      "name": "Tsukimino",
+      "ja": "つきみ野",
+      "shops": 10
+    },
+    {
+      "id": "chuo-rinkan",
+      "name": "Chuo-Rinkan",
+      "ja": "中央林間",
+      "shops": 9
+    },
+    {
+      "id": "asakusa",
+      "name": "Asakusa",
+      "ja": "浅草",
+      "shops": 67
+    },
+    {
+      "id": "tokyo-skytree",
+      "name": "Tokyo Skytree",
+      "ja": "とうきょうスカイツリー",
+      "shops": 63
+    },
+    {
+      "id": "oshiage",
+      "name": "Oshiage (Skytree)",
+      "ja": "押上〈スカイツリー前〉",
+      "shops": 56
+    },
+    {
+      "id": "hikifune",
+      "name": "Hikifune",
+      "ja": "曳舟",
+      "shops": 44
+    },
+    {
+      "id": "higashi-mukojima",
+      "name": "Higashi-Mukojima",
+      "ja": "東向島",
+      "shops": 33
+    },
+    {
+      "id": "kanegafuchi",
+      "name": "Kanegafuchi",
+      "ja": "鐘ヶ淵",
+      "shops": 37
+    },
+    {
+      "id": "horikiri",
+      "name": "Horikiri",
+      "ja": "堀切",
+      "shops": 36
+    },
+    {
+      "id": "ushida",
+      "name": "Ushida",
+      "ja": "牛田",
+      "shops": 34
+    },
+    {
+      "id": "kita-senju",
+      "name": "Kita-Senju",
+      "ja": "北千住",
+      "shops": 26
+    },
+    {
+      "id": "kosuge",
+      "name": "Kosuge",
+      "ja": "小菅",
+      "shops": 25
+    },
+    {
+      "id": "gotanno",
+      "name": "Gotanno",
+      "ja": "五反野",
+      "shops": 27
+    },
+    {
+      "id": "umejima",
+      "name": "Umejima",
+      "ja": "梅島",
+      "shops": 23
+    },
+    {
+      "id": "nishi-arai",
+      "name": "Nishi-Arai",
+      "ja": "西新井",
+      "shops": 22
+    },
+    {
+      "id": "takenotsuka",
+      "name": "Takenotsuka",
+      "ja": "竹ノ塚",
+      "shops": 15
+    }
+  ],
+  "flyers": 207,
+  "flyerBranches": 87,
+  "radiusMeters": 2500,
+  "checkedAt": "2026-10-09T15:11:52.174Z"
+}

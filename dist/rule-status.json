@@ -1,0 +1,132 @@
+{
+  "life": {
+    "status": "verified",
+    "approvedHashes": [
+      "8146fd0f3ccce02d46ac81f21ec5346ba6b10f85601b84d5c56376993953f04b",
+      "fac6d9285e4a5a9d4c3cac24796f417301dd5f0c4e465ffc392d5505815d1e04"
+    ],
+    "sources": [
+      {
+        "url": "https://www.lifecorp.jp/service/point/index.html",
+        "hash": "8146fd0f3ccce02d46ac81f21ec5346ba6b10f85601b84d5c56376993953f04b",
+        "checkedAt": "2026-10-09T15:17:49.847872+00:00"
+      },
+      {
+        "url": "https://www.lifecorp.jp/service/lacuca/",
+        "hash": "fac6d9285e4a5a9d4c3cac24796f417301dd5f0c4e465ffc392d5505815d1e04",
+        "checkedAt": "2026-10-09T15:17:50.105572+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:49.847872+00:00"
+  },
+  "welcia": {
+    "status": "verified",
+    "approvedHashes": [
+      "a3c6aadc55ff85d15146646e947c1c773d2d3a80c42fbab9a9b47cf6ada7bb9f",
+      "c66ca4984edc7840d2f0bdd52bdc3140afcf0f6110224c7368740d2b31a92e5b"
+    ],
+    "sources": [
+      {
+        "url": "https://welcia.tayori.com/q/yk-01/detail/1150044/",
+        "hash": "a3c6aadc55ff85d15146646e947c1c773d2d3a80c42fbab9a9b47cf6ada7bb9f",
+        "checkedAt": "2026-10-09T15:17:50.251581+00:00"
+      },
+      {
+        "url": "https://welcia.tayori.com/q/yk-01/detail/682253/",
+        "hash": "c66ca4984edc7840d2f0bdd52bdc3140afcf0f6110224c7368740d2b31a92e5b",
+        "checkedAt": "2026-10-09T15:17:50.574258+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:50.251581+00:00"
+  },
+  "mybasket": {
+    "status": "verified",
+    "approvedHashes": [
+      "571c70c829682c40c67ab1e1773607cdf05fc0a1cff6d3dec5bf93430c40023b",
+      "ce6ce18348e39ce7b03f4ad89afbc7e7a26fa637d96b46cd1b0cf5bbf1f10a71"
+    ],
+    "sources": [
+      {
+        "url": "https://www.mybasket.co.jp/service/point/",
+        "hash": "571c70c829682c40c67ab1e1773607cdf05fc0a1cff6d3dec5bf93430c40023b",
+        "checkedAt": "2026-10-09T15:17:50.640517+00:00"
+      },
+      {
+        "url": "https://www.mybasket.co.jp/faq/",
+        "hash": "ce6ce18348e39ce7b03f4ad89afbc7e7a26fa637d96b46cd1b0cf5bbf1f10a71",
+        "checkedAt": "2026-10-09T15:17:50.983465+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:50.640517+00:00"
+  },
+  "ok": {
+    "status": "verified",
+    "approvedHashes": [
+      "0b368820f80c09cd219923ddb12abdb8ceb77cb5cd9d26276581be2f42f19f3b"
+    ],
+    "sources": [
+      {
+        "url": "https://ok-corporation.jp/feature/okclub.html",
+        "hash": "0b368820f80c09cd219923ddb12abdb8ceb77cb5cd9d26276581be2f42f19f3b",
+        "checkedAt": "2026-10-09T15:17:51.058200+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:51.058200+00:00"
+  },
+  "tokyu": {
+    "status": "verified",
+    "approvedHashes": [
+      "ebb4dff7fd26ebadc30e6587ccfb4af28594677476e676093ca227fe6646f269"
+    ],
+    "sources": [
+      {
+        "url": "https://www.tokyu-store.co.jp/contact/faq.html",
+        "hash": "ebb4dff7fd26ebadc30e6587ccfb4af28594677476e676093ca227fe6646f269",
+        "checkedAt": "2026-10-09T15:17:51.337183+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:51.337183+00:00"
+  },
+  "keio": {
+    "status": "verified",
+    "approvedHashes": [
+      "97992c65e9eab921434d603f213ef2b4c6ac245aa441065e349bb5f8fcf33850"
+    ],
+    "sources": [
+      {
+        "url": "https://www.keiostore.co.jp/service/point.html",
+        "hash": "97992c65e9eab921434d603f213ef2b4c6ac245aa441065e349bb5f8fcf33850",
+        "checkedAt": "2026-10-09T15:17:51.517793+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:51.517793+00:00"
+  },
+  "sanwa": {
+    "status": "verified",
+    "approvedHashes": [
+      "f1bf9e3d3c8ec02ebdaea48d13cc93f2561ae6f320c2f508edcf61910ca08411"
+    ],
+    "sources": [
+      {
+        "url": "https://www.heartful-sanwa.co.jp/point",
+        "hash": "f1bf9e3d3c8ec02ebdaea48d13cc93f2561ae6f320c2f508edcf61910ca08411",
+        "checkedAt": "2026-10-09T15:17:51.687878+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:17:51.687878+00:00"
+  },
+  "seiyu": {
+    "status": "verified",
+    "approvedHashes": [
+      "bae30f25a4f345cf1e8c3afa970b1f939dc658e7d46bca4a8be67d4ea60b3587"
+    ],
+    "sources": [
+      {
+        "url": "https://www.seiyu.co.jp/assets/images/RakutenPoints_ServiceEnd_261001.pdf",
+        "hash": "bae30f25a4f345cf1e8c3afa970b1f939dc658e7d46bca4a8be67d4ea60b3587",
+        "checkedAt": "2026-10-09T15:19:38.970486+00:00"
+      }
+    ],
+    "checkedAt": "2026-10-09T15:19:38.970486+00:00"
+  }
+}

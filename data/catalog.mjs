@@ -1,4 +1,6 @@
 import {additionalStations} from './rail-lines.mjs';
+import {researchedStores} from './researched.mjs';
+export {researchSummary} from './researched.mjs';
 export {railLines,stationsOnLine} from './rail-lines.mjs';
 export const sources = {
   life:'https://www.lifecorp.jp/service/point/index.html',
@@ -9,6 +11,7 @@ export const sources = {
   tokyu:'https://www.tokyu-store.co.jp/contact/faq.html',
   ok:'https://ok-corporation.jp/feature/okclub.html',
   keio:'https://www.keiostore.co.jp/service/point.html'
+  ,sanwa:'https://www.heartful-sanwa.co.jp/point'
 };
 export const stations = [
   {id:'koenji',name:'Koenji',ja:'高円寺',code:'JC 07',description:'North and south of the JR station',line:'JR Chūō / Sōbu'},
@@ -28,10 +31,11 @@ export const walletOptions = [
   {id:'waon',name:'WAON POINT',ja:'WAON POINT'},
   {id:'tokyu',name:'TOKYU POINT',ja:'東急ポイント'},
   {id:'keio',name:'Keio',ja:'京王ポイント'},
-  {id:'ok',name:'OK Club',ja:'オーケークラブ',note:'Discount membership'}
+  {id:'ok',name:'OK Club',ja:'オーケークラブ',note:'Discount membership'},
+  {id:'sanwa',name:'Sanwa / Food One',ja:'三和・フードワン',url:'https://www.heartful-sanwa.co.jp/point',guide:'Own point card. Eligible cash and store vouchers earn points; cashless payments generally do not.'}
 ];
 // Source-reviewed branch facts. null walk means no station walking time was verified.
-export const stores = [
+export const legacyStores = [
   {id:'life-shukugawara',station:'shukugawara',chain:'life',name:'Life · Shukugawara',ja:'ライフ 宿河原店',address:'神奈川県川崎市多摩区宿河原1丁目22-37',hours:'09:00–00:00 · grocery floor',walk:5,access:'Official station estimate',url:'https://store.lifecorp.jp/detail/east823/'},
   {id:'life-noborito',station:'noborito',chain:'life',name:'Life · Shukugawara',ja:'ライフ 宿河原店',address:'神奈川県川崎市多摩区宿河原1丁目22-37',hours:'09:00–00:00 · grocery floor',walk:10,access:'From Noborito · same branch as Shukugawara',url:'https://store.lifecorp.jp/detail/east823/'},
   {id:'life-sakura-shimmachi',station:'sakura-shimmachi',chain:'life',name:'Life · Sakura-shimmachi',ja:'ライフ 桜新町店',address:'東京都世田谷区桜新町2丁目23-1',hours:'09:30–00:00 · grocery floor',walk:8,access:'Official station estimate · 0.7 km',url:'https://store.lifecorp.jp/detail/east639/'},
@@ -55,3 +59,4 @@ export const stores = [
   {id:'seijo-kichijoji',station:'kichijoji',chain:'seijo',name:'Seijo Ishii · Atre',ja:'成城石井 アトレ吉祥寺店',address:'武蔵野市吉祥寺南町1-1-24 東館1F',hours:'07:30–22:00',walk:1,access:'Atre east building',url:'https://shop.seijoishii.com/seijoishii/spot/detail?code=0104'},
   {id:'keio-kichijoji',station:'kichijoji',chain:'keio',name:'Kitchen Court',ja:'キッチンコート 吉祥寺店',address:'武蔵野市吉祥寺南町2-1-25 B1F',hours:'10:00–22:30',walk:0,access:'Station-connected · Kirarina B1F',url:'https://www.keiostore.co.jp/business/store51.html'}
 ];
+export const stores = researchedStores.length ? researchedStores : legacyStores;

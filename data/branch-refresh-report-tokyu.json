@@ -1,0 +1,460 @@
+{
+  "errors": [],
+  "sources": [
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/result.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:40.934675+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=10",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.219204+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=102",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.547519+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=105",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.060441+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=108",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.404553+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=109",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.916419+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=11",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.627924+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=111",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.860311+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=116",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.296389+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=118",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.644601+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=12",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.935592+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=120",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.283021+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=123",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.658776+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=125",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.013377+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=126",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.350890+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=127",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.748693+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=129",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.014482+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=130",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.390668+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=131",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.733282+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=132",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.092338+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=136",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.462391+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=139",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.822437+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=140",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.127787+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=141",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.505564+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=148",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.858946+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=15",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.359578+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=154",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.593038+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=155",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.983066+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=156",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.348807+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=157",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.737599+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=160",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.998982+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=161",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.343390+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=162",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.748693+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=164",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.045884+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=166",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.448421+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=167",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.748913+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=170",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.108737+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=172",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.467778+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=173",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.797760+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=174",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.157946+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=175",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.561014+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=176",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.843179+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=177",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.202387+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=178",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.625116+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=179",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.185902+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=18",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.987042+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=180",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.218014+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=182",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.577158+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=183",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.953567+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=184",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.363655+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=185",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.676089+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=187",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.017578+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=188",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.347014+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.724884+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=202",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.067609+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=203",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.432313+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=204",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.737147+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=205",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.111346+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=206",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.512389+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=207",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.847031+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=208",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.159341+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=210",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.526287+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=212",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.861414+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=213",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.211090+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=215",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.558227+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=216",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.989178+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=217",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.262490+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=218",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.613663+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=219",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.985394+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=22",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.361212+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=220",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.664127+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=30",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.031339+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=34",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.415580+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=40",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.294422+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=42",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.641270+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=44",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.961192+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=47",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.269442+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=54",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.020141+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=55",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.679445+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=57",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.985369+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=63",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.330516+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=65",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.868234+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=68",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.191322+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=72",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.593746+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=73",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.835237+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=75",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.206082+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=79",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.642770+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=81",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.030791+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=83",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.366396+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=89",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.671696+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=90",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:15.017456+00:00"
+    }
+  ]
+}

@@ -6,7 +6,7 @@ Unpublished working draft for the DEV Hacktoberfest Open-Source AI Challenge, We
 
 Station Points compares grocery shops around a selected Japanese train station. Choose the point cards you own, pick a visit date, and see which shops match, what payment conditions apply, and when recurring bonus days occur. Open the original flyer or walking directions when you are ready to go.
 
-The station selector covers 74 stations, including the full JR Nambu and Tokyu Den-en-toshi lines and Tobu Skytree through Takenotsuka. Verified shop coverage is smaller: 21 physical branches across eight station areas, with 22 station-to-shop records. Only the original Koenji, Ogikubo and Kichijoji areas reach the intended 5–10-shop comparison. Other stations clearly disclose incomplete research. This is a dated snapshot, not a nationwide finder or live inventory service.
+The station selector covers 74 stations, including the full JR Nambu and Tokyu Den-en-toshi lines and Tobu Skytree through Takenotsuka. There are 544 source-linked branches; every station has at least five candidates within 2.5 km direct distance or explicit official access. Up to ten appear per station. Separately refreshed metadata includes 207 flyers across 87 branches. It is a directory sample, not a nationwide census or live stock service.
 
 ## Why this belongs in “Touch Grass”
 
@@ -20,7 +20,7 @@ The quantized ONNX model runs in the browser, with no inference API or account. 
 
 ## What the first evaluation actually shows
 
-On 30 author-written questions against 14 source-reviewed Japanese paraphrases, MiniLM reached 80.0% Hit@1 and 93.3% Hit@3. Character-bigram Jaccard reached 43.3% and 63.3%. Much of the difference comes from English queries against Japanese text; on Japanese queries the lexical baseline already reached 93.3% Hit@3.
+On 40 author-written questions against 20 source-reviewed Japanese paraphrases, MiniLM reached 70.0% Hit@1 and 87.5% Hit@3. Character-bigram Jaccard reached 40.0% and 60.0%. The gain is mainly English queries against Japanese text. On Japanese queries the lexical baseline reached 95.0% Hit@3, versus the model's 90.0%. Adding similar notices reduced the old headline score; we report the current corpus and its failures.
 
 This is a smoke benchmark. The project authored both the questions and paraphrases. No independent labeling, retailer holdout, trained new model or OCR evaluation has been completed. The public report includes all rankings and first-result misses.
 

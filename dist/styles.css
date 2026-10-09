@@ -30,6 +30,8 @@
 .station-controls #line{font-size:14px;font-weight:400;margin-bottom:12px}
 .coverage-note{padding:20px 24px;margin-bottom:16px;border:1px solid var(--line);background:var(--surface);font-size:14px}
 .coverage-note p{margin:6px 0 12px;color:var(--muted)}
+.flyer-line a{font-weight:600}.about table{border-collapse:collapse;width:100%;font-size:14px;margin-top:16px}.about th,.about td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--line)}.about h1+p,.about p+p{margin-top:16px}.about h2{margin-top:28px}.about h2+p{margin-top:12px}
+@media(max-width:680px){.finder{padding:20px 0}.station-controls{margin-top:16px}.workspace{padding-top:16px}.result-meta{margin-top:16px}.about{padding-left:20px;padding-right:20px}}
 .program-guide{margin-top:22px;padding-top:16px;border-top:1px solid var(--line);font-size:14px}
 .program-guide summary{min-height:44px;font-weight:600}
 .program-guide p{margin:0 0 16px}.program-guide p span{display:block;margin-top:4px;color:var(--muted)}

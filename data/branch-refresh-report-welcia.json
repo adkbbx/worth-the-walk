@@ -1,0 +1,310 @@
+{
+  "errors": [],
+  "sources": [
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=0",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:42.576174+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1049D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:43.135494+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1054D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:43.615041+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1079D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:44.154239+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1081D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:44.715247+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1118D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:45.274993+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1121D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:45.919169+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1122D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:46.495262+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1143D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:47.167601+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1197D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:47.850273+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1206D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:00:33.696730+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1222D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:48.732045+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2030D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:49.304499+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2169D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:49.867829+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2173D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:50.424492+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2202D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:51.006600+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2278D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.045444+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3211D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.564631+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3222D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.994184+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3225D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:53.669439+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3227D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:54.185321+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3232D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:54.732435+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3237D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.329253+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3240D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.897128+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3261D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.515336+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4028D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.030442+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=100",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.271990+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4049D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.982582+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4058D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.514676+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4081D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.068262+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5020D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.584520+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5054D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.733313+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5080D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.341009+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5084D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.991012+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5090D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.545394+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5111D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.137283+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5120D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.757060+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5139D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.201946+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5143D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.768187+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5150D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.289572+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5167D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.749774+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5168D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.298105+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5176D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.034046+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5178D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.615382+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5179D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.156103+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5196D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.718104+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5197D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.015619+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.827173+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5207D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:11.645778+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5208D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.139721+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5212D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.660814+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=300",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.319689+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=14&datum=wgs84&limit=100&offset=0",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.668060+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=14&datum=wgs84&limit=100&offset=100",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.019716+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5022D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.685905+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5099D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.272776+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5112D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.886430+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=14&datum=wgs84&limit=100&offset=200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.071921+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5166D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.818507+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5180D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.434709+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5182D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.888326+00:00"
+    }
+  ]
+}

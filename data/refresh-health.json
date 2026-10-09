@@ -1,0 +1,27 @@
+{
+  "attemptedAt": "2026-10-09T15:37:15.177796+00:00",
+  "offline": true,
+  "steps": [
+    {
+      "step": "scripts/refresh_data.py",
+      "exitCode": 0
+    },
+    {
+      "step": "scripts/refresh_offers.py",
+      "exitCode": 0
+    },
+    {
+      "step": "scripts/refresh_rules.py",
+      "exitCode": 0
+    },
+    {
+      "step": "scripts/compile-research.mjs",
+      "exitCode": 0
+    },
+    {
+      "step": "scripts/build.mjs",
+      "exitCode": 0
+    }
+  ],
+  "ok": true
+}

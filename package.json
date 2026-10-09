@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "start": "node scripts/serve.mjs",
-    "check": "node --test tests/rules.test.mjs",
+    "check": "node --test tests/rules.test.mjs tests/data.test.mjs",
     "build": "node scripts/build.mjs",
     "check:browser": "node tests/browser.mjs"
   },

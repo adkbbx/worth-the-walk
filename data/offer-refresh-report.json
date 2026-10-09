@@ -1,0 +1,817 @@
+{
+  "errors": [],
+  "flyers": 207,
+  "branches": 87,
+  "sources": [
+    {
+      "url": "https://widgets.tokubai.co.jp/2521/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:21.160616+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2521/leaflet_widget/click?id=106838428&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:21.644376+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/80550/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:21.827804+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/80550/leaflet_widget/click?id=106838479&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:22.316800+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/258850/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:22.501954+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/258850/leaflet_widget/click?id=106838499&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:23.018506+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2549/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:23.226780+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2549/leaflet_widget/click?id=106838454&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:23.781283+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/230226/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:23.908755+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/230226/leaflet_widget/click?id=106838494&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:24.423214+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2349/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:24.624427+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2349/leaflet_widget/click?id=106838388&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:25.146019+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2332/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:25.449417+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2332/leaflet_widget/click?id=106838383&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:25.843476+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/277935/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:26.011819+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/277935/leaflet_widget/click?id=106838503&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:26.542349+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2523/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:26.721843+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2523/leaflet_widget/click?id=106838430&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:27.274160+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/13929/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:27.449368+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/13929/leaflet_widget/click?id=106838471&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:27.942446+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2550/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:28.130861+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2550/leaflet_widget/click?id=106838455&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:28.684757+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/173002/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:28.823581+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/173002/leaflet_widget/click?id=106838488&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:29.322711+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2527/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:29.533487+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2527/leaflet_widget/click?id=106838434&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:30.017007+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/18998/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:30.227121+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/18998/leaflet_widget/click?id=106838473&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:30.757549+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2553/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:30.928124+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2553/leaflet_widget/click?id=106838456&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:31.457900+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2513/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:31.639177+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2513/leaflet_widget/click?id=106838085&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:32.177172+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2516/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:32.334139+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2516/leaflet_widget/click?id=106838425&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:32.924538+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2505/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:33.056088+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2505/leaflet_widget/click?id=106838415&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:33.606195+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/230805/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:33.779014+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/230805/leaflet_widget/click?id=106838495&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:34.272529+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/192908/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:34.436115+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/192908/leaflet_widget/click?id=106838492&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:34.980575+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/169751/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:35.145935+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/169751/leaflet_widget/click?id=106838485&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:35.678921+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2524/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:35.873808+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2524/leaflet_widget/click?id=106838431&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:36.398032+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2506/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:36.553627+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2506/leaflet_widget/click?id=106838416&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:37.039012+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/13363/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:37.246017+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/13363/leaflet_widget/click?id=106838469&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:37.750297+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2346/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:37.964881+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2346/leaflet_widget/click?id=106838387&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:38.527545+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/9730/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:38.642440+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/9730/leaflet_widget/click?id=106838459&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:39.207526+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/269602/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:39.345715+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/269602/leaflet_widget/click?id=106838502&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:39.850480+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2554/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:40.063840+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2554/leaflet_widget/click?id=106838457&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:40.632236+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/123892/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:40.774472+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/123892/leaflet_widget/click?id=106838482&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:41.249286+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/22178/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:41.480432+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/22178/leaflet_widget/click?id=106838474&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:42.020795+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/11003/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:42.161394+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/11003/leaflet_widget/click?id=106838463&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:42.729458+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/80548/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:42.882431+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/80548/leaflet_widget/click?id=106838477&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:43.381293+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2489/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:43.569159+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2489/leaflet_widget/click?id=106838408&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:44.072087+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2490/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:44.283740+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2490/leaflet_widget/click?id=106838409&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:44.881216+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/257595/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:45.108777+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/257595/leaflet_widget/click?id=106838498&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:45.928241+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2488/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:46.196596+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2488/leaflet_widget/click?id=106838407&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:46.923966+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/174464/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:46.999572+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/174464/leaflet_widget/click?id=106838490&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:47.619527+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/9359/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:47.714750+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/9359/leaflet_widget/click?id=106838458&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:48.304426+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2484/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:00:34.705371+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2484/leaflet_widget/click?id=106838403&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:01:10.271866+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2486/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:48.526378+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2486/leaflet_widget/click?id=106838405&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:49.029079+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2481/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:49.202950+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2481/leaflet_widget/click?id=106838400&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:49.815668+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/9943/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:49.911737+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/9943/leaflet_widget/click?id=106838461&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:50.415074+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2483/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:50.590266+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2483/leaflet_widget/click?id=106838402&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:51.085364+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/224224/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:51.310402+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/224224/leaflet_widget/click?id=106838493&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:51.903844+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2487/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:51.992654+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2487/leaflet_widget/click?id=106838406&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:52.482189+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/11168/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:52.728610+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/11168/leaflet_widget/click?id=106838464&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:53.289795+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2485/leaflet_widget?count=4&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:53.645282+00:00"
+    },
+    {
+      "url": "https://widgets.tokubai.co.jp/2485/leaflet_widget/click?id=106838404&type=spweb",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:08:53.968803+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=10",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.219204+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103463&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:37.893052+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=108",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.404553+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103421&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:38.240360+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=116",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.296389+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103416&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:38.532316+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=120",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.283021+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103412&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:39.175622+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=123",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.658776+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103410&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:39.596364+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=126",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.350890+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103408&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:39.894868+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=129",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.014482+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103406&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:40.386279+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=130",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.390668+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103405&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:40.790837+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=131",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.733282+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103404&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:41.113562+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=15",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.359578+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103459&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:31.441026+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=154",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.593038+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103386&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:41.313557+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=162",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.748693+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103379&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:41.661432+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=173",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.797760+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=104439&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:42.046531+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=179",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.185902+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103376&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:42.420664+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=182",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.577158+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=221684&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:42.772539+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=185",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.676089+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=276322&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:43.469196+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=187",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.017578+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=285955&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:43.951605+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=202",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.067609+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=835068&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:44.174710+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=203",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.432313+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=842188&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:44.546741+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=204",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.737147+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=205",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.111346+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=844888&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:44.999197+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=207",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.847031+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=851034&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:45.231671+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=216",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.989178+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=218",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.613663+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=884073&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:45.583811+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=40",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.294422+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103449&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:46.326623+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=55",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.679445+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103444&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:46.661834+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=65",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.868234+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103440&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:46.928228+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=89",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.671696+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103430&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:47.349791+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179377&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:47.745684+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179385&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:48.106541+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179380&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:48.303753+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179382&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:48.662975+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179393&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:49.168182+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=262909&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:49.435843+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179413&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:49.786586+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179418&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:50.166676+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179397&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:50.492837+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179417&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:50.775798+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179406&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:51.130988+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=179430&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:51.593817+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=860117&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:51.944417+00:00"
+    },
+    {
+      "url": "https://asp.shufoo.net/api/shopDetailXML.php?un=heartfulsanwa&shopId=907171&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.heartful-sanwa.co.jp",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:11:52.174607+00:00"
+    }
+  ]
+}

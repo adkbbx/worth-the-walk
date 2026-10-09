@@ -1,0 +1,723 @@
+[
+  {
+    "branchId": "tokyu-10",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア中央林間店",
+    "address": "神奈川県大和市中央林間4-12-1 中央林間東急スクエア内1F",
+    "hours": "10:00-23:00 テナント・専門店の営業時間は東急ストアホームページのテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=10",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=10",
+    "accessText": "東急田園都市線・小田急江ノ島線中央林間駅より徒歩2分",
+    "stationIds": [
+      "chuo-rinkan"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:41.219204+00:00",
+    "sourceHash": "9e8ea0922f7c09a0f9e53dfa652c161ccff50b621d922b2f4e2a8775a1a6ca6f",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5041571711,
+    "lon": 139.4489908447,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103463&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-108",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "すすき野とうきゅう",
+    "address": "神奈川県横浜市青葉区すすき野2-5-4",
+    "hours": "平日 9:00 ～20:30 土日祝 9:00 ～21:00 ※専門店やテナントの営業時間はテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=108",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=108",
+    "accessText": "東急田園都市線あざみ野駅より 東急バス・あ２７・すすき野団地行（8分）/ 小田急バス・新２３・新百合ヶ丘駅行（8分） 「すすき野二丁目」下車 徒歩5分",
+    "stationIds": [
+      "azamino"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:42.404553+00:00",
+    "sourceHash": "d500fa4adc7b64c3db64bca3b36e80c77fa73bd7789192789cfc7101ee70eea3",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5732900034,
+    "lon": 139.5298094388,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103421&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-116",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア溝の口店",
+    "address": "神奈川県川崎市高津区溝口2-1-1",
+    "hours": "5:00-24:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=116",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=116",
+    "accessText": "東急田園都市線溝の口駅直結・JR南武線武蔵溝ノ口駅北口すぐ",
+    "stationIds": [
+      "musashi-mizonokuchi",
+      "mizonokuchi"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:44.296389+00:00",
+    "sourceHash": "1461a7b5813430b8df39959e0e46b449ae0c52f276024c64fab3ce31c165f444",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5966181821,
+    "lon": 139.6137697851,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103416&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-120",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "三軒茶屋とうきゅう",
+    "address": "東京都世田谷区太子堂4-1-1 キャロットタワー内",
+    "hours": "平日 7:00-24:00 土日祝 8:00-24:00 ※専門店やテナントの営業時間はテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=120",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=120",
+    "accessText": "東急田園都市線・東急世田谷線三軒茶屋駅前",
+    "stationIds": [
+      "sangen-jaya"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:45.283021+00:00",
+    "sourceHash": "9278db9135f2303419cdbe35a80ac25a7701150bdd31ff09c6679857a3b01521",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6404886315,
+    "lon": 139.672319367,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103412&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-123",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア宮崎台店",
+    "address": "神奈川県川崎市宮前区宮崎2-10-14",
+    "hours": "9:00-23:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=123",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=123",
+    "accessText": "東急田園都市線宮崎台駅前",
+    "stationIds": [
+      "miyazakidai"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:45.658776+00:00",
+    "sourceHash": "183797b32ca59bc71471c3a101a25a0b97dd0e91beef1b513515849ac3446f75",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.584261181,
+    "lon": 139.5954196924,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103410&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-126",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアたちばな台店",
+    "address": "神奈川県横浜市青葉区たちばな台 1-2-3",
+    "hours": "9:00-21:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=126",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=126",
+    "accessText": "東急田園都市線青葉台駅 北口より徒歩20分 または、東急バス・青28・桐蔭学園前行（4分） 「たちばな台二丁目」下車 徒歩1分",
+    "stationIds": [
+      "aobadai"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:46.350890+00:00",
+    "sourceHash": "7b291724c021adbd4b53e47a43b9743a43582b031c9bf4de274303f9d90d801b",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5511639996,
+    "lon": 139.5176417098,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103408&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-129",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア江田店",
+    "address": "神奈川県横浜市青葉区荏田北3-1-1",
+    "hours": "9:00-22:00（土曜・日曜・祝日は21:00閉店） テナント・専門店の営業時間は東急ストアホームページのテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=129",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=129",
+    "accessText": "東急田園都市線江田駅西口より徒歩2分",
+    "stationIds": [
+      "eda"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:47.014482+00:00",
+    "sourceHash": "5b24a18903b963a282d3db5d11bfd639be7ea05e594a3ad7254c00a79f0255f6",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5560678798,
+    "lon": 139.5545289988,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103406&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-130",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア藤が丘店",
+    "address": "神奈川県横浜市青葉区藤が丘1-36-2",
+    "hours": "9:00-22:00 テナント・専門店の営業時間は東急ストアホームページのテナント情報をご確認ください",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=130",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=130",
+    "accessText": "東急田園都市線藤が丘駅南口より徒歩2分",
+    "stationIds": [
+      "fujigaoka"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:47.390668+00:00",
+    "sourceHash": "564690404b70354acb5f63678b640a6ed1e51bfbaaf99f4714b011c56f132180",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.540182574,
+    "lon": 139.5320183981,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103405&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-131",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア田奈店",
+    "address": "神奈川県横浜市青葉区田奈町76-1",
+    "hours": "9:00-21:00 専門店やテナントの営業時間はテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=131",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=131",
+    "accessText": "東急田園都市線田奈駅より徒歩1分",
+    "stationIds": [
+      "tana"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:47.733282+00:00",
+    "sourceHash": "207b6cebe0399918fe35537176ed3d71ca3f9a65e5341116030ac4f6ddf61b1a",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5324411824,
+    "lon": 139.5070329668,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103404&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-15",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア高円寺店",
+    "address": "東京都杉並区高円寺南4-48-1",
+    "hours": "7:00-25:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=15",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=15",
+    "accessText": "JR中央線高円寺駅北口駅前",
+    "stationIds": [
+      "koenji"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:50.359578+00:00",
+    "sourceHash": "f5166a3c3eced677678328445d69c4faeae7fb4050580b3fe93c7fe1514890c6",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.7019703471,
+    "lon": 139.6522710326,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103459&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-154",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア立川駅南口店",
+    "address": "東京都立川市柴崎町3-6-29",
+    "hours": "9:00-23:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=154",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=154",
+    "accessText": "JR中央線立川駅 南口より徒歩3分・多摩都市モノレール立川南駅前",
+    "stationIds": [
+      "tachikawa"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:50.593038+00:00",
+    "sourceHash": "79ce51f4e54e0597efe88ac71bf606e30231ac5b8e80f9eee7708649a55c5150",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6930909878,
+    "lon": 139.416334631,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103386&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-162",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア市が尾店",
+    "address": "神奈川県横浜市青葉区市ヶ尾町1156番地1",
+    "hours": "8:00-24:00 ※専門店やテナントの営業時間はテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=162",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=162",
+    "accessText": "東急田園都市線市が尾駅直結",
+    "stationIds": [
+      "ichigao"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:52.748693+00:00",
+    "sourceHash": "94923a8e0c9e45bd6bab6996e458c027ef66c2f4a4b83a71ce196cfd1123d142",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5482592198,
+    "lon": 139.5445038067,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103379&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-173",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアたまプラーザテラス店",
+    "address": "神奈川県横浜市青葉区美しが丘1-1-2 たまプラーザテラスGATE PLAZA B2-1F",
+    "hours": "8:00-24:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=173",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=173",
+    "accessText": "東急田園都市線たまプラーザ駅東改札より徒歩1分",
+    "stationIds": [
+      "tama-plaza"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:54.797760+00:00",
+    "sourceHash": "085193097a4caf5c8a9b18614c6f284b2535057fc7744b3fdf48aed1f884e42e",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5736821502,
+    "lon": 139.5621729445,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=104439&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-179",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア二子玉川ライズ店",
+    "address": "東京都世田谷区玉川2-21-1 二子玉川ライズタウンフロントB1",
+    "hours": "10:00-24:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=179",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=179",
+    "accessText": "東急田園都市線・東急大井町線二子玉川駅より徒歩2分",
+    "stationIds": [
+      "futako-tamagawa"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:57.185902+00:00",
+    "sourceHash": "f44629c2b23a30a32696154259cbcc2c8a134f59577a93f5737ad9d09ca7b170",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6089009416,
+    "lon": 139.6317592445,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103376&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-182",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア高津店",
+    "address": "神奈川県川崎市高津区二子5-1-30",
+    "hours": "10：00-23：00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=182",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=182",
+    "accessText": "東急田園都市線高津駅西口すぐ",
+    "stationIds": [
+      "takatsu"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:58.577158+00:00",
+    "sourceHash": "4816f9b60da01ddd7c9fb90d1cc800ef9435a07474a006a266a0cc34c710c90c",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5995754947,
+    "lon": 139.6197098146,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=221684&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-185",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアフードステーション用賀店",
+    "address": "東京都世田谷区用賀4-10-1世田谷ビジネススクエアタワーB1",
+    "hours": "平日7:00-23:00 土日祝7:00-22:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=185",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=185",
+    "accessText": "東急田園都市線用賀駅直結",
+    "stationIds": [
+      "yoga"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:53:59.676089+00:00",
+    "sourceHash": "7f3799d5c097d770eef80cfd5029efc5a4611946b5fdf07936efa3b2735651f5",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6232829395,
+    "lon": 139.6360834776,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=276322&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-187",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアフードステーション渋谷キャスト店",
+    "address": "東京都渋谷区渋谷1-23-21渋谷キャスト内1F",
+    "hours": "7:00-22:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=187",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=187",
+    "accessText": "東急東横線 ・東急田園都市線・JR山手線・JR埼京線・JR湘南新宿ライン・京王井の頭線・東京メトロ銀座線・東京メトロ副都心線・東京メトロ半蔵門線 渋谷駅B1番出口より徒歩2分",
+    "stationIds": [
+      "shibuya"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:00.017578+00:00",
+    "sourceHash": "695ec1ca709fba2975390d801a80b96de47282237739601940aed316a315252d",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6593359028,
+    "lon": 139.7060683537,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=285955&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-202",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア武蔵小杉店",
+    "address": "神奈川県川崎市中原区小杉町3-472",
+    "hours": "7:00-24:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=202",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=202",
+    "accessText": "東急東横線・東急目黒線武蔵小杉駅直結 JR南武線・JR横須賀線・JR湘南新宿ライン武蔵小杉駅東口より徒歩2分",
+    "stationIds": [
+      "musashi-kosugi"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:01.067609+00:00",
+    "sourceHash": "2246970605c5583a0bbf2fefd3ac9852baf519c7e02577de9f324b047593c91b",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5724278087,
+    "lon": 139.6627972618,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=835068&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-203",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア南町田店",
+    "address": "東京都町田市鶴間3－4－1 グランベリーパーク ステーションコート １階（Ｂ１０１）",
+    "hours": "平日9:00‐23:00 土日祝9:00‐22:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=203",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=203",
+    "accessText": "東急田園都市線・南町田グランベリーパーク駅より徒歩1分",
+    "stationIds": [
+      "minami-machida"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:01.432313+00:00",
+    "sourceHash": "8239520724d47c5cbaab14e1c9c381a2b29ae6b88abf889cc71163a3db5d7a2c",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5078529054,
+    "lon": 139.472546508,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=842188&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-204",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアフードステーションミニ二子玉川駅構内店",
+    "address": "東京都世田谷区玉川２－２２－１３",
+    "hours": "7:00－22:00 ※駅構内の店舗のため、二子玉川駅に入場する必要があります。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=204",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=204",
+    "accessText": "東急田園都市線・東急大井町線 二子玉川駅改札口前",
+    "stationIds": [
+      "futako-tamagawa"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:01.737147+00:00",
+    "sourceHash": "5c512a675d14c8278d8bf8706eda5723b66b9d8e470ae603a9abfbcd7883082c",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "tokyu-205",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアフードステーションつきみ野店",
+    "address": "神奈川県大和市つきみ野５－８－６",
+    "hours": "平日 8:00-21:00 土日祝 9:00-21:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=205",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=205",
+    "accessText": "東急田園都市線つきみ野駅より徒歩1分",
+    "stationIds": [
+      "tsukimino"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:02.111346+00:00",
+    "sourceHash": "4820a275b885cea58f2e6923cecd882317ba66dde98af75bf9a8aa7125640112",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5076083687,
+    "lon": 139.4612583718,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=844888&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-207",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア フードステーション 宮前平駅前店",
+    "address": "神奈川県川崎市宮前区宮前平１－１１－１",
+    "hours": "平日 8:00－24:00 土日祝 9:00－24:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=207",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=207",
+    "accessText": "東急田園都市線宮前平駅 改札出てすぐ",
+    "stationIds": [
+      "miyamaedaira"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:02.847031+00:00",
+    "sourceHash": "cace3fc7970f546e17f7447799abdaacbabc601c64ddad1398f31fd9a1173231",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5817063894,
+    "lon": 139.5852664589,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=851034&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-216",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "THE PANTRY by Tokyu Store",
+    "address": "東京都渋谷区道玄坂二丁目２４番１号",
+    "hours": "10:00～18:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=216",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=216",
+    "accessText": "JR渋谷駅から徒歩6分",
+    "stationIds": [
+      "shibuya"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:04.989178+00:00",
+    "sourceHash": "63531813886692c3ee261d3011e27ed3a51ce28dc7200d781952937e164ed9e5",
+    "provenance": "official",
+    "category": "supermarket"
+  },
+  {
+    "branchId": "tokyu-218",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア渋谷サクラステージ店",
+    "address": "東京都渋谷区桜丘町1番4号 渋谷サクラステージ SHIBUYAサイド２F",
+    "hours": "平日 8:00～22:00 土日祝 9:00～21:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=218",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=218",
+    "accessText": "渋谷駅西口出てすぐ",
+    "stationIds": [
+      "shibuya"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:05.613663+00:00",
+    "sourceHash": "a9405e146236f135654ad03f86bf8760cfc4af7d0a42cef286025e9678d5f4a0",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6537683135,
+    "lon": 139.7050602851,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=884073&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-40",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアつくし野店",
+    "address": "東京都町田市つくし野1-30-1",
+    "hours": "9:00～21:00",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=40",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=40",
+    "accessText": "東急田園都市線つくし野駅前",
+    "stationIds": [
+      "tsukushino"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:08.294422+00:00",
+    "sourceHash": "985c5a3a386ebb6c9f2ae818c7fb3241a676e978cf1accb3a3b3a63ac9d8f932",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5244785948,
+    "lon": 139.4873387648,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103449&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-55",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストアあざみ野店",
+    "address": "神奈川県横浜市青葉区あざみ野2-1-1",
+    "hours": "6:00-24:00 テナント・専門店の営業時間は東急ストアホームページのテナント情報をご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=55",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=55",
+    "accessText": "東急田園都市線・横浜市営地下鉄ブルーライン あざみ野駅前",
+    "stationIds": [
+      "azamino"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:10.679445+00:00",
+    "sourceHash": "a2762f64f0578e0d00598d1a17257c51c78918c39b7bcd51c818eebbdd3ef86e",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5654041839,
+    "lon": 139.5570759401,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103444&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-65",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア梶が谷店",
+    "address": "神奈川県川崎市高津区末長1-48-5",
+    "hours": "7:00-24:00 専門店やテナントの営業時間はテナント情報を ご確認ください。",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=65",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=65",
+    "accessText": "東急田園都市線梶が谷駅より徒歩1分",
+    "stationIds": [
+      "kajigaya"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:11.868234+00:00",
+    "sourceHash": "362af84fb8cc4126c3c627f68fc14fc3c0da69c4a105f24c2eaf1306d37382f8",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.5901855792,
+    "lon": 139.6089020848,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103440&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  },
+  {
+    "branchId": "tokyu-89",
+    "chain": "tokyu",
+    "name": "Tokyu Store",
+    "ja": "東急ストア清水台店",
+    "address": "東京都目黒区下目黒4-11-18",
+    "hours": "9:00-22:00 テナント・専門店の営業時間は東急ストアホームページのテナント情報をご確認ください",
+    "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=89",
+    "flyerUrl": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=89",
+    "accessText": "東急目黒線・JR山手線・東京メトロ南北線・ 都営地下鉄三田線目黒駅 目黒駅東口より 東急バス・東98・等々力操車所行（3分）/ 目黒駅前より 東急バス・黒01・大岡山小学校前行（4分）、 東急バス・黒02・二子玉川駅行（4分）、 東急バス・黒06・三軒茶屋行（4分） 「元競馬場前」下車 徒歩1分",
+    "stationIds": [
+      "futako-tamagawa"
+    ],
+    "verifiedPrograms": [
+      "rakuten",
+      "tokyu"
+    ],
+    "checkedAt": "2026-10-09T14:54:14.671696+00:00",
+    "sourceHash": "8452f195369434db0b24a14054a46097baa46591eba0762f9edffc153e19c9e0",
+    "provenance": "official",
+    "category": "supermarket",
+    "lat": 35.6278285383,
+    "lon": 139.7072059812,
+    "coordinatePrecision": "publisher-location",
+    "coordinateSource": "https://asp.shufoo.net/api/shopDetailXML.php?un=tokyustore&shopId=103430&responseFormat=json&usedfor=shufoo.asp.chirashilist&referer=www.tokyu-store.co.jp"
+  }
+]

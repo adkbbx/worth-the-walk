@@ -1,0 +1,4925 @@
+{
+  "errors": [],
+  "sources": [
+    {
+      "url": "https://express.heartrails.com/api/json?method=getStations&line=JR%E5%8D%97%E6%AD%A6%E7%B7%9A",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:48:51.957594+00:00"
+    },
+    {
+      "url": "https://express.heartrails.com/api/json?method=getStations&line=JR%E5%8D%97%E6%AD%A6%E6%94%AF%E7%B7%9A",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:50:41.121206+00:00"
+    },
+    {
+      "url": "https://express.heartrails.com/api/json?method=getStations&line=%E6%9D%B1%E6%80%A5%E7%94%B0%E5%9C%92%E9%83%BD%E5%B8%82%E7%B7%9A",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:50:41.402980+00:00"
+    },
+    {
+      "url": "https://express.heartrails.com/api/json?method=getStations&line=%E6%9D%B1%E6%AD%A6%E4%BC%8A%E5%8B%A2%E5%B4%8E%E7%B7%9A",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:50:41.750073+00:00"
+    },
+    {
+      "url": "https://express.heartrails.com/api/json?method=getStations&line=JR%E4%B8%AD%E5%A4%AE%E7%B7%9A",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:50:42.098586+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/%E6%9D%B1%E4%BA%AC%E9%83%BD/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:42.392578+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east834/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:42.675514+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east627/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:43.040092+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east666/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:43.360149+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east867/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:43.715733+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east656/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:44.085608+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east874/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:44.429063+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east882/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:44.774668+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east676/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:45.133755+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/%E6%9D%B1%E4%BA%AC%E9%83%BD/?page=2",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:45.753687+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east821/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:45.849077+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east613/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:46.174979+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east869/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:46.532673+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east639/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:46.890253+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east829/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:47.237013+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east617/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:47.579323+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east650/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:47.933181+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east812/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:48.290371+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east833/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:48.627585+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east670/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:49.074970+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east658/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:49.332833+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/%E6%9D%B1%E4%BA%AC%E9%83%BD/?page=3",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:49.929353+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east647/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:50.065687+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east634/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:50.395000+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east841/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:50.838427+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east685/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:51.093028+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east611/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:51.477650+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east875/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:51.869130+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east888/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:52.142298+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east674/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:52.497872+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east863/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:52.847958+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:53.202208+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east631/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:53.553020+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east619/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:53.895978+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east893/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:54.277453+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east624/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:54.610623+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east861/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:54.941864+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east813/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:55.303432+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east664/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:55.655297+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east815/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:55.996134+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east642/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:56.351347+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east887/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:56.708563+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east823/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:57.059560+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east806/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:57.406614+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east795/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:57.775397+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east891/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:58.107821+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east715/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:58.450701+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east648/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:58.813851+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east614/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:59.165731+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east895/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:59.547317+00:00"
+    },
+    {
+      "url": "https://store.lifecorp.jp/detail/east855/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:59.876866+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:35.784806+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=30",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:36.071733+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=60",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:36.432651+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=90",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:36.767285+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=120",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:37.122713+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=150",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:37.476493+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=180",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:38.168917+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=210",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:38.577402+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=240",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:38.634599+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=270",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:39.338804+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=300",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:39.397583+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=330",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:39.756657+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=360",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:40.469798+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=390",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:40.897884+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=420",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:40.972456+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=450",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:41.320100+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=480",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:42.045899+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=510",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:42.130019+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=540",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:42.462805+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=570",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:43.155970+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=600",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:43.576884+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=630",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:43.637489+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=660",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:44.000263+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=690",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:44.356642+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=720",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:44.702988+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=750",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:45.055796+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=780",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:45.390116+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=810",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:45.760090+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=840",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:46.448953+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=870",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:46.515493+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=900",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:46.868112+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=930",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:47.215863+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=960",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:47.569274+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=990",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:47.917989+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1020",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:48.285839+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1050",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:48.640194+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1080",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:48.976631+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1110",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:49.336835+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1140",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:49.686567+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1170",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:50.031938+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:50.737794+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1230",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:50.802033+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1260",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:51.199960+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1290",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:51.534484+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1320",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:51.927720+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1350",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:52.231869+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/?rt_bn_search_list_skip=1380",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:52.543254+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1067.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:52.940518+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1068.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:53.310250+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1081.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:53.598195+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1091.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:53.949488+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1098.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:54.365778+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1148.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:54.708881+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1151.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:55.055010+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1152.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:55.402167+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1153.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:55.704178+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1156.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:56.106407+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1159.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:56.460326+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1163.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:56.800557+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1167.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:57.170476+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1169.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:57.509680+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1170.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:57.856438+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1171.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:58.156996+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1172.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:58.522938+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1173.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:58.873965+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1175.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:59.214127+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1182.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:59.654260+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1184.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:51:59.985350+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/12911.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:00.330741+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/12916.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:00.683471+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/12924.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:00.987227+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/13592.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:01.379504+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/13782.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:01.739444+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/14497.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:02.076253+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/14542.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:02.444448+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/14550.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:02.795046+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/14572.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:03.097937+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/14573.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:03.490726+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1670.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:03.846865+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1686.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:04.189537+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1726.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:04.539594+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1793.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:04.839163+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1794.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:05.245431+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1924.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:05.590926+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/1931.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:05.890637+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2328.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:06.299473+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2338.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:06.650754+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2342.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:06.948836+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2348.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:07.340966+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2356.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:07.688018+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2359.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:08.043324+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2384.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:08.346334+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2403.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:08.743136+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2437.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:09.101029+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2442.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:09.457563+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2444.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:09.798416+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2453.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:10.149916+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2661.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:10.508244+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2666.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:10.847434+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2674.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:11.163554+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2680.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:11.557060+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2707.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:11.902492+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2756.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:12.251652+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2758.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:12.626279+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2759.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:12.959975+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2760.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:13.304470+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2761.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:13.604611+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2762.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:14.016179+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2776.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:14.360383+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2780.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:14.718511+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2788.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:15.019994+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2796.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:15.420506+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2797.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:15.775069+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2799.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:16.060680+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2811.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:16.414702+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/2907.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:16.815410+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31644.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:17.193405+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31645.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:17.520059+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31648.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:17.814517+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31649.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:18.165490+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31650.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:18.515645+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31677.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:18.927603+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31678.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:19.279143+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31679.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:19.622797+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31687.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:19.930135+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31689.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:20.321219+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31693.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:20.689618+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31695.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:21.027277+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31820.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:21.377554+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31869.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:21.675604+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31871.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:22.076491+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31875.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:22.432518+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31876.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:22.783424+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31879.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:23.135713+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31884.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:23.444645+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31887.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:23.830919+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31889.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:24.183904+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31891.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:24.531808+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31899.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:24.897204+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31968.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:25.208987+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31975.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:25.537646+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/31977.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:25.963906+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32008.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:26.300283+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32012.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:26.640963+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32033.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:26.946442+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32172.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:27.361239+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32176.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:27.645347+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32181.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:28.008754+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32190.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:28.394500+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32200.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:28.695593+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32274.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:29.045368+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3235.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:29.455685+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3237.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:29.796617+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3238.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:30.097936+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3248.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:30.510263+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3254.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:30.853711+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32923.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:31.148763+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32936.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:31.502668+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32940.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:31.852982+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32954.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:32.257025+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32955.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:32.611363+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32972.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:32.961195+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32974.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:33.308053+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32978.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:33.670307+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32985.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:34.014826+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32986.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:34.361351+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/32989.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:34.671420+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33006.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:35.070849+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3342.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:35.431161+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3343.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:35.714762+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3345.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:36.125789+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3346.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:36.495828+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3347.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:36.826088+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3348.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:37.171373+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3359.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:37.470437+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33610.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:37.883221+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33617.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:38.239167+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33629.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:38.521309+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33630.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:38.879011+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33685.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:39.291342+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33690.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:39.636839+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33702.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:39.982880+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33703.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:40.329068+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33708.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:40.630637+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33741.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:40.982312+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3378.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:41.401509+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33783.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:41.760373+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33796.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:42.082363+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33880.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:42.433401+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33902.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:42.796294+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/33967.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:43.130789+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3409.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:43.500491+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/35433.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:43.837900+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/36093.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:44.186094+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/36104.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:44.498539+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/36108.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:44.844012+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/36109.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:45.186478+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/36110.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:45.547075+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/36130.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:45.895273+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/37529.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:46.239310+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/37534.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:46.640574+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/37538.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:46.950916+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/37546.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:47.291696+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/37547.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:47.698583+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/37550.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:47.997448+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38383.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:48.348205+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38384.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:48.755419+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38385.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:49.103443+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38434.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:49.451652+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38551.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:49.753163+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38617.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:50.169320+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38688.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:50.458517+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38690.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:50.859310+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/38694.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:51.206502+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3870.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:51.565259+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3897.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:51.905165+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3901.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:52.281629+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39016.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:52.607105+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39152.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:52.923611+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39153.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:53.318001+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39231.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:53.663499+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39233.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:53.969256+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39240.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:54.368212+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39260.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:54.713484+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3929.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:55.063370+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39378.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:55.416641+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39414.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:55.760840+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39415.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:56.120971+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39420.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:56.413668+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3943.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:56.817415+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39440.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:57.188601+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39485.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:57.534275+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3954.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:57.875479+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39665.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:58.223394+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39666.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:58.571752+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39679.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:58.882212+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39683.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:59.274539+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39686.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:59.589764+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39688.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:52:59.926760+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39689.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:00.270982+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39703.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:00.621998+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39709.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:01.056382+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/39714.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:01.379444+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/3987.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:01.728718+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4154.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:02.080952+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4270.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:02.387153+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4416.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:02.782007+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4419.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:03.146371+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4422.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:03.495453+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4673.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:03.838983+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4683.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:04.183771+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4686.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:04.537820+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4756.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:04.889201+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4930.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:05.243584+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4931.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:05.537583+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4934.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:05.947792+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4939.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:06.290209+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/4995.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:06.645670+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5063.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:06.999903+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5163.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:07.341068+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5166.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:07.700065+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5492.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:08.046620+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5676.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:08.396034+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5681.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:08.755767+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5733.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:09.063564+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5791.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:09.448013+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5827.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:09.753809+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5830.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:10.157935+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5835.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:10.499696+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5845.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:10.859395+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5897.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:11.198444+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5930.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:11.555915+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5934.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:11.867620+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5938.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:12.256052+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/5996.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:12.569723+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6175.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:12.958634+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6177.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:13.313775+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6183.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:13.659764+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6184.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:14.022530+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6186.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:14.359132+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6237.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:14.722408+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6406.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:15.072382+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6407.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:15.428804+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6408.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:15.773898+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6412.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:16.061308+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6418.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:16.472626+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6421.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:16.817406+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6423.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:17.118944+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6425.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:17.521208+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6490.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:17.872195+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6495.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:18.170178+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6499.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:18.576678+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6733.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:18.931520+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6734.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:19.271406+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6744.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:19.626014+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6746.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:19.984138+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6764.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:20.324326+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6845.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:20.701443+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6931.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:20.975434+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6945.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:21.391781+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6951.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:21.680110+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6955.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:22.081799+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6960.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:22.431690+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6964.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:22.802758+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6977.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:23.079050+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/6979.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:23.490520+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70025.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:23.796129+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70026.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:24.146260+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70038.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:24.538238+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70043.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:24.895195+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70044.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:25.252455+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70048.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:25.600258+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70653.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:25.951457+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70814.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:26.298271+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70857.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:26.646194+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70858.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:26.957393+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70875.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:27.296994+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70878.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:27.647008+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70880.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:28.050248+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7094.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:28.408807+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/70962.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:28.751870+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7112.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:29.118228+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71340.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:29.468316+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71575.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:29.812699+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71577.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:30.159212+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71582.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:30.514483+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71626.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:30.856016+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71629.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:31.205976+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71804.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:31.557329+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71810.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:31.858749+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71812.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:32.261562+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71813.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:32.567393+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71816.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:32.916295+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71819.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:33.282414+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71848.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:33.678627+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71849.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:34.030548+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71851.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:34.369400+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71855.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:34.726707+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71859.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:35.076177+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71861.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:35.422911+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71870.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:35.722919+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71888.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:36.134316+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71897.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:36.447410+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71898.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:36.839546+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71900.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:37.182083+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71934.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:37.470243+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71937.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:37.831819+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71946.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:38.181950+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71951.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:38.530470+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71954.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:38.938410+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71957.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:39.246673+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71959.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:39.646414+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7196.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:39.984487+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71962.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:40.293171+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71971.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:40.696897+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71972.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:40.984661+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71985.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.388555+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/71996.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.692125+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72000.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.094476+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72016.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.440487+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72025.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.741959+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7241.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.142201+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72550.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.488363+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72555.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.790558+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72556.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.181937+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72557.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.555752+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72561.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.896247+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72562.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.268477+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72570.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.606753+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72574.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.948713+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72580.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.312926+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72582.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.662976+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72588.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.957719+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7266.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.365178+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72820.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.700231+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72821.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.078804+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7287.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.384310+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/72882.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.777024+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7305.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.116740+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73084.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.475745+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73085.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.768649+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73086.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.175492+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73087.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.466875+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7314.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.862352+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73182.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.177778+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73194.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.569133+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73232.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.925743+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7327.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.268425+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73301.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.622170+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73302.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.922410+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73417.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.313251+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73422.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.619152+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73435.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.962018+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73460.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.377712+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73468.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.724387+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73474.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.088050+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73476.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.424871+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/73623.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.774131+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74130.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.122461+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74146.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.425902+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74148.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.823245+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7417.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.180871+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74175.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.474180+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74226.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.892298+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74228.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.231050+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74236.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.576158+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74238.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.943536+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7424.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.286817+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74297.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.639067+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74322.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.016564+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74429.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.297861+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7443.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.683710+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74440.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.059254+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74441.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.423291+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74443.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.756202+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74445.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.111346+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74474.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.451234+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74489.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.808923+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74491.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.145253+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74495.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.490803+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74592.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.856031+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74715.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.139975+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74717.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.517364+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74802.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.902626+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74803.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.223671+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74804.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.553787+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74808.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.970340+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74810.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.309004+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74821.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.608931+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74823.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.012695+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74842.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.353741+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74859.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.685752+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74894.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.005385+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74918.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.409409+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/74921.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.701804+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7503.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.112878+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75552.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.418430+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75564.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.769045+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75599.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.173697+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75850.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.526236+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75860.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.830992+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75889.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.180445+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75890.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.571345+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75891.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.878273+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7591.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.286527+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75912.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.566493+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75915.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.937484+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75956.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.293999+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75976.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.677404+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75977.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.975314+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/75981.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.338388+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7599.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.672702+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76000.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:15.035609+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76001.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:15.435414+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76008.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:15.802870+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76025.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:16.078156+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76026.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:16.490087+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76034.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:16.790373+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76087.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:17.197520+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76212.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:17.552844+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76217.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:17.901541+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76291.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:18.185477+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76321.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:18.538660+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7633.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:18.946977+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76361.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:19.232902+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76362.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:19.641326+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7662.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:19.994076+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76795.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:20.297311+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76803.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:20.682991+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76805.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:20.990348+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/76814.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:21.393066+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/77479.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:21.691845+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/77895.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:22.043813+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/77931.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:22.396043+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/78049.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:22.757510+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/7832.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:23.167650+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8154.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:23.493983+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8155.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:23.793282+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8166.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:24.198788+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8188.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:24.539692+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8189.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:24.848929+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8202.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:25.266517+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8208.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:25.590681+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8212.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:25.947527+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8219.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:26.311403+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8494.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:26.653189+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8707.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:27.013183+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8709.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:27.378609+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/8710.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:27.704360+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/890.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:28.004098+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9194.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:28.402196+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9209.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:28.759510+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9247.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:29.056470+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9256.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:29.438603+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9412.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:29.757898+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9507.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:30.174165+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9571.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:30.525835+00:00"
+    },
+    {
+      "url": "https://www.mybasket.co.jp/shop/detail/9582.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:30.859465+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.299084+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/ayaseekimae.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.576950+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/tatikawatakasimaya.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.922410+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/page/2/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.274644+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/asakusa.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.606584+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/mitakakitaguchi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.959018+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/kichijoji.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.303505+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/sumiyoshi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.666092+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/chohu.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.016711+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/page/3/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.376806+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/shimoigusa.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.703257+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/machida-ogawa.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.068292+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/nakarokugo.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.411142+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/page/4/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.776046+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/nishifu.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.110542+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/hatsudai.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.461154+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/nishi-arai.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.813315+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/page/5/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.178898+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/saginomiya.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.509817+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/yaguchi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.886004+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/hashiba.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.234850+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/page/6/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.580253+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/dennenntyoufu.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.939746+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/hikifune.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.283240+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/yotsugi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.637108+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/ogikubo.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.993621+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/koenji.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.333646+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/ikejiriohashi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.685453+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/shin-yoga.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.028217+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E6%9D%B1%E4%BA%AC%E9%83%BD/page/7/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.405976+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/sendagaya.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.735428+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/yogaekimae.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.115171+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/hitotsuya.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.435129+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/tachikawa-fujimicho.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.792723+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/komae.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.127927+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/komae-nakaizumi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.491177+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/suginami-miyamae.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.843985+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.209105+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/yamatoturuma.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.543753+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/aobadai.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.897398+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/kawasaki-ogura.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.235198+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/noborito.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.596959+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/miyazakidai.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.952792+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C/page/2/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.301027+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/azamino.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.649271+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/nogawa.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.005385+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C/page/3/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.365245+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/mizonokuchi.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.691768+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C/page/4/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.070455+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/ikuta.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.407883+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/nagatsuda.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.758373+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/kawasaki-honcho.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.120004+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/kohoku-chuo.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.466231+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/keyword/%E7%A5%9E%E5%A5%88%E5%B7%9D%E7%9C%8C/page/5/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.813536+00:00"
+    },
+    {
+      "url": "https://ok-corporation.jp/shop/kohoku.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.189523+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/result.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:40.934675+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=10",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.219204+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=102",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:41.547519+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=105",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.060441+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=108",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.404553+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=109",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:42.916419+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=11",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.627924+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=111",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:43.860311+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=116",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.296389+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=118",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.644601+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=12",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:44.935592+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=120",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.283021+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=123",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:45.658776+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=125",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.013377+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=126",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.350890+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=127",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:46.748693+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=129",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.014482+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=130",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.390668+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=131",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:47.733282+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=132",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.092338+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=136",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.462391+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=139",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:48.822437+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=140",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.127787+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=141",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.505564+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=148",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:49.858946+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=15",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.359578+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=154",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.593038+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=155",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:50.983066+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=156",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.348807+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=157",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.737599+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=160",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:51.998982+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=161",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.343390+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=162",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:52.748693+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=164",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.045884+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=166",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.448421+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=167",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:53.748913+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=170",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.108737+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=172",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.467778+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=173",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:54.797760+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=174",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.157946+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=175",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.561014+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=176",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:55.843179+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=177",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.202387+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=178",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:56.625116+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=179",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.185902+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=18",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:57.987042+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=180",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.218014+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=182",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.577158+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=183",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:58.953567+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=184",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.363655+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=185",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:53:59.676089+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=187",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.017578+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=188",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.347014+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:00.724884+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=202",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.067609+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=203",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.432313+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=204",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:01.737147+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=205",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.111346+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=206",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.512389+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=207",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:02.847031+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=208",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.159341+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=210",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.526287+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=212",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:03.861414+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=213",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.211090+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=215",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.558227+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=216",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:04.989178+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=217",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.262490+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=218",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.613663+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=219",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:05.985394+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=22",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.361212+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=220",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:06.664127+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=30",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.031339+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=34",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:07.415580+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=40",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.294422+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=42",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.641270+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=44",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:08.961192+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=47",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:09.269442+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=54",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.020141+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=55",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.679445+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=57",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:10.985369+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=63",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.330516+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=65",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:11.868234+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=68",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.191322+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=72",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.593746+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=73",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:12.835237+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=75",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.206082+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=79",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:13.642770+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=81",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.030791+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=83",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.366396+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=89",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:14.671696+00:00"
+    },
+    {
+      "url": "https://www.tokyu-store.co.jp/shop/detail.html?pdid=90",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:54:15.017456+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=0",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:42.576174+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1049D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:43.135494+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1054D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:43.615041+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1079D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:44.154239+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1081D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:44.715247+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1118D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:45.274993+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1121D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:45.919169+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1122D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:46.495262+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1143D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:47.167601+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1197D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:47.850273+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1206D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:00:33.696730+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=1222D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:48.732045+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2030D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:49.304499+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2169D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:49.867829+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2173D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:50.424492+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2202D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:51.006600+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=2278D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.045444+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3211D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.564631+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3222D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.994184+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3225D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:53.669439+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3227D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:54.185321+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3232D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:54.732435+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3237D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.329253+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3240D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.897128+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=3261D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.515336+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4028D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.030442+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=100",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.271990+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4049D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.982582+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4058D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.514676+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=4081D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.068262+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5020D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.584520+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5054D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.733313+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5080D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.341009+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5084D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.991012+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5090D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.545394+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5111D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.137283+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5120D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.757060+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5139D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.201946+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5143D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.768187+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5150D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.289572+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5167D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.749774+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5168D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.298105+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5176D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.034046+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5178D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.615382+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5179D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.156103+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5196D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.718104+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5197D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.015619+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.827173+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5207D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:11.645778+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5208D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.139721+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5212D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.660814+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=13&datum=wgs84&limit=100&offset=300",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.319689+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=14&datum=wgs84&limit=100&offset=0",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.668060+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=14&datum=wgs84&limit=100&offset=100",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.019716+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5022D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.685905+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5099D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.272776+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5112D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.886430+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/api/proxy2/shop/list?address=14&datum=wgs84&limit=100&offset=200",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.071921+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5166D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.818507+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5180D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.434709+00:00"
+    },
+    {
+      "url": "https://store.welcia.co.jp/welcia/spot/detail?code=5182D",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.888326+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T14:59:46.420796+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/001",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.457031+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/002",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.656852+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/003",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.979566+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/004",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.549399+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/005",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.712147+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/006",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:00:33.894163+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/007",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.065737+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/008",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.414649+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/009",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.770711+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/010",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.121833+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/011",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.462211+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/012",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.821640+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/013",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.199607+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/014",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.523202+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/015",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.866919+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/016",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.217837+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/017",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.585175+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/018",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.927974+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/019",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.319614+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/020",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.657889+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/021",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.978153+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/022",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.364737+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/023",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.674708+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/024",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.042469+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/025",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.393488+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/026",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.746264+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/028",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.085168+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/029",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.435817+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/030",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.788203+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/031",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.141550+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/032",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.491451+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/033",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.868241+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/034",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.192781+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/036",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.533400+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/037",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.883718+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/038",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.248133+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/039",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.588368+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/040",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.948355+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/041",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:11.295865+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/042",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:11.644776+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/043",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.002659+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/045",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.366358+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/046",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.703992+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/047",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.050205+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/048",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.406282+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/049",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.752076+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/050",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.113643+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/051",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.451450+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/052",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.823859+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/053",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.154918+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/054",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.514570+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/055",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.853742+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/056",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.213985+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/057",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.550957+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/058",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.908513+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/059",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.252945+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/060",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.608475+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/061",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.960729+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/062",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:18.313575+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/063",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:18.670969+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/065",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:19.101787+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/066",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:19.403840+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/067",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:19.731626+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/068",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:20.076172+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/069",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:20.426100+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/070",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:20.764333+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/071",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:21.112964+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/072",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:21.502062+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/073",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:21.814897+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/075",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:22.188582+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/076",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:22.530784+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/077",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:22.871451+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/078",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:23.228750+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/079",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:23.583910+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/080",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:23.931812+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/095",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:24.278286+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/099",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:24.626287+00:00"
+    },
+    {
+      "url": "https://www.heartful-sanwa.co.jp/shop/100",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:24.979911+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/searchshop/tokyo/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:01:09.867331+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/searchshop/kanagawa/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.145187+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e3%82%b5%e3%83%b3%e3%82%b7%e3%83%a3%e3%82%a4%e3%83%b3%e8%a5%bf%e5%8f%8b/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.609422+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e3%83%aa%e3%83%b4%e3%82%a3%e3%83%b3%e3%82%88%e3%81%93%e3%81%99%e3%81%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:57.097824+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e3%83%aa%e3%83%b4%e3%82%a3%e3%83%b3%e3%82%aa%e3%82%ba%e5%a4%a7%e6%b3%89%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:57.467788+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e3%83%aa%e3%83%b4%e3%82%a3%e3%83%b3%e5%85%89%e3%81%8c%e4%b8%98%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:57.847658+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e3%83%aa%e3%83%b4%e3%82%a3%e3%83%b3%e7%94%b0%e7%84%a1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.351285+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e3%81%b2%e3%81%b0%e3%82%8a%e3%81%8c%e4%b8%98%e5%9b%a3%e5%9c%b0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.783568+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e3%81%b2%e3%81%b0%e3%82%8a%e3%83%b6%e4%b8%98%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.177499+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%83%e9%87%8c%e3%83%b6%e6%b5%9c%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.619295+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%89%e8%bb%92%e8%8c%b6%e5%b1%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.110930+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%89%e9%b7%b9%e7%89%9f%e7%a4%bc%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.640775+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%8a%e7%9f%b3%e7%a5%9e%e4%ba%95%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.167125+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%8b%e4%b8%b8%e5%ad%90%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.667191+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%8b%e4%ba%95%e8%8d%89%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.008670+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%8b%e9%ab%98%e4%ba%95%e6%88%b8%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.357354+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%ad%e6%9d%91%e6%a9%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.866919+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%ad%e6%b2%b3%e5%8e%9f%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.193230+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b8%ad%e9%87%8e%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.534373+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%b9%85%e7%b1%b3%e5%b7%9d%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.109450+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%ba%8c%e5%ae%ae%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.525553+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%bb%99%e5%b7%9d%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.864771+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e4%bf%9d%e8%b0%b7%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.395819+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%8a%a0%e8%b3%80%e9%b9%bf%e6%b5%9c%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.832789+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%8c%97%e7%b6%be%e7%80%ac%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.294775+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%8d%83%e6%ad%b3%e7%83%8f%e5%b1%b1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.661852+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%8d%97%e6%9e%97%e9%96%93%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.101030+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%8d%97%e8%91%9b%e8%a5%bf%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.534214+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%90%89%e7%a5%a5%e5%af%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:07.884491+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%9b%bd%e5%88%86%e5%af%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.204428+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%9b%bd%e7%ab%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:08.575099+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%9b%bd%e9%a0%98%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.105382+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%a4%a7%e4%ba%95%e7%94%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.431879+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%a4%a7%e6%a3%ae%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:09.782849+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%a4%a7%e8%88%b9%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.352538+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%af%8c%e5%a3%ab%e8%a6%8b%e3%83%b6%e4%b8%98%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:10.840736+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%b0%8f%e5%b9%b3%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:11.332985+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%b7%9d%e5%b4%8e%e7%a5%9e%e6%98%8e%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:11.775638+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%b7%a3%e9%b4%a8%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.133685+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%b8%82%e3%83%b6%e5%b0%be%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.462741+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%b9%b3%e4%ba%95%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:12.818187+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%b9%b3%e5%a1%9a%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.369955+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e5%ba%9c%e4%b8%ad%e5%9b%9b%e8%b0%b7%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:13.688128+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%88%90%e5%a2%97%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.179657+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%96%b0%e3%82%86%e3%82%8a%e3%82%b0%e3%83%aa%e3%83%bc%e3%83%b3%e3%82%bf%e3%82%a6%e3%83%b3%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.505897+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%96%b0%e5%b0%8f%e5%b2%a9%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:14.892653+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%9d%b1%e4%b9%85%e7%95%99%e7%b1%b3%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.229793+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%9d%b1%e5%a4%a7%e5%92%8c%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.562110+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%9d%b1%e9%95%b7%e5%b4%8e%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:15.962813+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%9d%b1%e9%99%bd%e7%94%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.295283+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%a1%9c%e5%8f%b0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:16.811464+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b0%b8%e5%b1%b1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.198560+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b1%9f%e6%88%b8%e5%b7%9d%e4%b8%ad%e5%a4%ae%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:17.639880+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b5%85%e8%8d%89rox%e9%a3%9f%e5%93%81%e9%a4%a8/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:18.142103+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b5%9c%e7%94%b0%e5%b1%b1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:18.545794+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b7%b1%e6%b2%a2%e7%9b%ae%e9%bb%92%e9%80%9a%e3%82%8a%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:18.820847+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%b8%85%e7%80%ac%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:19.410875+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e6%bb%9d%e5%b1%b1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:19.759760+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e7%94%ba%e7%94%b0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:20.100783+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e7%9f%a2%e5%8f%a3%e3%83%8e%e6%b8%a1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:20.459809+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e7%a6%8f%e7%94%9f%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:20.845145+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e7%ab%b9%e3%81%ae%e5%a1%9a%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:21.378318+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e7%b7%b4%e9%a6%ac%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:21.704315+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e7%be%bd%e6%9d%91%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:22.087281+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%83%bd%e8%a6%8b%e5%8f%b0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:22.405338+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%8d%bb%e7%aa%aa%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:22.900084+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%91%9b%e9%a3%be%e6%96%b0%e5%ae%bf%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:23.238348+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%92%b2%e7%94%b0%e4%b8%ad%e5%a4%ae%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:23.584911+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%93%ae%e6%a0%b9%e5%9d%82%e4%b8%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:23.941848+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%97%a4%e6%b2%a2%e7%9f%b3%e5%b7%9d%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:24.290291+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%a1%a3%e7%ac%a0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:24.635324+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%a5%bf%e4%b8%80%e4%b9%8b%e6%b1%9f%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:25.153842+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%a5%bf%e5%9b%bd%e7%ab%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:25.550948+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%a5%bf%e8%8d%bb%e7%aa%aa%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:25.885300+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%aa%bf%e5%b8%83%e5%85%a5%e9%96%93%e7%94%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:26.314967+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%aa%bf%e5%b8%83%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:26.687713+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%b1%8a%e7%8e%89%e5%8d%97%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:27.158737+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%b6%b3%e7%ab%8b%e5%b3%b6%e6%a0%b9%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:27.488576+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e8%be%bb%e5%a0%82%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:27.886103+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%80%97%e5%ad%90%e3%83%8f%e3%82%a4%e3%83%a9%e3%83%b3%e3%83%89%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:28.424156+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%8c%a6%e7%b3%b8%e7%94%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:28.866208+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%96%a2%e7%94%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:29.290413+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%98%bf%e4%b9%85%e5%92%8c%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:29.795200+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%98%bf%e4%bd%90%e3%83%b6%e8%b0%b7%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:30.245324+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%9d%92%e4%ba%95%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:30.671019+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%9d%92%e6%9f%b3%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:31.168601+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%a6%ac%e5%a0%80%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:31.625317+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%a7%92%e6%b2%a2%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:31.937898+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e4%ba%95%e6%88%b8%e6%9d%b1%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:32.308952+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e5%86%86%e5%af%ba%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:32.810155+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e7%94%b0%e9%a6%ac%e5%a0%b4%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:33.198506+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%ab%98%e9%87%8e%e5%8f%b0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:33.720204+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%b6%b4%e3%82%b1%e5%b3%b0%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:34.066249+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%b6%b4%e8%a6%8b%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:34.507967+00:00"
+    },
+    {
+      "url": "https://www.seiyu.co.jp/shop/%e8%a5%bf%e5%8f%8b%e9%b7%b9%e5%8f%96%e5%ba%97/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:34.988609+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:00:34.389116+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_10.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:50.146695+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_11.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:50.477667+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_12.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:50.819426+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_13.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:51.182539+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_14.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:51.522517+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_15.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:51.886906+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_16.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.223447+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_17.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.562622+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_18.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:52.913406+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_20.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:53.275090+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_23.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:53.615265+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_24.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:53.992321+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_25.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:54.341489+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_26.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:54.665944+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_27.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.027081+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_28.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.376952+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_29.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:55.719424+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_31.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.081991+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_32.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.427829+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_33.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:56.780319+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_34.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:57.126947+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_35.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:57.482374+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_36.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:57.825569+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_37.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.184203+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_39.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.532241+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_40.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:58.907761+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_41.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.234518+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_43.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.597240+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_44.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:03:59.949392+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_45.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.287912+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_48.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.654309+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_49.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:00.997865+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_50.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.338154+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_52.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:01.712740+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_53.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.044749+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_54.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.392963+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_55.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:02.749783+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_70.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.077862+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_72.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.435795+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_74.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:03.806965+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_75.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.149832+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_77.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.488230+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_78.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:00:34.600539+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_79.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:04.854544+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_8.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.187355+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_81.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.541254+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_82.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:05.906334+00:00"
+    },
+    {
+      "url": "https://www.fujicitio.com/tenpo/shop_9.html",
+      "status": "cached",
+      "checkedAt": "2026-10-09T15:04:06.243882+00:00"
+    }
+  ]
+}

@@ -4,9 +4,11 @@ Select a train line and station in Tokyo or Kanagawa to check researched grocery
 
 The selector includes **74 stations**: all 30 distinct JR Nambu stations including the branch, all 27 Tokyu Den-en-toshi stations, 14 Tobu Skytree stations through Takenotsuka including Oshiage, and the original three Chūō/Sōbu pilot stations. Den-en-toshi is operated by Tokyu; it connects with Tokyo Metro Hanzomon services.
 
-**Shop coverage is incomplete.** Koenji, Ogikubo and Kichijoji retain 5–7 shops each. Four additional physical branches provide five station-to-shop records at Shukugawara, Noborito, Sakura-shimmachi, Takatsu and Takenotsuka. There are 21 physical branches and 22 station-to-shop records total. Unresearched stations show a coverage explanation and an external nearby-supermarket search, not invented recommendations. See [STATIONS.md](STATIONS.md) for the complete list and per-station coverage.
+**All 74 stations have at least five sourced candidates.** The snapshot contains 544 distinct branches and 1,898 station-to-branch associations. The app displays up to ten options, prioritized by selected memberships and distance. Candidates are within 2.5 km straight-line distance or have explicit station access on their official page; this is a directory sample, not every local shop. [STATIONS.md](STATIONS.md) lists coverage.
 
-The wallet has 13 choices, including d POINT, V POINT, Ponta, PayPay Points, nanaco, JRE POINT and TOBU POINT. Only checked chain affiliations affect filtering. PayPay/nanaco payment rewards and OK Club membership are distinguished from common point cards. Official program guides are available even when no matching branch has been researched. This remains a dated snapshot with no live sale feed.
+The wallet has 14 choices, including d POINT, V POINT, Ponta, PayPay Points, nanaco, JRE POINT, TOBU POINT and Sanwa/Food One. Branch card flags restrict chain defaults where available. Payment acceptance does not establish earning eligibility. There are 207 dated flyer records from 87 Life, Tokyu and Sanwa branches; advertised periods and publication periods are labeled separately. Recurring point bonuses and cash-discount conditions are verified separately. Item prices are not automatically extracted.
+
+Run `python scripts/refresh.py` for an incremental refresh. Flyers update daily, directories and rule sources weekly, coordinates monthly. Expired/stale flyers disappear; changed/stale rules stop producing point matches until reviewed. Scheduling is not enabled. See [REFRESH.md](REFRESH.md) for the runner, caching, review queue, tests and publication workflow. `/data-status.html` exposes coverage and checks.
 
 ## Run the app
 
@@ -47,16 +49,16 @@ node scripts/build.mjs
 
 The download script reuses the recorded revision. The encoder verifies file hashes before inference. The index is built from Japanese notice text only, without evaluation queries or expected IDs. No fine-tuning or query-based threshold tuning was performed.
 
-The fixture has 14 manually reviewed Japanese paraphrases and 30 author-written queries, split equally between English and Japanese. Some queries have multiple acceptable relevant notices. Evaluation searches the entire corpus; UI station filtering changes the candidate set.
+The fixture has 20 manually reviewed Japanese paraphrases and 40 author-written queries, split equally between English and Japanese. Some queries have multiple acceptable relevant notices. Evaluation searches the entire corpus; UI station, rule freshness and notice-date filtering change the candidate set.
 
-The additional Life and Welcia rules and program guides are not part of this 14-notice semantic index or its benchmark. At stations with no indexed notices, semantic search reports the missing coverage.
+Life, Welcia and Sanwa are now included. Expired item notices and chains whose rules need review are filtered out in the browser. Flyer metadata does not trigger re-embedding; it is separate from the authored rule-notice corpus.
 
 | Method | Queries | Hit@1 | Hit@3 | MRR |
 | --- | ---: | ---: | ---: | ---: |
-| Quantized multilingual MiniLM | 30 | 80.0% | 93.3% | 0.862 |
-| Character-bigram Jaccard | 30 | 43.3% | 63.3% | 0.570 |
+| Quantized multilingual MiniLM | 40 | 70.0% | 87.5% | 0.797 |
+| Character-bigram Jaccard | 40 | 40.0% | 60.0% | 0.538 |
 
-The gain is mostly cross-language retrieval. For Japanese queries, the lexical baseline already reaches 73.3% Hit@1 and 93.3% Hit@3. The [per-query report](data/evaluation.json) includes every ranking and runtime measurements. `/evaluation.html` displays the results and first-result misses.
+The gain is mostly cross-language retrieval. For Japanese queries, the lexical baseline reaches 65.0% Hit@1 and 95.0% Hit@3, compared with the model's 65.0% and 90.0%. Expanded coverage reduced the model's old headline score; those older 14-notice figures no longer describe the current corpus. The [per-query report](data/evaluation.json) includes every ranking and runtime measurements. `/evaluation.html` displays results and misses.
 
 **This is a smoke benchmark, not a résumé-scale validation study.** The same project authored the paraphrases and queries. Labels were not independently audited. There is no held-out retailer test, field trial, OCR evaluation, or trained new model. Report these limits with the scores.
 
