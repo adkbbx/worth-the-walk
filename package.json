@@ -1,0 +1,13 @@
+{
+  "name": "station-points",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node scripts/serve.mjs",
+    "check": "node --test tests/rules.test.mjs",
+    "build": "node scripts/build.mjs",
+    "check:browser": "node tests/browser.mjs"
+  },
+  "devDependencies": {"playwright":"1.62.1"}
+}

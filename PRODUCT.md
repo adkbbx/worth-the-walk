@@ -1,0 +1,5 @@
+# Station Points
+
+A station-based grocery finder for residents of Japan. Select a train station and point memberships to compare 5–10 nearby food shops, earning and redemption conditions, and advertised discounts by date. English and Japanese store names; no account needed. Use cited real branch records and dated chain rules. Unknown point support and missing sale data remain unknown. Do not infer loyalty-card earning from a payment logo. Dates are Japan dates. First rollout uses researched Tokyo stations; coverage is explicit.
+
+Open-source multilingual MiniLM enables English and Japanese semantic search over source-reviewed Japanese notice paraphrases. A reproducible ONNX pipeline builds the index and evaluates retrieval. It does not extract prices or determine eligibility. Dates and walk-time sorting are deterministic. Model outputs are not ground truth. Keep per-query evaluation results and source provenance. No made-up prices, stock, live refresh or universal coverage claims. No bank login, purchased data or credentials in the client.

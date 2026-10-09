@@ -1,0 +1,1254 @@
+{
+  "protocol": "30 author-written EN/JA queries against 14 source-reviewed Japanese paraphrases. No training or tuning on these queries. Full-corpus evaluation; UI station filtering can differ. Not a real-user or OCR benchmark.",
+  "model": {
+    "id": "Xenova/paraphrase-multilingual-MiniLM-L12-v2",
+    "revision": "2c4055b12046f11709e9df2c122e59ffbdc2f900",
+    "dtype": "q8",
+    "dimension": 384,
+    "pooling": "attention-masked mean, L2 normalized",
+    "files": {
+      "tokenizer.json": {
+        "sha256": "b60b6b43406a48bf3638526314f3d232d97058bc93472ff2de930d43686fa441",
+        "bytes": 17082913
+      },
+      "tokenizer_config.json": {
+        "sha256": "3f5961b9ac86288cccdb97f32fb848d6187c78e1603958c53f3ea1f296b7d8a2",
+        "bytes": 496
+      },
+      "config.json": {
+        "sha256": "05b570bff786faa5c4604152aa16f19f77ed6dfc31e47dd0f3dd987078693ac7",
+        "bytes": 673
+      },
+      "onnx/model_quantized.onnx": {
+        "sha256": "66fc00f5f29afcaff34092e1bdd20008ca3918265a82fb9695a551e510cc4ebc",
+        "bytes": 118308126
+      }
+    }
+  },
+  "baseline": "Japanese-compatible character bigram Jaccard, stable id tie-break",
+  "runtime": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.12.14",
+    "onnxruntime": "1.23.2",
+    "threads": 2,
+    "load_ms": 918.96,
+    "median_single_query_ms": 3.95
+  },
+  "metrics": {
+    "semantic": {
+      "all": {
+        "n": 30,
+        "hit_at_1": 0.8,
+        "hit_at_3": 0.9333333333333333,
+        "mrr": 0.8622895622895623
+      },
+      "en": {
+        "n": 15,
+        "hit_at_1": 0.8,
+        "hit_at_3": 0.9333333333333333,
+        "mrr": 0.8616161616161616
+      },
+      "ja": {
+        "n": 15,
+        "hit_at_1": 0.8,
+        "hit_at_3": 0.9333333333333333,
+        "mrr": 0.8629629629629629
+      }
+    },
+    "lexical": {
+      "all": {
+        "n": 30,
+        "hit_at_1": 0.43333333333333335,
+        "hit_at_3": 0.6333333333333333,
+        "mrr": 0.5699482924482925
+      },
+      "en": {
+        "n": 15,
+        "hit_at_1": 0.13333333333333333,
+        "hit_at_3": 0.3333333333333333,
+        "mrr": 0.311007696007696
+      },
+      "ja": {
+        "n": 15,
+        "hit_at_1": 0.7333333333333333,
+        "hit_at_3": 0.9333333333333333,
+        "mrr": 0.8288888888888889
+      }
+    }
+  },
+  "results": [
+    {
+      "query": "Which shop gives cheaper food when I pay with banknotes?",
+      "language": "en",
+      "relevant": [
+        "ok-cash"
+      ],
+      "semantic_order": [
+        "ok-cash",
+        "ok-card",
+        "waon-bonus",
+        "keio-earn",
+        "ok-flyer",
+        "tokyu-earn",
+        "waon-no-sale",
+        "waon-double",
+        "seiyu-earn",
+        "waon-redeem",
+        "keio-card",
+        "waon-card",
+        "seiyu-end",
+        "seiyu-campaign-end"
+      ],
+      "lexical_order": [
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-card",
+        "waon-double",
+        "waon-no-sale",
+        "waon-redeem"
+      ]
+    },
+    {
+      "query": "Does tapping my credit card remove my OK membership saving?",
+      "language": "en",
+      "relevant": [
+        "ok-card"
+      ],
+      "semantic_order": [
+        "ok-card",
+        "keio-card",
+        "waon-card",
+        "ok-cash",
+        "tokyu-earn",
+        "seiyu-end",
+        "waon-redeem",
+        "seiyu-earn",
+        "seiyu-campaign-end",
+        "keio-earn",
+        "waon-no-sale",
+        "ok-flyer",
+        "waon-bonus",
+        "waon-double"
+      ],
+      "lexical_order": [
+        "tokyu-earn",
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "When can I get five times WAON rewards?",
+      "language": "en",
+      "relevant": [
+        "waon-bonus"
+      ],
+      "semantic_order": [
+        "waon-double",
+        "waon-bonus",
+        "seiyu-earn",
+        "waon-no-sale",
+        "seiyu-end",
+        "waon-redeem",
+        "seiyu-campaign-end",
+        "ok-flyer",
+        "keio-earn",
+        "waon-card",
+        "ok-cash",
+        "tokyu-earn",
+        "ok-card",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Tell me the dates for double WAON rewards",
+      "language": "en",
+      "relevant": [
+        "waon-double"
+      ],
+      "semantic_order": [
+        "waon-double",
+        "waon-bonus",
+        "seiyu-earn",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "waon-no-sale",
+        "waon-redeem",
+        "waon-card",
+        "ok-flyer",
+        "ok-cash",
+        "keio-earn",
+        "tokyu-earn",
+        "ok-card",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Can I earn WAON with my unrelated Visa card?",
+      "language": "en",
+      "relevant": [
+        "waon-card"
+      ],
+      "semantic_order": [
+        "waon-card",
+        "keio-card",
+        "keio-earn",
+        "waon-double",
+        "waon-bonus",
+        "tokyu-earn",
+        "waon-redeem",
+        "seiyu-earn",
+        "ok-card",
+        "ok-flyer",
+        "ok-cash",
+        "seiyu-end",
+        "waon-no-sale",
+        "seiyu-campaign-end"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Is AEON's five percent off day valid at My Basket?",
+      "language": "en",
+      "relevant": [
+        "waon-no-sale"
+      ],
+      "semantic_order": [
+        "waon-bonus",
+        "waon-double",
+        "waon-no-sale",
+        "seiyu-earn",
+        "waon-redeem",
+        "keio-earn",
+        "ok-cash",
+        "tokyu-earn",
+        "ok-flyer",
+        "waon-card",
+        "seiyu-end",
+        "ok-card",
+        "keio-card",
+        "seiyu-campaign-end"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Do I need to register before spending my WAON balance?",
+      "language": "en",
+      "relevant": [
+        "waon-redeem"
+      ],
+      "semantic_order": [
+        "waon-redeem",
+        "waon-bonus",
+        "waon-double",
+        "waon-card",
+        "seiyu-earn",
+        "seiyu-end",
+        "keio-earn",
+        "ok-card",
+        "tokyu-earn",
+        "keio-card",
+        "ok-flyer",
+        "waon-no-sale",
+        "seiyu-campaign-end",
+        "ok-cash"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "How much is one Rakuten point worth at SEIYU?",
+      "language": "en",
+      "relevant": [
+        "seiyu-earn"
+      ],
+      "semantic_order": [
+        "seiyu-earn",
+        "tokyu-earn",
+        "waon-double",
+        "waon-bonus",
+        "waon-redeem",
+        "keio-earn",
+        "ok-flyer",
+        "ok-cash",
+        "seiyu-end",
+        "waon-card",
+        "waon-no-sale",
+        "seiyu-campaign-end",
+        "ok-card",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Will SEIYU still accept Rakuten points next March?",
+      "language": "en",
+      "relevant": [
+        "seiyu-end",
+        "seiyu-earn"
+      ],
+      "semantic_order": [
+        "seiyu-end",
+        "seiyu-earn",
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "tokyu-earn",
+        "waon-bonus",
+        "seiyu-campaign-end",
+        "waon-no-sale",
+        "ok-flyer",
+        "keio-earn",
+        "keio-card",
+        "ok-card",
+        "ok-cash"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Are the SEIYU campaign and card service finishing on different dates?",
+      "language": "en",
+      "relevant": [
+        "seiyu-campaign-end",
+        "seiyu-end"
+      ],
+      "semantic_order": [
+        "seiyu-campaign-end",
+        "seiyu-end",
+        "seiyu-earn",
+        "waon-double",
+        "ok-flyer",
+        "waon-no-sale",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-card",
+        "waon-redeem",
+        "ok-card",
+        "ok-cash",
+        "keio-card",
+        "keio-earn"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Can I collect Tokyu points with another credit card?",
+      "language": "en",
+      "relevant": [
+        "tokyu-earn"
+      ],
+      "semantic_order": [
+        "tokyu-earn",
+        "waon-card",
+        "keio-card",
+        "keio-earn",
+        "seiyu-earn",
+        "waon-redeem",
+        "waon-double",
+        "seiyu-end",
+        "ok-card",
+        "waon-bonus",
+        "seiyu-campaign-end",
+        "ok-flyer",
+        "ok-cash",
+        "waon-no-sale"
+      ],
+      "lexical_order": [
+        "tokyu-earn",
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Does Kitchen Court let me earn both Keio and Rakuten?",
+      "language": "en",
+      "relevant": [
+        "keio-earn"
+      ],
+      "semantic_order": [
+        "keio-earn",
+        "waon-double",
+        "ok-cash",
+        "waon-bonus",
+        "keio-card",
+        "tokyu-earn",
+        "ok-card",
+        "ok-flyer",
+        "waon-redeem",
+        "waon-card",
+        "seiyu-earn",
+        "waon-no-sale",
+        "seiyu-end",
+        "seiyu-campaign-end"
+      ],
+      "lexical_order": [
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-card",
+        "waon-double",
+        "waon-no-sale",
+        "waon-redeem"
+      ]
+    },
+    {
+      "query": "Which payment stops me receiving Keio rewards?",
+      "language": "en",
+      "relevant": [
+        "keio-card"
+      ],
+      "semantic_order": [
+        "waon-double",
+        "ok-card",
+        "waon-no-sale",
+        "waon-bonus",
+        "tokyu-earn",
+        "ok-cash",
+        "ok-flyer",
+        "keio-earn",
+        "seiyu-earn",
+        "waon-card",
+        "keio-card",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "waon-redeem"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "How much is the frozen vegetable rice topping advertised for?",
+      "language": "en",
+      "relevant": [
+        "ok-flyer"
+      ],
+      "semantic_order": [
+        "ok-flyer",
+        "keio-earn",
+        "ok-cash",
+        "waon-bonus",
+        "waon-double",
+        "tokyu-earn",
+        "seiyu-earn",
+        "waon-no-sale",
+        "ok-card",
+        "waon-redeem",
+        "keio-card",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "waon-card"
+      ],
+      "lexical_order": [
+        "tokyu-earn",
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "Can I get the OK member rate on beer?",
+      "language": "en",
+      "relevant": [
+        "ok-cash"
+      ],
+      "semantic_order": [
+        "ok-cash",
+        "seiyu-earn",
+        "ok-card",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-double",
+        "waon-no-sale",
+        "keio-earn",
+        "waon-redeem",
+        "waon-card",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "ok-flyer",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "電子決済にしたらオーケーの会員特典はなくなりますか",
+      "language": "ja",
+      "relevant": [
+        "ok-card"
+      ],
+      "semantic_order": [
+        "ok-card",
+        "waon-redeem",
+        "ok-cash",
+        "waon-no-sale",
+        "seiyu-earn",
+        "tokyu-earn",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "waon-card",
+        "waon-bonus",
+        "keio-earn",
+        "waon-double",
+        "keio-card",
+        "ok-flyer"
+      ],
+      "lexical_order": [
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "waon-redeem",
+        "keio-earn",
+        "seiyu-earn",
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "tokyu-earn",
+        "waon-no-sale",
+        "seiyu-end",
+        "keio-card"
+      ]
+    },
+    {
+      "query": "現金を使うと食品を安く買える会員制度はありますか",
+      "language": "ja",
+      "relevant": [
+        "ok-cash"
+      ],
+      "semantic_order": [
+        "ok-card",
+        "ok-cash",
+        "keio-earn",
+        "ok-flyer",
+        "tokyu-earn",
+        "waon-redeem",
+        "waon-bonus",
+        "waon-no-sale",
+        "seiyu-earn",
+        "waon-double",
+        "keio-card",
+        "seiyu-campaign-end",
+        "waon-card",
+        "seiyu-end"
+      ],
+      "lexical_order": [
+        "ok-cash",
+        "waon-card",
+        "keio-card",
+        "waon-bonus",
+        "ok-card",
+        "waon-redeem",
+        "seiyu-end",
+        "keio-earn",
+        "seiyu-earn",
+        "waon-double",
+        "seiyu-campaign-end",
+        "tokyu-earn",
+        "ok-flyer",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "まいばすでポイントが五倍になるのはいつ",
+      "language": "ja",
+      "relevant": [
+        "waon-bonus"
+      ],
+      "semantic_order": [
+        "seiyu-earn",
+        "waon-double",
+        "waon-bonus",
+        "seiyu-end",
+        "waon-no-sale",
+        "tokyu-earn",
+        "keio-earn",
+        "waon-redeem",
+        "seiyu-campaign-end",
+        "ok-flyer",
+        "ok-cash",
+        "waon-card",
+        "keio-card",
+        "ok-card"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-card",
+        "waon-no-sale",
+        "keio-earn",
+        "seiyu-earn",
+        "keio-card",
+        "tokyu-earn",
+        "waon-double",
+        "seiyu-campaign-end",
+        "waon-bonus",
+        "seiyu-end",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer"
+      ]
+    },
+    {
+      "query": "WAONの特典が二倍になる日に行きたい",
+      "language": "ja",
+      "relevant": [
+        "waon-double"
+      ],
+      "semantic_order": [
+        "waon-double",
+        "waon-bonus",
+        "waon-redeem",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-no-sale",
+        "waon-card",
+        "seiyu-campaign-end",
+        "keio-earn",
+        "tokyu-earn",
+        "ok-flyer",
+        "ok-cash",
+        "ok-card",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "waon-double",
+        "waon-card",
+        "waon-bonus",
+        "waon-redeem",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn",
+        "waon-no-sale"
+      ]
+    },
+    {
+      "query": "まいばすで他社のクレカを使ってもポイントもらえる？",
+      "language": "ja",
+      "relevant": [
+        "waon-card"
+      ],
+      "semantic_order": [
+        "waon-redeem",
+        "tokyu-earn",
+        "waon-no-sale",
+        "keio-earn",
+        "seiyu-earn",
+        "waon-bonus",
+        "ok-cash",
+        "ok-card",
+        "waon-card",
+        "waon-double",
+        "seiyu-end",
+        "keio-card",
+        "seiyu-campaign-end",
+        "ok-flyer"
+      ],
+      "lexical_order": [
+        "waon-card",
+        "waon-redeem",
+        "keio-card",
+        "tokyu-earn",
+        "waon-no-sale",
+        "keio-earn",
+        "seiyu-earn",
+        "waon-double",
+        "seiyu-campaign-end",
+        "waon-bonus",
+        "seiyu-end",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer"
+      ]
+    },
+    {
+      "query": "お客さま感謝デーでまいばすも値引きされる？",
+      "language": "ja",
+      "relevant": [
+        "waon-no-sale"
+      ],
+      "semantic_order": [
+        "waon-no-sale",
+        "waon-bonus",
+        "waon-double",
+        "ok-cash",
+        "seiyu-earn",
+        "tokyu-earn",
+        "keio-earn",
+        "ok-card",
+        "seiyu-campaign-end",
+        "ok-flyer",
+        "waon-redeem",
+        "seiyu-end",
+        "waon-card",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "waon-no-sale",
+        "waon-bonus",
+        "waon-card",
+        "waon-redeem",
+        "waon-double",
+        "keio-card",
+        "ok-cash",
+        "ok-card",
+        "keio-earn",
+        "ok-flyer",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn"
+      ]
+    },
+    {
+      "query": "WAONの残高のポイントを使うための手続きは",
+      "language": "ja",
+      "relevant": [
+        "waon-redeem"
+      ],
+      "semantic_order": [
+        "waon-redeem",
+        "waon-card",
+        "waon-double",
+        "waon-bonus",
+        "seiyu-earn",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "tokyu-earn",
+        "keio-earn",
+        "ok-cash",
+        "waon-no-sale",
+        "ok-flyer",
+        "keio-card",
+        "ok-card"
+      ],
+      "lexical_order": [
+        "waon-redeem",
+        "waon-card",
+        "keio-card",
+        "seiyu-earn",
+        "keio-earn",
+        "waon-double",
+        "seiyu-campaign-end",
+        "waon-bonus",
+        "seiyu-end",
+        "tokyu-earn",
+        "ok-card",
+        "waon-no-sale",
+        "ok-cash",
+        "ok-flyer"
+      ]
+    },
+    {
+      "query": "西友で楽天の貯めたポイントをいくらで使える",
+      "language": "ja",
+      "relevant": [
+        "seiyu-earn"
+      ],
+      "semantic_order": [
+        "seiyu-earn",
+        "waon-redeem",
+        "tokyu-earn",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "ok-cash",
+        "waon-bonus",
+        "keio-earn",
+        "waon-double",
+        "waon-no-sale",
+        "waon-card",
+        "ok-card",
+        "ok-flyer",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "seiyu-earn",
+        "seiyu-campaign-end",
+        "seiyu-end",
+        "keio-earn",
+        "keio-card",
+        "tokyu-earn",
+        "waon-redeem",
+        "waon-card",
+        "waon-no-sale",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "waon-bonus",
+        "waon-double"
+      ]
+    },
+    {
+      "query": "西友で楽天カードのポイント利用ができなくなる日は",
+      "language": "ja",
+      "relevant": [
+        "seiyu-end",
+        "seiyu-earn"
+      ],
+      "semantic_order": [
+        "seiyu-end",
+        "waon-card",
+        "seiyu-earn",
+        "tokyu-earn",
+        "seiyu-campaign-end",
+        "keio-card",
+        "ok-card",
+        "waon-no-sale",
+        "waon-redeem",
+        "keio-earn",
+        "ok-cash",
+        "waon-bonus",
+        "waon-double",
+        "ok-flyer"
+      ],
+      "lexical_order": [
+        "seiyu-earn",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "keio-card",
+        "keio-earn",
+        "waon-card",
+        "tokyu-earn",
+        "waon-redeem",
+        "ok-card",
+        "waon-no-sale",
+        "ok-cash",
+        "ok-flyer",
+        "waon-bonus",
+        "waon-double"
+      ]
+    },
+    {
+      "query": "西友のキャンペーンが年内に終わるって本当？",
+      "language": "ja",
+      "relevant": [
+        "seiyu-campaign-end"
+      ],
+      "semantic_order": [
+        "seiyu-campaign-end",
+        "seiyu-end",
+        "seiyu-earn",
+        "waon-redeem",
+        "waon-no-sale",
+        "waon-double",
+        "ok-cash",
+        "ok-card",
+        "waon-bonus",
+        "waon-card",
+        "tokyu-earn",
+        "ok-flyer",
+        "keio-earn",
+        "keio-card"
+      ],
+      "lexical_order": [
+        "seiyu-campaign-end",
+        "seiyu-end",
+        "seiyu-earn",
+        "keio-card",
+        "keio-earn",
+        "ok-card",
+        "ok-cash",
+        "ok-flyer",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-card",
+        "waon-double",
+        "waon-no-sale",
+        "waon-redeem"
+      ]
+    },
+    {
+      "query": "東急のポイントカードはお会計の前に見せる？",
+      "language": "ja",
+      "relevant": [
+        "tokyu-earn"
+      ],
+      "semantic_order": [
+        "tokyu-earn",
+        "keio-earn",
+        "seiyu-earn",
+        "seiyu-end",
+        "waon-card",
+        "keio-card",
+        "seiyu-campaign-end",
+        "waon-redeem",
+        "ok-card",
+        "ok-cash",
+        "waon-bonus",
+        "waon-double",
+        "ok-flyer",
+        "waon-no-sale"
+      ],
+      "lexical_order": [
+        "keio-card",
+        "keio-earn",
+        "tokyu-earn",
+        "seiyu-earn",
+        "waon-card",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "ok-card",
+        "waon-redeem",
+        "waon-no-sale",
+        "ok-cash",
+        "ok-flyer",
+        "waon-bonus",
+        "waon-double"
+      ]
+    },
+    {
+      "query": "キッチンコートでポイントカードを二枚出せる？",
+      "language": "ja",
+      "relevant": [
+        "keio-earn"
+      ],
+      "semantic_order": [
+        "keio-earn",
+        "keio-card",
+        "tokyu-earn",
+        "waon-card",
+        "seiyu-earn",
+        "ok-cash",
+        "ok-card",
+        "waon-no-sale",
+        "seiyu-end",
+        "waon-redeem",
+        "seiyu-campaign-end",
+        "waon-double",
+        "waon-bonus",
+        "ok-flyer"
+      ],
+      "lexical_order": [
+        "keio-card",
+        "keio-earn",
+        "waon-card",
+        "tokyu-earn",
+        "seiyu-earn",
+        "seiyu-end",
+        "seiyu-campaign-end",
+        "ok-card",
+        "waon-redeem",
+        "waon-no-sale",
+        "ok-cash",
+        "ok-flyer",
+        "waon-bonus",
+        "waon-double"
+      ]
+    },
+    {
+      "query": "京王以外のクレカだと京王ポイントはつかない？",
+      "language": "ja",
+      "relevant": [
+        "keio-card"
+      ],
+      "semantic_order": [
+        "keio-card",
+        "keio-earn",
+        "waon-card",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-redeem",
+        "waon-no-sale",
+        "seiyu-earn",
+        "ok-flyer",
+        "waon-double",
+        "seiyu-end",
+        "ok-cash",
+        "ok-card",
+        "seiyu-campaign-end"
+      ],
+      "lexical_order": [
+        "keio-card",
+        "waon-card",
+        "waon-redeem",
+        "keio-earn",
+        "tokyu-earn",
+        "seiyu-earn",
+        "seiyu-campaign-end",
+        "seiyu-end",
+        "ok-card",
+        "waon-no-sale",
+        "ok-cash",
+        "ok-flyer",
+        "waon-bonus",
+        "waon-double"
+      ]
+    },
+    {
+      "query": "今週オーケーの中華丼の冷凍食品の価格は",
+      "language": "ja",
+      "relevant": [
+        "ok-flyer"
+      ],
+      "semantic_order": [
+        "ok-flyer",
+        "keio-earn",
+        "ok-cash",
+        "tokyu-earn",
+        "waon-bonus",
+        "ok-card",
+        "waon-double",
+        "waon-no-sale",
+        "seiyu-earn",
+        "keio-card",
+        "seiyu-end",
+        "waon-redeem",
+        "waon-card",
+        "seiyu-campaign-end"
+      ],
+      "lexical_order": [
+        "ok-flyer",
+        "ok-cash",
+        "ok-card",
+        "waon-no-sale",
+        "keio-card",
+        "keio-earn",
+        "seiyu-campaign-end",
+        "seiyu-earn",
+        "seiyu-end",
+        "tokyu-earn",
+        "waon-bonus",
+        "waon-card",
+        "waon-double",
+        "waon-redeem"
+      ]
+    },
+    {
+      "query": "お酒でもオーケーカードの割引は受けられる？",
+      "language": "ja",
+      "relevant": [
+        "ok-cash"
+      ],
+      "semantic_order": [
+        "ok-cash",
+        "ok-card",
+        "tokyu-earn",
+        "waon-no-sale",
+        "seiyu-earn",
+        "keio-earn",
+        "waon-card",
+        "waon-bonus",
+        "waon-double",
+        "seiyu-campaign-end",
+        "keio-card",
+        "ok-flyer",
+        "seiyu-end",
+        "waon-redeem"
+      ],
+      "lexical_order": [
+        "ok-card",
+        "ok-cash",
+        "waon-card",
+        "seiyu-end",
+        "tokyu-earn",
+        "ok-flyer",
+        "keio-card",
+        "keio-earn",
+        "seiyu-earn",
+        "seiyu-campaign-end",
+        "waon-no-sale",
+        "waon-bonus",
+        "waon-double",
+        "waon-redeem"
+      ]
+    }
+  ]
+}

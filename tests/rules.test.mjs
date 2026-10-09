@@ -1,0 +1,9 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';
+import {nextBonus,programs,reward,japanToday,orderStores,matches} from '../src/rules.mjs';
+import {stations,stores} from '../data/catalog.mjs';
+test('Japan date crosses UTC day at midnight JST',()=>{assert.equal(japanToday(new Date('2026-10-09T15:00:00Z')),'2026-10-10');});
+test('bonus dates cross month/year correctly and include selected date',()=>{assert.deepEqual(nextBonus('2026-10-09'),{date:'2026-10-15',multiplier:2});assert.deepEqual(nextBonus('2026-10-30'),{date:'2026-10-30',multiplier:5});assert.deepEqual(nextBonus('2026-12-31'),{date:'2027-01-05',multiplier:2});});
+test('announcement date does not prematurely end SEIYU Rakuten',()=>{assert.deepEqual(programs('seiyu','2026-10-09'),['rakuten']);assert.deepEqual(programs('seiyu','2027-04-04'),['rakuten']);assert.deepEqual(programs('seiyu','2027-04-05'),[]);});
+test('My Basket bonus is points multiplier, ordinary days get one',()=>{assert.equal(reward('mybasket','2026-10-20'),5);assert.equal(reward('mybasket','2026-10-15'),2);assert.equal(reward('mybasket','2026-10-09'),1);});
+test('unknown programs never match a wallet and no wallet leaves distance order',()=>{assert.equal(matches({chain:'gyomu'},['rakuten'],'2026-10-09'),false);const samples=[{chain:'ok',walk:8},{chain:'mybasket',walk:3},{chain:'seiyu',walk:4}];assert.equal(orderStores(samples,[],'2026-10-09')[0].chain,'mybasket');assert.equal(orderStores(samples,['rakuten'],'2026-10-09')[0].chain,'seiyu');});
+test('pilot stations have 5–10 cited unique stores each',()=>{assert.equal(new Set(stores.map(s=>s.id)).size,stores.length);for(const station of stations){const list=stores.filter(s=>s.station===station.id);assert.ok(list.length>=5&&list.length<=10);for(const s of list)assert.ok(new URL(s.url).protocol==='https:');}});

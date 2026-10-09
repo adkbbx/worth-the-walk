@@ -1,0 +1,6 @@
+.python/
+.model-cache/
+.sites-runtime/
+.impeccable/review/
+*.zip
+__pycache__/
