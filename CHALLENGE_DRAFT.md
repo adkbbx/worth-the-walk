@@ -6,7 +6,7 @@ Unpublished working draft for the DEV Hacktoberfest Open-Source AI Challenge, We
 
 Station Points compares grocery shops around a selected Japanese train station. Choose the point cards you own, pick a visit date, and see which shops match, what payment conditions apply, and when recurring bonus days occur. Open the original flyer or walking directions when you are ready to go.
 
-The first pilot covers 17 researched shops around Koenji, Ogikubo and Kichijoji. It is a dated snapshot, not a nationwide finder or live inventory service.
+The station selector covers 74 stations, including the full JR Nambu and Tokyu Den-en-toshi lines and Tobu Skytree through Takenotsuka. Verified shop coverage is smaller: 21 physical branches across eight station areas, with 22 station-to-shop records. Only the original Koenji, Ogikubo and Kichijoji areas reach the intended 5–10-shop comparison. Other stations clearly disclose incomplete research. This is a dated snapshot, not a nationwide finder or live inventory service.
 
 ## Why this belongs in “Touch Grass”
 

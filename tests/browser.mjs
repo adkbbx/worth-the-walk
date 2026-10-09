@@ -28,6 +28,21 @@ try{
   const source=page.locator('article').filter({hasText:'オーケー 高円寺店'});await source.locator('summary').click();
   assert.ok(await source.getByRole('link',{name:'Point / membership rules'}).isVisible());await source.locator('summary').click();
   for(const link of await page.locator('.directions').all()) assert.match(await link.getAttribute('href'),/travelmode=walking/);
+  assert.equal(await page.locator('#wallet input').count(),13);
+  await page.locator('#line').selectOption('nambu');assert.equal(await page.locator('#station option').count(),26);
+  assert.match(await page.locator('#stores').innerText(),/not been checked yet/);
+  await page.locator('#station').selectOption('shukugawara');assert.equal(await page.locator('.store').count(),1);
+  await page.locator('#wallet input[value=dpoint]').check();await page.locator('#only-matches').check();assert.equal(await page.locator('.store').count(),1);
+  assert.match(decodeURIComponent(await page.locator('.directions').getAttribute('href')),/神奈川県/);
+  await page.locator('#line').selectOption('nambu-branch');assert.equal(await page.locator('#station option').count(),5);
+  await page.locator('#line').selectOption('den-en-toshi');assert.equal(await page.locator('#station option').count(),27);
+  await page.locator('#station').selectOption('sakura-shimmachi');assert.match(await page.locator('.store').innerText(),/d POINT \/ Ponta/);
+  await page.locator('#station').selectOption('minami-machida');assert.match(await page.locator('#station-name').innerText(),/Grandberry/);
+  await page.locator('#line').selectOption('skytree');assert.equal(await page.locator('#station option').count(),14);
+  await page.locator('#station').selectOption('takenotsuka');await page.locator('#wallet input[value=vpoint]').check();assert.equal(await page.locator('.store').count(),1);
+  assert.match(await page.locator('.store').innerText(),/V POINT: 1 \/ ¥200/);
+  await page.locator('#wallet input[value=dpoint]').uncheck();await page.locator('#wallet input[value=vpoint]').uncheck();await page.locator('#only-matches').uncheck();
+  await page.locator('#line').selectOption('pilot');
   if(process.env.TEST_AI==='1'){
     await page.locator('.ai-panel summary').click();await page.locator('#load-ai').click();
     await page.locator('#semantic-form').waitFor({state:'visible',timeout:240000});
@@ -55,6 +70,10 @@ try{
   await page.screenshot({path:'.impeccable/review/mobile-viewport.png'});
   await page.screenshot({path:'.impeccable/review/mobile.png',fullPage:true});
   assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  await page.locator('#line').selectOption('den-en-toshi');await page.locator('#station').selectOption('minami-machida');
+  assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true,'Long bilingual station names must fit mobile');
+  await page.goto(base+'/?station=takatsu');assert.equal(await page.locator('#line').inputValue(),'den-en-toshi');
+  assert.equal(await page.locator('#station').inputValue(),'takatsu');
   await page.goto(base+'/evaluation.html');assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.deepEqual(errors,[]);
   console.log('Browser flows passed: station changes, wallet filter, empty recovery, date boundaries, source disclosure, directions, desktop/mobile overflow.');

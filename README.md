@@ -1,8 +1,12 @@
 # Station Points
 
-Select a Tokyo train station and compare 5–10 nearby grocery shops: where your point cards work, payment conditions, advertised prices, and the next recurring bonus day.
+Select a train line and station in Tokyo or Kanagawa to check researched grocery shops, point-card conditions and dated offers.
 
-The first pilot covers **17 source-reviewed shops** around **Koenji, Ogikubo, and Kichijoji**. This is a dated snapshot, not nationwide discovery or a live sale feed.
+The selector includes **74 stations**: all 30 distinct JR Nambu stations including the branch, all 27 Tokyu Den-en-toshi stations, 14 Tobu Skytree stations through Takenotsuka including Oshiage, and the original three Chūō/Sōbu pilot stations. Den-en-toshi is operated by Tokyu; it connects with Tokyo Metro Hanzomon services.
+
+**Shop coverage is incomplete.** Koenji, Ogikubo and Kichijoji retain 5–7 shops each. Four additional physical branches provide five station-to-shop records at Shukugawara, Noborito, Sakura-shimmachi, Takatsu and Takenotsuka. There are 21 physical branches and 22 station-to-shop records total. Unresearched stations show a coverage explanation and an external nearby-supermarket search, not invented recommendations. See [STATIONS.md](STATIONS.md) for the complete list and per-station coverage.
+
+The wallet has 13 choices, including d POINT, V POINT, Ponta, PayPay Points, nanaco, JRE POINT and TOBU POINT. Only checked chain affiliations affect filtering. PayPay/nanaco payment rewards and OK Club membership are distinguished from common point cards. Official program guides are available even when no matching branch has been researched. This remains a dated snapshot with no live sale feed.
 
 ## Run the app
 
@@ -44,6 +48,8 @@ node scripts/build.mjs
 The download script reuses the recorded revision. The encoder verifies file hashes before inference. The index is built from Japanese notice text only, without evaluation queries or expected IDs. No fine-tuning or query-based threshold tuning was performed.
 
 The fixture has 14 manually reviewed Japanese paraphrases and 30 author-written queries, split equally between English and Japanese. Some queries have multiple acceptable relevant notices. Evaluation searches the entire corpus; UI station filtering changes the candidate set.
+
+The additional Life and Welcia rules and program guides are not part of this 14-notice semantic index or its benchmark. At stations with no indexed notices, semantic search reports the missing coverage.
 
 | Method | Queries | Hit@1 | Hit@3 | MRR |
 | --- | ---: | ---: | ---: | ---: |

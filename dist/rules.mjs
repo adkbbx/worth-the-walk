@@ -14,7 +14,7 @@ export function nextBonus(date) {
 }
 export function programs(chain,date) {
   if (chain === 'seiyu') return date <= '2027-04-04' ? ['rakuten'] : [];
-  return ({tokyu:['rakuten','tokyu'],mybasket:['waon'],ok:['ok'],keio:['rakuten','keio']})[chain] || [];
+  return ({tokyu:['rakuten','tokyu'],mybasket:['waon'],ok:['ok'],keio:['rakuten','keio'],life:['dpoint','ponta','lacuca'],welcia:['vpoint','waon']})[chain] || [];
 }
 export function matches(store,wallet,date) {
   return wallet.some(p=>programs(store.chain,date).includes(p));

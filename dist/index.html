@@ -15,7 +15,7 @@
   <main>
     <section class="finder" aria-labelledby="page-title">
       <div class="intro"><h1 id="page-title">A better grocery stop.<br>Right around your station.</h1><p>Find where your points work, what the conditions are, and when it’s worth dropping by.</p></div>
-      <div class="station-controls"><label for="station">Your station</label><select id="station"><option value="koenji">Koenji · 高円寺</option><option value="ogikubo">Ogikubo · 荻窪</option><option value="kichijoji">Kichijoji · 吉祥寺</option></select><span class="coverage">Tokyo pilot · 3 stations · 17 shops</span></div>
+      <div class="station-controls"><label for="line">Your line</label><select id="line"></select><label for="station">Your station</label><select id="station"></select><span class="coverage" id="coverage"></span></div>
     </section>
     <div class="workspace">
       <aside class="preferences" aria-label="Shopping preferences">
@@ -23,6 +23,7 @@
         <fieldset><legend>Your point cards</legend><p class="helper">Optional. Matching shops appear first.</p><div id="wallet"></div></fieldset>
         <div class="date-control"><label for="visit-date">Visit date</label><input id="visit-date" type="date" min="2026-10-01" max="2027-04-30"><p class="helper">Promotion dates use Japan time.</p></div>
         <label class="checkbox filter"><input type="checkbox" id="only-matches"><span>Only shops matching my cards</span></label>
+        <details class="program-guide"><summary>Point-program guide</summary><div id="program-guide"></div></details>
         <section class="next-day"><h2>Next bonus day</h2><div id="next-bonus"></div></section>
         <details class="ai-panel"><summary>Find an offer in your own words</summary><p class="helper">Search the checked point notices in English or Japanese using an open-source multilingual model.</p><button id="load-ai" class="secondary" type="button">Enable semantic search</button><p id="ai-status" class="helper" role="status">First use downloads about 135 MB plus runtime files. Text stays in your browser.</p><form id="semantic-form" hidden><label for="offer-query">What matters to you?</label><input id="offer-query" maxlength="200" placeholder="e.g. cash-only discount"><button type="submit" class="primary">Find matching notices</button></form><div id="semantic-results" aria-live="polite"></div></details>
         <button class="primary mobile-apply" id="apply-options" type="button">Show shops with these settings</button>

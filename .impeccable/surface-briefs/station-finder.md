@@ -16,7 +16,7 @@ Store rows separate earning, spending and discounts. Unverified data remains vis
 
 - Choose a station and find the first store in the first mobile viewport or immediately below it; secondary settings should not occupy multiple screens.
 - Read the Japanese branch name, point condition and cash/payment exclusion without opening a dialog.
-- Preserve 5–10 researched shops per station, explicit pilot coverage, snapshot date and flyer provenance.
+- Preserve 5–10 researched shops at the original pilot stations. Expanded station coverage must disclose incomplete shop research and provide useful source links; never pad missing coverage with invented branches.
 - Use native labelled controls, visible keyboard focus and 44px primary touch targets.
 - Pass desktop/mobile overflow checks, date boundaries and real browser model inference.
 - No claim of nationwide coverage, independent evaluation or actual outdoor testing.

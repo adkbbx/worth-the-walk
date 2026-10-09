@@ -1,4 +1,4 @@
-import {stations,stores,walletOptions,sources} from './catalog.mjs';
+import {stations,stores,walletOptions,sources,railLines,stationsOnLine} from './catalog.mjs';
 import {SNAPSHOT,japanToday,nextBonus,programs,matches,orderStores,reward} from './rules.mjs';
 const $=id=>document.getElementById(id);
 const escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -12,9 +12,29 @@ $('apply-options').addEventListener('click',showResults);
 if(date<'2026-10-01'||date>'2027-04-30')date=SNAPSHOT;
 try{wallet=JSON.parse(localStorage.getItem('station-points-wallet')||'[]').filter(p=>walletOptions.some(x=>x.id===p));}catch{}
 const params=new URLSearchParams(location.search);if(stations.some(s=>s.id===params.get('station')))selected=params.get('station');
-$('station').value=selected;$('visit-date').value=date;
+let selectedLine=stations.find(s=>s.id===selected).lineId;
+$('line').innerHTML=railLines.map(l=>`<option value="${l.id}">${escape(l.name)} · ${escape(l.ja)}</option>`).join('');
+function stationOptions(){
+  const list=stationsOnLine(stations,selectedLine);
+  $('line').value=selectedLine;
+  $('station').innerHTML=list.map(s=>`<option value="${s.id}">${escape(s.name)} · ${escape(s.ja)}</option>`).join('');
+  $('station').value=selected;
+}
+stationOptions();$('visit-date').value=date;
+$('coverage').textContent=`${stations.length} stations selectable · shop research incomplete`;
 $('wallet').innerHTML=walletOptions.map(p=>`<label class="checkbox"><input type="checkbox" value="${p.id}" ${wallet.includes(p.id)?'checked':''}><span>${p.name}${p.note?`<small>${p.note}</small>`:''}</span></label>`).join('');
 function lines(chain){
+  if(chain==='life')return [
+    ['Earn','d POINT / Ponta: 1 point per ¥200 before tax','Present one program before checkout. Cannot combine with LaCuCa or LC JCB. Life multipliers and bonus points do not apply.'],
+    ['Spend','d POINT / Ponta: 1 point = ¥1','Point-paid amounts do not earn points. Product exclusions apply; in-store service only.'],
+    ['Life card','LaCuCa accepted as an alternative','Own-program rates and campaign terms are not quoted here. Choose one program per checkout.'],
+    ['Sale','Item prices not verified','Open the official branch page for current flyers.']
+  ];
+  if(chain==='welcia')return [
+    ['Earn','V POINT: 1 / ¥200 · WAON POINT: 1 / ¥100 before tax','Base rates from the current official FAQ. Eligible card presentation, registration and product exclusions apply.'],
+    ['Spend','Check current redemption conditions','V POINT is listed by the official partner directory; do not assume the same special-day benefit as WAON POINT.'],
+    ['Sale','Item prices and special-day limits not verified','This is a drugstore. Food assortment varies; check the branch flyer before visiting.']
+  ];
   if(chain==='mybasket')return [
     ['Earn',`${reward(chain,date)} WAON POINT / ¥200 incl. tax`, 'Eligible: AEON Pay, AEON card, electronic WAON, or point card + cash / eligible AEON vouchers. Other credit cards excluded.'],
     ['Spend','WAON POINT accepted','Membership registration required. Electronic WAON points need conversion first.'],
@@ -47,7 +67,8 @@ function renderStore(s){
   const chips=supported.map(id=>`<span class="point-chip ${wallet.includes(id)?'owned':''}">${walletOptions.find(p=>p.id===id).name}${wallet.includes(id)?' · yours':''}</span>`).join('');
   const walk=s.walk===null?'See directions':s.walk===0?'Station-connected':`${s.walk} min walk`;
   const source=sources[s.chain];
-  const direction='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(stations.find(x=>x.id===selected).ja+'駅 東京')+'&destination='+encodeURIComponent(s.ja+' '+s.address)+'&travelmode=walking';
+  const origin=stations.find(x=>x.id===selected);
+  const direction='https://www.google.com/maps/dir/?api=1&origin='+encodeURIComponent(origin.ja+'駅 '+origin.region+' '+origin.line)+'&destination='+encodeURIComponent(s.ja+' '+s.address)+'&travelmode=walking';
   return `<article class="store" data-walk="${s.walk===null?'unknown':'known'}" aria-labelledby="name-${s.id}"><div class="store-top"><div><h3 id="name-${s.id}">${escape(s.name)}</h3><p class="store-ja" lang="ja">${escape(s.ja)}</p></div><span class="walk">${walk}<small>${escape(s.access)}</small></span></div><div class="store-location"><span>${escape(s.hours)}</span><span lang="ja">${escape(s.address)}</span></div><div class="store-body">${chips?`<div class="points-row">${chips}</div>`:''}${lines(s.chain).map(([label,title,condition])=>`<div class="offer-line"><span class="offer-label">${label}</span><div><strong class="${label==='Discount'?'discount':''}">${escape(title)}</strong><span class="condition">${escape(condition)}</span></div></div>`).join('')}</div><details><summary>Sources &amp; checkout details<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></summary><div class="source-detail"><p>Checked ${fmt(SNAPSHOT)}. Branch facts and chain rules are separate sources. Special hours, exclusions and stock can change.</p><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Official branch page</a>${source?`<a href="${escape(source)}" target="_blank" rel="noopener noreferrer">Point / membership rules</a>`:''}${s.chain==='mybasket'?`<a href="${sources.mybasketFaq}" target="_blank" rel="noopener noreferrer">Payment &amp; exclusions FAQ</a>`:''}<p>Blue labels identify your selected memberships, not a guarantee that your payment qualifies.</p></div></details><div class="store-bottom"><a href="${escape(s.url)}" target="_blank" rel="noopener noreferrer">Store information</a><a href="${s.chain==='ok'?'https://ok-corporation.jp/flyer/':escape(s.url)}" target="_blank" rel="noopener noreferrer">Flyer / notices</a><a class="directions" href="${escape(direction)}" target="_blank" rel="noopener noreferrer" aria-label="Walking directions to ${escape(s.ja)}">Directions</a></div></article>`;
 }
 function render(){
@@ -57,18 +78,23 @@ function render(){
   $('station-code').textContent=station.code;
   $('station-description').textContent=station.line+' · '+station.description;
   const all=stores.filter(s=>s.station===selected);
+  const programList=walletOptions.filter(p=>p.url&&(!wallet.length||wallet.includes(p.id)));
+  $('program-guide').innerHTML=programList.map(p=>`<p><a target="_blank" rel="noopener noreferrer" href="${escape(p.url)}">${escape(p.name)} · official guide</a><span>${escape(p.guide)}</span></p>`).join('')||'<p>Select a major point program to see its official guide.</p>';
   let list=orderStores(all,wallet,date);
   const only=$('only-matches').checked;
   if(only)list=list.filter(s=>matches(s,wallet,date));
-  $('result-count').textContent=`${list.length} of ${all.length} researched shops`;
+  $('result-count').textContent=`${list.length} of ${all.length} researched shops${all.length<5?' · incomplete coverage':''}`;
   $('sort-label').textContent=wallet.length?'Your cards first, then published walk time':'Published walk times first';
   $('date-note').textContent=`Visit: ${fmt(date)} · Sources checked ${fmt(SNAPSHOT)}${date!==SNAPSHOT?' · Recurring dates projected from checked rules':''}`;
-  $('stores').innerHTML=list.length?list.map(renderStore).join(''):`<div class="empty"><h3>${wallet.length?'No verified card matches here':'Choose a card to filter shops'}</h3><p>${wallet.length?'Other shops may support your points, but this pilot has not verified them.':'Select memberships on the left, or show all researched shops.'}</p><button class="secondary" id="show-all">Show all shops</button></div>`;
+  const localSearch='https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(station.ja+'駅 '+station.region+' スーパーマーケット');
+  const coverageNote=all.length<5?`<div class="coverage-note"><strong>Shop research is incomplete here.</strong><p>${all.length?'These are the branches checked so far; this is not the full local selection.':'This station is available, but nearby branches and their point conditions have not been checked yet.'}</p><a href="${escape(localSearch)}" target="_blank" rel="noopener noreferrer">Look for supermarkets around this station</a> · <a href="${escape(station.source)}" target="_blank" rel="noopener noreferrer">Official line information</a></div>`:'';
+  $('stores').innerHTML=coverageNote+(list.length?list.map(renderStore).join(''):all.length?`<div class="empty"><h3>${wallet.length?'No verified card matches here':'Choose a card to filter shops'}</h3><p>${wallet.length?'Other shops may support your points, but this pilot has not verified them. Check the point-program guide for official partners.':'Select memberships on the left, or show all researched shops.'}</p><button class="secondary" id="show-all">Show all shops</button></div>`:'');
   $('show-all')?.addEventListener('click',()=>{$('only-matches').checked=false;render();});
   const bonus=nextBonus(date);
-  $('next-bonus').innerHTML=`<div class="bonus-date">${fmt(bonus.date)}</div><p>My Basket · ${bonus.multiplier}× WAON POINT<br>Eligible payments; exclusions apply.</p><button type="button" id="use-bonus">Compare shops on this date</button>`;
-  $('use-bonus').addEventListener('click',()=>{date=bonus.date;$('visit-date').value=date;render();showResults();});
+  $('next-bonus').innerHTML=all.some(s=>s.chain==='mybasket')?`<div class="bonus-date">${fmt(bonus.date)}</div><p>My Basket · ${bonus.multiplier}× WAON POINT<br>Eligible payments; exclusions apply.</p><button type="button" id="use-bonus">Compare shops on this date</button>`:'<p>No recurring bonus date has been verified for the checked shops at this station.</p>';
+  $('use-bonus')?.addEventListener('click',()=>{date=bonus.date;$('visit-date').value=date;render();showResults();});
 }
+$('line').addEventListener('change',e=>{selectedLine=e.target.value;selected=stationsOnLine(stations,selectedLine)[0].id;stationOptions();history.replaceState(null,'','?station='+selected);$('semantic-results').replaceChildren();render();});
 $('station').addEventListener('change',e=>{selected=e.target.value;history.replaceState(null,'','?station='+selected);$('semantic-results').replaceChildren();render();});
 $('wallet').addEventListener('change',()=>{wallet=[...$('wallet').querySelectorAll('input:checked')].map(n=>n.value);try{localStorage.setItem('station-points-wallet',JSON.stringify(wallet));}catch{}render();});
 $('only-matches').addEventListener('change',render);
@@ -94,6 +120,6 @@ $('semantic-form').addEventListener('submit',async e=>{
     const chains=new Set(stores.filter(s=>s.station===selected).map(s=>s.chain));
     const scored=index.filter(n=>chains.has(n.chain)).map(n=>({...n,score:n.vector.reduce((sum,v,i)=>sum+v*vector[i],0)})).sort((a,b)=>b.score-a.score).slice(0,3);
     $('semantic-results').innerHTML=scored.map(n=>`<article><strong>${escape(n.title)}</strong><p>${escape(n.summary)}</p><a target="_blank" rel="noopener noreferrer" href="${escape(n.source)}">Read official notice</a><p><small>Semantic match ${n.score.toFixed(2)} · not a probability</small></p></article>`).join('');
-    $('ai-status').textContent='Closest notices for this station. Review the source and dates before acting.';
+    $('ai-status').textContent=scored.length?'Closest notices for this station. Review the source and dates before acting.':'No indexed notices for this station yet. Read the branch rules or official point-program guide.';
   }catch(e){$('ai-status').textContent='Search could not run. Try a shorter query or reload the page.';}finally{button.disabled=false;}
 });

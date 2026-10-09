@@ -18,6 +18,18 @@ Walk times are official branch estimates from the named station, not measured ro
 
 Hours refer to grocery floors where the branch page distinguishes floors. After-midnight closing is labelled with the following day. Special-day changes are not modeled. Missing support means “not verified,” not “not accepted.”
 
+## Station and point-program expansion
+
+The complete operator-checked station lists and source links are in `data/rail-lines.mjs`; the generated [station coverage table](STATIONS.md) includes all 74 selectable stations. Shitte is shared between the main Nambu line and its branch, not counted twice. Musashi-Mizonokuchi and Mizonokuchi remain distinct operator stations. Oshiage is included on the Skytree branch. Den-en-toshi belongs to Tokyu. Station availability does not mean nearby stores have been researched.
+
+Additional branch sources: [Life Shukugawara](https://store.lifecorp.jp/detail/east823/) (5-minute walk from Shukugawara, 10 from Noborito), [Life Sakura-shimmachi](https://store.lifecorp.jp/detail/east639/), [Life Mizoguchi](https://store.lifecorp.jp/detail/east648/) (10-minute walk from Takatsu), and [Welcia Takenotsuka 1-chome](https://store.welcia.co.jp/welcia/spot/detail?code=1206D). Welcia walking time and food assortment are not verified. Life’s delivery-only Sakura-shimmachi center is excluded.
+
+[Life common-point rules](https://www.lifecorp.jp/service/point/index.html): d POINT or Ponta earn 1 per ¥200 before tax, redeem 1 as ¥1, and cannot combine with LaCuCa/LC JCB. Product exclusions apply. Life’s own multipliers do not apply, and point-paid amounts do not earn points. [Welcia’s current base-point FAQ](https://welcia.tayori.com/q/yk-01/detail/1150044/) gives V POINT 1 per ¥200 before tax and WAON POINT 1 per ¥100 before tax; exclusions apply. The [V POINT partner directory](https://t-point.tsite.jp/store/) lists Welcia. No special-day redemption value or stacking guarantee is made.
+
+The [Maruetsu termination notice](https://www.maruetsu.co.jp/wp-content/uploads/2025/12/20251218-2.pdf) ends V POINT service on 30 June 2026. No current Maruetsu V POINT match is inferred from historical affiliations. PayPay, nanaco, JRE POINT and TOBU POINT choices link to official program information; they do not imply verified branch support or uniform earning rates. Payment acceptance alone does not establish loyalty-card eligibility.
+
+The Life/Welcia rules and general program guides are outside the original semantic notice index. Its existing evaluation figures apply only to the original 14 notices.
+
 ## Updating a snapshot
 
 1. Recheck the official branch and program sources.
