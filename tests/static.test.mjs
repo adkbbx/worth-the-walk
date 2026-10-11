@@ -157,19 +157,22 @@ test('service worker precaches startup dependencies and keeps APIs/photos off it
   assert.equal(await (await cache.match('/chirashi.mjs')).text(),'fresh module','non-200 must not replace a cached success');
   assert.equal(timers.size,0,'non-navigation shell requests have no timeout');
   networkResponse=new Response('fast navigation');
-  assert.equal(await (await intercepted('/fast',{mode:'navigate'})).text(),'fast navigation');
+  assert.equal(await (await intercepted('/',{mode:'navigate'})).text(),'fast navigation');
+  assert.equal(await (await cache.match('/index.html')).text(),'fast navigation','root navigation refreshes the canonical shell');
   assert.equal(timers.size,0,'fast navigation clears its timeout');
+  await cache.put('/index.html',new Response('other navigation'));
 
   let finishNetwork;
   pendingNetwork=new Promise(resolve => { finishNetwork=resolve; });
-  const slowNavigation=intercepted('/index.html',{mode:'navigate'});
+  const slowNavigation=intercepted('/',{mode:'navigate'});
   await new Promise(setImmediate);
   assert.equal(timers.size,1);
   for (const callback of timers.values()) callback();
-  assert.deepEqual(Buffer.from(await (await slowNavigation).arrayBuffer()),await readFile('dist/index.html'));
+  assert.equal(await (await slowNavigation).text(),'fast navigation','timeout prefers the requested URL over the canonical shell');
   finishNetwork(new Response('background refresh'));
   await Promise.all(background);
   assert.equal(await (await cache.match('/index.html')).text(),'background refresh','late network success updates the cache');
+  assert.equal(await (await cache.match('/')).text(),'background refresh');
 
   stores.clear();
   pendingNetwork=new Promise(resolve => { finishNetwork=resolve; });
@@ -186,12 +189,31 @@ test('service worker precaches startup dependencies and keeps APIs/photos off it
   pendingNetwork=undefined;
   networkResponse=undefined; offline=true;
   assert.equal(await (await intercepted('/chirashi.mjs')).text(),'fresh module','shell falls back when the network fails');
-  assert.deepEqual(Buffer.from(await (await intercepted('/?resume=1',{mode:'navigate'})).arrayBuffer()),await readFile('dist/index.html'));
+  assert.equal(await (await intercepted('/?resume=1',{mode:'navigate'})).text(),'background refresh','offline fallback prefers the requested URL');
+  assert.deepEqual(Buffer.from(await (await intercepted('/missing',{mode:'navigate'})).arrayBuffer()),await readFile('dist/index.html'));
   offline=false; networkResponse=new Response('font bytes');
   const font='/fonts/offline-policy-fixture.woff2';
   assert.equal(await (await intercepted(font)).text(),'font bytes');
   const before=networkCalls; offline=true;
   assert.equal(await (await intercepted(font)).text(),'font bytes'); assert.equal(networkCalls,before,'font hit avoids the network');
+});
+
+test('static cache retries a transient read failure without a changed ETag',async () => {
+  const source=await readFile('scripts/serve.mjs','utf8');
+  const code=source.slice(source.indexOf('        // One entry per path;'),source.indexOf('        if (encoding) {'));
+  const staticFiles=new Map(), expected=Buffer.from('recovered file');
+  let reads=0;
+  const load=runInNewContext('(async () => {\n'+code+'\nreturn body; })',{
+    staticFiles,path:'/fixture',etag:'unchanged',readFile:async () => {
+      if (++reads === 1) throw new Error('Transient read failure');
+      return expected;
+    }
+  });
+  await assert.rejects(load(),/Transient read failure/);
+  assert.equal(staticFiles.size,0,'failed promise is evicted');
+  assert.deepEqual(await load(),expected);
+  assert.deepEqual(await load(),expected);
+  assert.equal(reads,2,'successful retry is cached');
 });
 
 test('weak static ETags revalidate GET/HEAD across encodings without a body',async () => {

@@ -7,6 +7,83 @@ const tile=raw=>normalizeTile(raw);
 const page=(id,raw)=>({id,tiles:[tile(raw)]});
 const empty={business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false,flyer_count:1};
 
+test('mergeFallback dedupes offer text and printed amounts, preserving textless offers',()=>{
+  const offers=[
+    {text_en:'Eggs',regular_yen:198,offer_yen:158},
+    {text_en:'Chicken',regular_yen:198,offer_yen:158},
+    {text_en:'Eggs',regular_yen:208,offer_yen:158},
+    {text_en:'Eggs',regular_yen:198,offer_yen:148},
+    {text_en:'Eggs',regular_yen:198,offer_yen:158,discount_yen:40},
+    {text_en:'Eggs',regular_yen:198,offer_yen:158,percent_off:20},
+    {text_ja:'卵',text_en:'Eggs',regular_yen:198,offer_yen:158},
+    {text_ja:'卵',text_en:'Different translation',regular_yen:198,offer_yen:158},
+    {discount_yen:40},{discount_yen:40}
+  ];
+  const merged=mergeFallback([page('a',{offers}),page('b',{offers:[offers[0]]})]);
+  assert.equal(merged.offers.length,9);
+  assert.deepEqual(merged.offers.map(o=>o.text_en),['Eggs','Chicken','Eggs','Eggs','Eggs','Eggs','Eggs',null,null]);
+});
+
+test('identical action toasts replace the Undo callback',()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const code=source.slice(source.indexOf('function notify('),source.indexOf('function save()'));
+  const notice={hidden:true,dataset:{},children:[],replaceChildren(){this.children=[];},append(el){this.children.push(el);},setAttribute(){}};
+  const notify=runInNewContext(code+'\nnotify',{$:()=>notice,noticeTimer:null,clearTimeout(){},setTimeout(){},
+    modelText:String,closeIcon:'',safely:fn=>fn(),document:{createElement:()=>({addEventListener(type,callback){this[type]=callback;},setAttribute(){}})}});
+  let restored;
+  notify('Removed Aikido dojo from today\'s walk.',{actionLabel:'Undo',onAction:()=>{restored='first';}});
+  const first=notice.children[1];
+  notify('Removed Aikido dojo from today\'s walk.',{actionLabel:'Undo',onAction:()=>{restored='second';}});
+  assert.notEqual(notice.children[1],first);
+  notice.children[1].click(); assert.equal(restored,'second');
+});
+
+test('sample eggs count once and retain the ticket sticker',()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const sample=source.slice(source.indexOf('function sampleFlyers('),source.indexOf('async function drawSampleThumb('));
+  const deals=source.slice(source.indexOf('function dealParts('),source.indexOf('function revokeThumbs('));
+  const {sampleFlyers,dealParts,stickerHTML}=runInNewContext(sample+deals+'\n({sampleFlyers,dealParts,stickerHTML})',{
+    japanToday:()=> '2026-10-12',sampleOffset:()=>({}),currentOffers:f=>f.offers.map(entry=>({entry})),printedValue,
+    shortText:String,money:v=>'¥'+v,modelText:String
+  });
+  const market=sampleFlyers({})[2];
+  assert.equal(market.offers.length,0); assert.equal(market.items.length,3);
+  assert.equal(market.items.filter(i=>i.name_en === 'Eggs').length,1);
+  assert.equal(savings(market.items.map(entry=>({entry}))).yen,110);
+  assert.equal(dealParts(market).label,'Eggs');
+  assert.equal(stickerHTML(market),'<span class="cw-sticker">Eggs <b>¥158</b> <s><span class="cw-sr">was </span>¥198</s></span>');
+});
+
+test('discard cancels only a read start request and empty reads never ask for a start',async()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const ask=source.slice(source.indexOf('function askStart('),source.indexOf('async function continueStart('));
+  const discard=source.slice(source.indexOf("    case 'discard':"),source.indexOf("    case 'discard':")+source.slice(source.indexOf("    case 'discard':")).indexOf('\n'));
+  let renders=0;
+  const sandbox={photos:[],startRequest:null,startPicker:true,view:'home',busy:false,preparing:false,recovered:true,reading:{},
+    state:{pages:{}},thumbBlobs:new Map(),photoDB:async()=>{},URL:{revokeObjectURL(){}},render:()=>{renders++;},
+    $:()=>({focus(){},scrollIntoView(){}})};
+  const {askStart,discardPhotos}=runInNewContext(ask+'\nasync function discardPhotos(){switch("discard"){'+discard+'}}\n({askStart,discardPhotos})',sandbox);
+  askStart('read'); assert.equal(sandbox.startRequest,null); assert.equal(renders,0);
+  sandbox.photos=[{id:'p',url:'blob:p'}]; askStart('read',['missing']); assert.equal(sandbox.startRequest,null);
+  askStart('read',['p']); assert.equal(sandbox.startRequest.type,'read');
+  await discardPhotos(); assert.equal(sandbox.startRequest,null); assert.equal(sandbox.startPicker,false);
+  assert.equal(sandbox.photos.length,0); assert.equal(sandbox.reading,null); assert.equal(renders,2);
+  askStart('sample'); await discardPhotos(); assert.equal(sandbox.startRequest.type,'sample');
+});
+
+test('clearSample removes mixed sample/catalog outings and resets the active walk view',async()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const code=source.slice(source.indexOf('async function clearSample('),source.indexOf('function newOuting('));
+  const state={flyers:[{id:'sample',sample:true,pageIds:['sample-p']},{id:'real',pageIds:[]}],
+    outings:[{id:'mixed',status:'active',stopIds:['sample','catalog']},{id:'real-walk',stopIds:['real']},{id:'empty',stopIds:[]}],labels:{sample:1,real:1},pages:{},overrides:{}};
+  const sandbox={state,view:'walk',activeOuting:()=>state.outings.find(o=>o.status === 'active'),scores:new Map(),allItems:new Map(),
+    addressOpen:new Set(),thumbBlobs:new Map(),photoDB:async()=>{},save(){},chosenStops:null,groceryChoice:null};
+  const clearSample=runInNewContext(code+'\nclearSample',sandbox);
+  assert.equal(await clearSample(),true); assert.equal(sandbox.view,'home');
+  assert.deepEqual(state.outings.map(o=>o.id),['real-walk','empty']); assert.deepEqual(state.flyers.map(f=>f.id),['real']);
+  assert.deepEqual(state.labels,{real:1}); assert.equal(await clearSample(),false);
+});
+
 test('reading ETA includes unread flyers and sorting backlog, counting known groups once',()=>{
   const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
   const code=source.slice(source.indexOf('function updateReading()'),source.indexOf('function locateControl('));
@@ -248,7 +325,7 @@ test('mergeFallback combines pages, dedupes entries and uses category majority',
   assert.deepEqual(flyer.business,{name:'テスト教室',branch:'テスト支店',kind:'教室'});
   assert.equal(flyer.category,'lesson');assert.equal(flyer.address,'東京都テスト区1-2-3');assert.equal(flyer.summary_en,'Try a lesson.');assert.equal(flyer.hours,'10:00–18:00');
   assert.equal(flyer.valid_from_text,'10/1');assert.equal(flyer.valid_to_text,'10/31');
-  assert.deepEqual(flyer.offers.map(o=>[o.text_ja,o.page]),[['無料・体験',0],['テスト割引',1]]);
+  assert.deepEqual(flyer.offers.map(o=>[o.text_ja,o.page]),[['無料・体験',0],['無料 体験',1],['テスト割引',1]]);
   assert.deepEqual(flyer.items.map(i=>[i.price_yen,i.page]),[[158,0],[198,1]]);
   assert.deepEqual(flyer.phones,['0120-000-111','0120-000-222']);assert.deepEqual(flyer.websites,['https://example.co.jp','https://example.org']);
   assert.equal(flyer.comes_to_you,true);assert.equal(flyer.delivery,true);assert.equal(flyer.bucket,'home');assert.equal(flyer.needsLookup,false);assert.equal(flyer.deadline,null);assert.equal(flyer.chain,null);

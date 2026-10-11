@@ -182,8 +182,9 @@ export function mergeFallback(pages) {
       for(const key of ['summary_en','address','hours','valid_from_text','valid_to_text'])flyer[key] ??= tile[key];
       if(tile.category!=='other')categories.set(tile.category,(categories.get(tile.category) || 0)+1);
       for(const offer of tile.offers) {
-        const key=normText(offer.text_ja);
-        if(!offers.has(key)) { offers.add(key);flyer.offers.push({...offer,page}); }
+        const text=normText(offer.text_ja) || normText(offer.text_en);
+        const key=JSON.stringify([text,offer.regular_yen,offer.offer_yen,offer.discount_yen,offer.percent_off]);
+        if(!text || !offers.has(key)) { offers.add(key);flyer.offers.push({...offer,page}); }
       }
       flyer.items.push(...tile.items.map(item=>({...item,page})));
       tile.phones.forEach(phone=>phones.add(phone));

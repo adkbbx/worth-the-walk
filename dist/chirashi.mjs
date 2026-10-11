@@ -78,7 +78,7 @@ $('notice').after(announcer);
 
 function notify(message = '', {tone='info',actionLabel,onAction} = {}) {
   const notice=$('notice');
-  if (message && !notice.hidden && notice.dataset.message === message && notice.dataset.tone === tone) return;
+  if (!onAction && message && !notice.hidden && notice.dataset.message === message && notice.dataset.tone === tone) return;
   notice.dataset.message=message;
   clearTimeout(noticeTimer);
   notice.replaceChildren(); notice.hidden=!message;
@@ -112,6 +112,7 @@ function home() {
 }
 const rounded = (value,digits) => Number(value.toFixed(digits));
 function askStart(type,ids=null) {
+  if (type === 'read' && !photos.some(p => !ids || ids.includes(p.id))) return;
   startRequest={type,ids}; view='home'; render();
   const heading=$('start-heading'); heading.focus(); heading.scrollIntoView({block:'center'});
 }
@@ -514,9 +515,9 @@ async function retryPages(ids) {
 }
 async function readPhotos(ids=null) {
   if (readUnavailable()) return;
-  if (!home()) { askStart('read',ids); return; }
   if (!photos.length || busy || preparing || recovering) return;
   const batch=photos.filter(p => !ids || ids.includes(p.id)); if (!batch.length) return;
+  if (!home()) { askStart('read',ids); return; }
   const previous=reading;
   const batchWithFailures=ids ? [...(previous?.batch ?? []).filter(p => !batch.includes(p)),...batch].sort((a,b) => a.pageNumber-b.pageNumber) : batch;
   busy=true; recovered=false; view='home';
@@ -1066,7 +1067,7 @@ function sampleFlyers(h) {
   const rows=[
     ['walk','fitness','Pilates studio','さくらピラティス',[offer('Trial',3300,1000,18)],18,-120,240,['0120-000-101']],
     ['walk','cleaning','Dry cleaner','ほしクリーニング',[offer('Shirts',297,98,19)],19,-190,320,[]],
-    ['walk','supermarket','Supermarket','あおぞら市場',[offer('Eggs',198,158,0,'sale')],0,-250,410,[]],
+    ['walk','supermarket','Supermarket','あおぞら市場',[],0,-250,410,[]],
     ['walk','lesson','Aikido dojo','わかば合気道場',[offer('Free trial',3300,0,49,'free_trial')],49,-320,530,[]],
     ['home','food_delivery','Sushi delivery','ほし寿司',[{kind:'coupon',text_en:'¥500 off orders over ¥3,000',discount_yen:500,deadline_text:date(19)}],19,-120,240,['0120-000-105']],
     ['toss','buying_service','Gold buyer','きらり買取',[],null,-190,320,[]],
@@ -1107,7 +1108,8 @@ async function sampleMailbox() {
 async function clearSample() {
   const samples=state.flyers.filter(f => f.sample); if (!samples.length) return false;
   const ids=new Set(samples.map(f => f.id));
-  state.outings=state.outings.filter(o => !o.stopIds.length || !o.stopIds.every(id => ids.has(id)));
+  if (activeOuting()?.stopIds.some(id => ids.has(id))) view='home';
+  state.outings=state.outings.filter(o => !o.stopIds.some(id => ids.has(id)));
   state.flyers=state.flyers.filter(f => !f.sample);
   for (const f of samples) {
     delete state.labels[f.id]; scores.delete(f.id); allItems.delete(f.id); addressOpen.delete(f.id);
@@ -1146,7 +1148,7 @@ async function action(button) {
     case 'use-station': if (useStation($('start-line').value,$('start-station').value)) { notify(); await continueStart(); } break;
     case 'stop-reading': stopReading(); break;
     case 'retry-page': await retryPages([id]); break;
-    case 'discard': if (!busy && !preparing) { for (const p of photos) { await photoDB('delete',p.id); if (!state.pages[p.id]) { thumbBlobs.delete(p.id); await photoDB('delete',p.id,'thumbs'); } URL.revokeObjectURL(p.url); } photos=[]; recovered=false; reading=null; render(); } break;
+    case 'discard': if (!busy && !preparing) { for (const p of photos) { await photoDB('delete',p.id); if (!state.pages[p.id]) { thumbBlobs.delete(p.id); await photoDB('delete',p.id,'thumbs'); } URL.revokeObjectURL(p.url); } photos=[]; recovered=false; reading=null; if (startRequest?.type === 'read') { startRequest=null; startPicker=false; } render(); } break;
     case 'flyer-sheet': openSheet('flyer',id,button); break;
     case 'page-sheet': openSheet('page',id,button); break;
     case 'bucket-sheet': openSheet('bucket',id,button); break;

@@ -1,5 +1,5 @@
 // Bump this version when changing the app shell or its startup dependencies.
-const VERSION = 'wtw-2026-10-12-2';
+const VERSION = 'wtw-2026-10-12-3';
 const SHELL = [
   '/', '/index.html', '/chirashi.mjs', '/chirashi.css', '/theme.js',
   '/manifest.webmanifest', '/walks.mjs', '/mailbox.mjs', '/rules.mjs',
@@ -32,7 +32,10 @@ async function networkFirst(request, navigation, event) {
   try {
     const network = (async () => {
       const response = await fetch(request);
-      if (response.status === 200) await cache.put(request, response.clone()).catch(() => {});
+      if (response.status === 200) {
+        await cache.put(request, response.clone()).catch(() => {});
+        if (navigation) await cache.put('/index.html', response.clone()).catch(() => {});
+      }
       return response;
     })();
     if (!navigation) return await network;
@@ -43,10 +46,11 @@ async function networkFirst(request, navigation, event) {
       new Promise(resolve => { timer = setTimeout(resolve, 4000); })
     ]);
     if (response) return response;
-    const cached = await cache.match('/index.html', { ignoreSearch: true });
+    const cached = await cache.match(request, { ignoreSearch: true }) || await cache.match('/index.html', { ignoreSearch: true });
     return cached || await network;
   } catch (error) {
-    const cached = await cache.match(navigation ? '/index.html' : request, { ignoreSearch: true });
+    const cached = await cache.match(request, { ignoreSearch: true }) ||
+      (navigation && await cache.match('/index.html', { ignoreSearch: true }));
     if (cached) return cached;
     throw error;
   } finally {

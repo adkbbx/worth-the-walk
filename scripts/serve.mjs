@@ -173,6 +173,11 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
         if (cached?.etag !== etag) {
           cached = { etag, body: readFile(path), encodings: new Map() };
           staticFiles.set(path, cached);
+          const entry = cached;
+          cached.body = cached.body.catch(error => {
+            if (staticFiles.get(path) === entry) staticFiles.delete(path);
+            throw error;
+          });
         }
         let body = await cached.body;
         if (encoding) {
