@@ -564,14 +564,15 @@ function totals(o) {
 }
 
 let sealRender = 0;
-function sealHTML(stamp,{current=true,animate=true} = {}) {
-  const p=stop(stamp.stopId), f=p?.flyer, kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : 'Stamped place'));
+function sealHTML(stamp,{current=true,animate=true,finished=false} = {}) {
+  const p=stop(stamp.stopId), f=p?.flyer, kind=finished ? 'Worth the walk' : capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : 'Stamped place'));
   const id=stamp.stopId+':'+stamp.at;
   const hash=[...id].reduce((hash,c) => (hash*31+c.charCodeAt(0)) >>> 0,0), angle=hash%17-8;
   const dojo=/dojo|aikido|karate|judo|kendo|martial|道場/i.test([f?.business?.kind,f?.business?.name,p?.name].join(' '));
-  const [mark,ink]=dojo ? ['道','teal'] : ['lesson','fitness'].includes(p?.category) ? ['体','indigo'] : p?.category === 'cleaning' ? ['洗','green'] : p?.category === 'clinic' ? ['医','green'] : ['supermarket','drugstore','shop'].includes(p?.category) ? ['市','vermilion'] : ['restaurant','food_delivery'].includes(p?.category) ? ['食','vermilion'] : p?.category === 'event' ? ['祭','teal'] : ['歩','teal'];
+  const [mark,ink]=finished ? ['済','vermilion'] : dojo ? ['道','teal'] : ['lesson','fitness'].includes(p?.category) ? ['体','indigo'] : p?.category === 'cleaning' ? ['洗','green'] : p?.category === 'clinic' ? ['医','green'] : ['supermarket','drugstore','shop'].includes(p?.category) ? ['市','vermilion'] : ['restaurant','food_delivery'].includes(p?.category) ? ['食','vermilion'] : p?.category === 'event' ? ['祭','teal'] : ['歩','teal'];
   const arcId='stamp-arc-'+hash+'-'+(++sealRender), label=String(kind).toUpperCase(), date=japanToday(new Date(stamp.at)).replaceAll('-','.');
-  return `<svg class="cw-seal${current ? ' cw-stamp' : ''} ${stamp.kind === 'gps' ? 'gps' : 'self'}${animate && recentStamp === stamp.stopId ? ' new' : ''}" viewBox="0 0 100 100" style="--c:var(--ink-${ink});--r:${angle}deg" role="img" aria-label="${escape(kind)} stamp, ${escape(formatDate(stamp.at))}, ${stamp.kind === 'gps' ? 'GPS verified' : 'stamped without GPS'}">
+  const arriving=current && animate && recentStamp === stamp.stopId;
+  return `${arriving ? `<span class="cw-seal-impression" style="--c:var(--ink-${ink})">` : ''}<svg class="cw-seal${finished ? ' cw-finished-seal' : ''}${current ? ' cw-stamp' : ''} ${stamp.kind === 'gps' ? 'gps' : 'self'}${arriving ? ' new' : ''}" viewBox="0 0 100 100" style="--c:var(--ink-${ink});--r:${finished ? -9 : angle}deg" ${finished ? 'aria-hidden="true"' : `role="img" aria-label="${escape(kind)} stamp, ${escape(formatDate(stamp.at))}, ${stamp.kind === 'gps' ? 'GPS verified' : 'stamped without GPS'}"`}>
     <g filter="url(#ink)">
       <circle class="outer" cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="4.2"/>
       <circle cx="50" cy="50" r="39.5" fill="none" stroke="currentColor" stroke-width="1.1"/>
@@ -581,34 +582,44 @@ function sealHTML(stamp,{current=true,animate=true} = {}) {
       <rect x="31" y="69.5" width="38" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
       <text class="date" x="50" y="77.6" text-anchor="middle">${date}</text>
     </g>
-  </svg>`;
+  </svg>${arriving ? '</span>' : ''}`;
 }
 function stampCard(stamp) {
   const p=stop(stamp.stopId), f=p?.flyer, kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : 'Stamped place'));
   const name=f?.business?.name ?? p?.name;
   return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}">${sealHTML(stamp)}<div class="cw-stamp-name">${modelText(kind)}${name ? `<small${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</small>` : ''}</div><p class="cw-meta">${escape(formatDate(stamp.at))}</p></div>`;
 }
-function emptyStamp(label='',hidden=false) { return `<div class="cw-spot"${hasJapanese(label) ? ' lang="ja"' : ''}${hidden ? ' aria-hidden="true"' : ''}>${escape(label)}</div>`; }
+function emptyStamp(label='',hidden=false) { return `<div class="cw-spot"${hasJapanese(label) ? ' lang="ja"' : ''}${hidden ? ' aria-hidden="true"' : ''}>${label === 'Next stamp' ? '<span class="cw-spot-mark" lang="ja" aria-hidden="true">歩</span>' : ''}<span>${escape(label)}</span></div>`; }
+const stopKind = id => { const p=stop(id); return capital(p?.flyer?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : p?.name ?? 'Stop')); };
+function stopState(o,id,i) { return o.stamps.some(s => s.stopId === id) ? 'stamped' : (o.skipped ?? []).includes(id) ? 'skipped' : i === currentCursor(o) ? 'current' : 'upcoming'; }
+function lineMap(o) {
+  return `<div class="cw-line-map" aria-hidden="true" style="--stations:${o.stopIds.length+2}"><span class="cw-line-station endpoint"><i class="cw-line-dot"></i><small lang="ja">発</small></span>${o.stopIds.map((id,i) => `<span class="cw-line-station ${stopState(o,id,i)}${i === currentCursor(o) ? ' current' : ''}" data-line-stop="${escape(id)}">${i === currentCursor(o) ? '<em lang="ja">次</em>' : ''}<i class="cw-line-dot"></i><small>${i+1}</small>${i === currentCursor(o) ? `<b>${escape(shortText(stopKind(id).toUpperCase(),12))}</b>` : ''}</span>`).join('')}<span class="cw-line-station endpoint"><i class="cw-line-dot"></i><small lang="ja">着</small></span></div>`;
+}
 function walkRally(o) {
-  return `<div class="cw-rally" aria-label="This walk's stamps">${o.stopIds.slice(0,5).map((id,i) => { const stamped=o.stamps.find(s => s.stopId === id), p=stop(id); return stamped ? sealHTML(stamped,{current:false,animate:false}) : emptyStamp(`${i+1} · ${capital(p?.flyer?.business?.kind ?? p?.name ?? 'Stop')}`); }).join('')}</div>`;
+  return `<aside class="cw-walk-ticket" aria-label="This walk"><h2 class="cw-print cw-walk-ticket-title">This walk</h2><ol class="cw-mini-route"><li><span class="cw-dot" aria-hidden="true">発</span><span class="cw-print">Start</span></li>${o.stopIds.map((id,i) => { const status=stopState(o,id,i), stamped=o.stamps.find(s => s.stopId === id); return `<li class="${status}"${status === 'current' ? ' aria-current="step"' : ''}><span class="cw-dot" aria-hidden="true">${i+1}</span><div><strong>${modelText(stopKind(id))}</strong><small class="cw-print">${status === 'stamped' ? '✓ stamped' : status === 'current' ? '→ current' : status}</small></div>${stamped ? `<span class="cw-mini-seal">${sealHTML(stamped,{current:false,animate:false})}</span>` : ''}</li>`; }).join('')}<li><span class="cw-dot" aria-hidden="true">着</span><span class="cw-print">Finish</span></li></ol><div class="cw-rally" aria-label="This walk's stamps">${o.stopIds.map((id,i) => { const stamped=o.stamps.find(s => s.stopId === id); return stamped ? sealHTML(stamped,{current:false,animate:false}) : emptyStamp(`${i+1} · ${stopKind(id)}`); }).join('')}</div></aside>`;
 }
 function stamp(o,id,kind,distance = null) {
   if (o.status !== 'active' || o.stamps.some(s => s.stopId === id)) return;
   o.stamps.push({stopId:id,at:now(),kind,distance});
   if (flyer(id)?.bucket !== 'keep' && flyer(id)) state.labels[id]=1;
   recentStamp=id;
-  stampMessages.delete(id); save(); render(); requestAnimationFrame(() => { recentStamp=null; }); void rank();
+  stampMessages.delete(id); save(); render();
+  notify(`Stamped: ${stopKind(id)}`);
+  const target=document.querySelector('.cw-used h2') ?? document.querySelector('[data-action="next-stop"]');
+  if (target) { if (target.tagName !== 'BUTTON') target.tabIndex=-1; target.focus({preventScroll:true}); }
+  if (kind === 'gps') { try { navigator.vibrate?.(18); } catch {} }
+  requestAnimationFrame(() => { recentStamp=null; }); void rank();
 }
 async function here(o,id,button) {
   const p = stop(id); if (!p) { notify('This stop no longer has a location.'); return; }
-  button.disabled = true; button.textContent = 'Checking location…';
+  button.disabled = true; button.setAttribute('aria-busy','true'); button.innerHTML = '<span class="cw-spinner" aria-hidden="true"></span>Checking location…';
   try {
     const position = await new Promise((resolve,reject) => navigator.geolocation ? navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}) : reject(new Error('Location unavailable')));
     const distance = distanceMeters({lat:position.coords.latitude,lon:position.coords.longitude},p);
     if (distance-position.coords.accuracy <= 200) stamp(o,id,'gps',Math.round(distance));
     else { stampMessages.set(id,{distance:Math.round(distance),text:`You're ${Math.round(distance)} m away — keep walking`}); render(); }
-  } catch { stamp(o,id,'self'); notify('Location unavailable. Added a self-reported outline stamp.'); }
-  finally { button.disabled = false; }
+  } catch { stamp(o,id,'self'); notify(`Stamped: ${stopKind(id)}. Location unavailable. Added a self-reported outline stamp.`); }
+  finally { button.disabled = false; button.removeAttribute('aria-busy'); }
 }
 
 function shortDate(value) { return formatDate(value).replace(/ \d{4}$/, ''); }
@@ -756,6 +767,7 @@ function stampPreview() {
   return `<section class="cw-side-stamps" aria-labelledby="side-stamps"><h2 id="side-stamps">Stamp card</h2><p class="cw-print">${stamps.length} ${plural(stamps.length,'place','places')} stamped</p><div class="cw-rally">${[...stamps].reverse().slice(0,6).map(s => sealHTML(s,{current:false,animate:false})).join('')}</div><button class="cw-secondary cw-wide" data-action="stamps">Open stamp card</button></section>`;
 }
 function actionsFor(f) {
+  if (f.sample === true) return [{text:'Made-up shop — nothing to call.'}];
   const actions=[];
   for (const phone of f.phones ?? []) { const digits=String(phone).normalize('NFKC').replace(/\D/g,''); if (digits) actions.push({kind:'phone',text:`Call ${phone}`,href:'tel:'+digits}); }
   for (const website of f.websites ?? []) {
@@ -788,13 +800,13 @@ function pageSheet(id) {
 function bucketSheet(bucket) {
   const list=state.flyers.filter(f => f.bucket === bucket);
   if (bucket === 'keep') return `<h2 id="sheet-heading">${list.length} ${plural(list.length,'letter','letters')} to keep</h2><p>Nothing from these was saved.</p>`;
-  return `<h2 id="sheet-heading">${list.length} ${bucket === 'home' ? 'deals to order at home' : 'flyers safe to recycle'}</h2>${list.map(f => { const phone=actionsFor(f).find(a => a.kind === 'phone'); return `<article class="cw-secondary-row">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-meta">${modelText(bucket === 'home' ? bestDeal(f) : f.comes_to_you ? 'They come to you' : ['buying_service','junk_removal'].includes(f.category) ? 'Only if you need the service' : f.category === 'real_estate' ? 'Property advert' : 'No in-person deal')}</span></button>${bucket === 'home' && phone ? `<a class="cw-link" href="${escape(phone.href)}">Call</a>` : ''}</article>`; }).join('')}`;
+  return `<h2 id="sheet-heading">${list.length} ${bucket === 'home' ? 'deals to order at home' : 'flyers safe to recycle'}</h2>${list.map(f => { const phone=f.sample === true ? null : actionsFor(f).find(a => a.kind === 'phone'); return `<article class="cw-secondary-row">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-meta">${modelText(bucket === 'home' ? bestDeal(f) : f.comes_to_you ? 'They come to you' : ['buying_service','junk_removal'].includes(f.category) ? 'Only if you need the service' : f.category === 'real_estate' ? 'Property advert' : 'No in-person deal')}</span></button>${bucket === 'home' && phone ? `<a class="cw-link" href="${escape(phone.href)}">Call</a>` : ''}</article>`; }).join('')}`;
 }
 function stampsContent() {
   const done=state.outings.filter(o => o.status === 'done'), stamps=state.outings.flatMap(o => o.stamps).sort((a,b) => Date.parse(b.at)-Date.parse(a.at)), meters=done.reduce((n,o) => n+o.meters,0), e=estimates(meters,state.settings.weightKg), yen=savings(usedEntries()).yen;
   const month=new Intl.DateTimeFormat('en-GB',{month:'long',timeZone:'Asia/Tokyo'}).format(new Date());
   const stats=[done.length ? `<div><b>${done.length}</b><span>${plural(done.length,'walk','walks')}</span></div>` : '',meters ? `<div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>~${e.steps.toLocaleString('en-US')} steps</span></div>` : '',yen ? `<div><b class="cw-money">${money(yen)}</b><span>saved, printed on flyers</span></div>` : ''].join('');
-  return `<h2 id="sheet-heading">Your stamps</h2><p class="cw-print">Stamp rally · ${month}</p><div class="cw-rally-head"><h3>${stamps.length} ${plural(stamps.length,'place','places')} stamped</h3><p>Each kind of place has its own ink</p></div><div class="cw-rally">${stamps.map(stampCard).join('')}${emptyStamp('Next stamp')+emptyStamp('',true)+emptyStamp('',true)}</div>${stats ? `<div class="cw-tally">${stats}</div>` : ''}${stamps.some(s => s.kind === 'self') || meters ? '<p class="cw-small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>' : ''}${!stamps.length ? '<p class="cw-muted">Your first walk starts with a flyer.</p>' : ''}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
+  return `<h2 id="sheet-heading">Your stamps</h2><section class="cw-ticket cw-month-rally"><div class="cw-ticket-kicker"><span>Stamp rally · ${month}</span><span>${stamps.length} collected</span></div><div class="cw-rally-head"><h3>${stamps.length} ${plural(stamps.length,'place','places')} stamped</h3><p>Each kind of place has its own ink</p></div><div class="cw-rally">${stamps.map(stampCard).join('')}${emptyStamp('Next stamp')+emptyStamp('',true)+emptyStamp('',true)}</div></section>${stats ? `<div class="cw-tally">${stats}</div>` : ''}${stamps.some(s => s.kind === 'self') || meters ? '<p class="cw-small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>' : ''}${!stamps.length ? '<p class="cw-muted">Your first walk starts with a flyer.</p>' : ''}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
 }
 function historyResults() {
   const query=historyQuery.toLowerCase(), list=[...state.flyers].reverse().filter(f => f.bucket !== 'keep' && [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
@@ -802,25 +814,41 @@ function historyResults() {
 }
 function activeOuting() { return state.outings.find(o => o.status === 'active'); }
 function currentCursor(o) { return Number.isInteger(o.cursor) && o.cursor >= 0 ? Math.min(o.cursor,o.stopIds.length) : 0; }
+function walkSavings(o) {
+  const yen=savings(usedEntries([o])).yen;
+  return yen>0 ? `<p class="cw-walk-savings"><strong>${money(yen)}</strong> <span>saved on this walk · printed on the flyer</span></p>` : '';
+}
+function routeLink(f,href) {
+  return f?.sample === true ? '' : `<a class="cw-link" href="${escape(href)}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a>`;
+}
+function farCard(o,id,f,message,href) {
+  return `<section class="cw-far" role="status"><p>You're <strong class="cw-far-distance">${message.distance} m</strong> away — keep walking</p>${routeLink(f,href)}<button class="cw-secondary cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button><p class="cw-small-note">Stamp anyway gives a dashed stamp.</p></section>`;
+}
 function walkScreen(o) {
   if (!o) { view='home'; return renderHome(); }
   const cursor=currentCursor(o), id=o.stopIds[cursor], p=stop(id), f=p?.flyer, stamped=o.stamps.find(s => s.stopId === id), message=stampMessages.get(id);
   if (cursor>=o.stopIds.length) return doneScreen(o);
   const previous=cursor ? stop(o.stopIds[cursor-1]) ?? o.start : o.start;
   const meters=p ? distanceMeters(previous,p) : 0, minutes=walkMinutes(meters);
-  const remaining=o.stopIds.slice(cursor).map(stop).filter(Boolean);
+  const remaining=o.stopIds.slice(cursor).map(stop).filter(Boolean), href=mapsLink(previous,remaining,o.end);
   const kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : p?.name ?? 'Stop unavailable')), name=f?.business?.name ?? p?.name;
-  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board" role="status"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div></div>${!stamped ? `<p class="cw-muted">${f?.sample ? "This place is made up. Tap I'm here, then Stamp anyway to try a stamp." : "Walk there, then tap I'm here."}</p>` : ""}<div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}<a class="cw-link" href="${escape(mapsLink(previous,remaining,o.end))}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a></div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-arrival">${stampCard(stamped)}</div>${f ? usedChips(f,o) : ''}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? `<p class="cw-warning" role="status">${escape(message.text)}</p><button class="cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
+  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board" role="status"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div>${lineMap(o)}</div>${!stamped ? `<p class="cw-muted">${f?.sample ? "This place is made up. Tap I'm here, then Stamp anyway to try a stamp." : "Walk there, then tap I'm here."}</p>` : ''}<div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}${routeLink(f,href)}</div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-result"><p class="cw-print cw-stamp-label">Stamp ${o.stamps.findIndex(s => s.stopId === id)+1} of ${o.stopIds.length} · ${stamped.kind === 'gps' ? 'GPS checked' : 'without GPS'}</p><div class="cw-stamp-arrival">${stampCard(stamped)}</div></div>${f ? usedChips(f,o) : ''}${walkSavings(o)}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? farCard(o,id,f,message,href) : ''}${walkSavings(o)}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
 }
 function usedChips(f,o) {
   // Printed savings first; otherwise let people still mark the offer they used (it counts as used, no printed value).
   const printed=[...currentOffers(f),...priceItems(f)].filter(({entry}) => printedValue(entry) !== null), entries=(printed.length ? printed : currentOffers(f)).slice(0,6);
   if (!entries.length) return '';
-  return `<section class="cw-used"><h2>Did you use it?</h2><p class="cw-muted">Tap what you used. Only printed prices count as savings.</p><div class="cw-chips">${entries.map(({entry,index,kind}) => { const used=o.used.some(u => u.flyerId === f.id && u.kind === kind && u.index === index); return `<button data-action="used" data-id="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(o.id)}" aria-pressed="${used}">${used ? '✓ ' : ''}${modelText(entry.text_en ?? entry.name_en ?? 'Printed offer')}${printedValue(entry) !== null ? ' · '+money(printedValue(entry)) : ''}</button>`; }).join('') || '<p class="cw-meta">No printed saving to count.</p>'}</div></section>`;
+  return `<section class="cw-used"><h2 id="used-heading" tabindex="-1">Did you use it?</h2><p class="cw-muted">Tap what you used. Only printed prices count as savings.</p><div class="cw-chips">${entries.map(({entry,index,kind}) => {
+    const used=o.used.some(u => u.flyerId === f.id && u.kind === kind && u.index === index), name=entry.text_en ?? entry.name_en ?? 'Printed offer', value=printedValue(entry);
+    return `<button data-action="used" data-id="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(o.id)}" aria-pressed="${used}" aria-label="${escape(name)}${value !== null ? ' · '+money(value) : ''}">${used ? '<span aria-hidden="true">✓ </span>' : ''}${modelText(name)}${value !== null ? `<span class="cw-sticker cw-chip-price"><b>${money(value)}</b></span>` : ''}</button>`;
+  }).join('')}</div></section>`;
 }
 function doneScreen(o=state.outings.at(-1)) {
   if (!o) return renderHome();
-  return `<section class="cw-done"><h1>Walk done</h1><p class="cw-done-summary">${routeSummary(o)}<strong>${money(savings(usedEntries([o])).yen)} saved <small>printed on the flyers</small></strong></p><div class="cw-rally">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">Your stamps</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button></section>`;
+  const e=estimates(o.meters,state.settings.weightKg), yen=savings(usedEntries([o])).yen;
+  const number=String(Math.max(1,state.outings.indexOf(o)+1)).padStart(4,'0');
+  const more=candidates().filter(f => !o.stopIds.includes(f.id) && !state.outings.some(w => w.stamps.some(s => s.stopId === f.id) || (w.skipped ?? []).includes(f.id))).length;
+  return `<section class="cw-done"><article class="cw-ticket cw-used-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h1 class="cw-ticket-title">Walk done</h1><p class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</p></div><div class="cw-tally cw-done-tally"><div><b>${o.stamps.length}</b><span>stamps collected</span></div><div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>walk distance</span></div><div><b>~${e.steps.toLocaleString('en-US')}</b><span>steps · estimate</span></div><div><b>~${e.kcal}</b><span>kcal · estimate</span></div></div>${yen>0 ? `<p class="cw-done-summary"><strong>${money(yen)} saved</strong> <span>· printed on the flyers</span></p>` : ''}${sealHTML({stopId:o.id,at:now(),kind:'gps'},{current:false,animate:false,finished:true})}</article><div class="cw-rally" aria-label="This walk's stamps">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">See your stamp card</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button>${more ? `<p class="cw-small-note">${more} more ${plural(more,'place is','places are')} still worth the walk.</p>` : ''}</section>`;
 }
 function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
 function restoreFocus(key) {
@@ -871,6 +899,7 @@ function closeSheet() {
   if (previous) { sheet=previous.sheet; render(); $('sheet').scrollTop=previous.scrollTop; restoreFocus(previous.opener); }
   else $('sheet').close();
 }
+$('sheet').addEventListener('keydown',event => { if (event.key === 'Escape' && !event.isComposing && sheetTrail.length > 0) { event.preventDefault(); closeSheet(); } });
 $('sheet').addEventListener('cancel',event => { if (sheetTrail.length) { event.preventDefault(); closeSheet(); } });
 $('sheet').addEventListener('close',() => { sheet=null; sheetTrail.length=0; render(); restoreFocus(sheetOpener); sheetOpener=null; });
 function renderSetup() {
@@ -995,7 +1024,7 @@ async function action(button) {
     case 'start': { if (activeOuting()) { view='walk'; render(); break; } const p=plan(); if (p?.stops.length) { newOuting(p); notify(); } break; }
     case 'here': { const o=activeOuting(); if (o && o.stopIds[currentCursor(o)] === id) await here(o,id,button); break; }
     case 'stamp-anyway': { const o=activeOuting(); if (o && o.stopIds[currentCursor(o)] === id) stamp(o,id,'self',stampMessages.get(id)?.distance ?? null); break; }
-    case 'used': { const o=activeOuting(); if (!o || !o.stamps.some(s => s.stopId === id)) break; const kind=button.dataset.kind, index=Number(button.dataset.index), entry=flyer(id)?.[kind === 'offer' ? 'offers' : 'items']?.[index]; if (!entry || printedValue(entry) === null) break; const existing=o.used.find(u => u.flyerId === id && u.kind === kind && u.index === index); if (existing) o.used=o.used.filter(u => u !== existing); else o.used.push({flyerId:id,kind,index}); save(); render(); break; }
+    case 'used': { const o=activeOuting(); if (!o || !o.stamps.some(s => s.stopId === id)) break; const kind=button.dataset.kind, index=Number(button.dataset.index), entry=flyer(id)?.[kind === 'offer' ? 'offers' : 'items']?.[index]; if (!entry) break; const existing=o.used.find(u => u.flyerId === id && u.kind === kind && u.index === index); if (existing) o.used=o.used.filter(u => u !== existing); else o.used.push({flyerId:id,kind,index}); save(); render(); break; }
     case 'next-stop': advance(activeOuting()); break;
     case 'skip-stop': advance(activeOuting(),true); break;
     case 'stamps': openSheet('stamps',undefined,button); break;

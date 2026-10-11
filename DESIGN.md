@@ -119,7 +119,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### Selected photo cards
 - Above the horizontally scrollable strip: uppercase print “1 page ready” / “N pages ready”. Each 108px paper card has a Rule border, Photo Shadow, alternating −1.5° / +1.5° static tilt, and a print “Page N” caption beneath the preview.
-- Round 44px paper buttons overlap the top corners: rotate left, remove right. Rule borders, Faded Ink glyphs, and the shared gate-blue focus ring. Existing accessible names and photo actions stay intact.
+- Round 44px paper buttons sit inside the top corners, 4px from the edges over the photo: rotate left, remove right. Paper background, Rule borders, soft Photo Shadow, Faded Ink glyphs, and the shared gate-blue focus ring. The strip keeps a 16px gap and vertical padding so tilted cards and focus rings do not clip or crowd their neighbours. Existing accessible names and photo actions stay intact.
 - While the fixed Read dock shows, `cw-has-photos` reserves 112px plus the safe-area inset below main content so the final hint clears the dock, including on desktop.
 
 ### Reading ticket
@@ -138,16 +138,38 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - "NEXT · 次は" (Display Dim) ← → "STOP 1 / 3"; stop name in Dela Gothic One (`#f6f1e4`); Japanese name and "6 MIN WALK · 450 M" in amber print face
 - Below: large thumbnail + price sticker + "Open route in Google Maps"; a "HOW TO USE" box (print label + plain instructions); Gate "I'm here · stamp"; Ghost "Skip this stop"; the walk's stamp slots
 
+### Walk refinements
+- Under the distance line, `.cw-line-map` is decorative (`aria-hidden="true"`): start/end dots labelled 発 / 着, and one numbered dot per outing stop, including groceries. Stamped dots fill Display Amber; skipped dots dim with a small break in the line; upcoming dots are hollow Display Dim. The current dot is larger with a soft amber ring, 次 above, and an uppercase kind truncated to approximately 12 characters below. Equal flexible columns accommodate six stops plus endpoints at 320px. The existing heading and Stop N / N carry the accessible meaning.
+- While checking the phone's location, the gate says "Checking location…", has `aria-busy="true"`, and a 16px CSS spinner. The spinner is still in reduced-motion mode; no stamp-location reading is sent anywhere.
+- Too far away: Paper Shade card, Rule border, 16px padding, Dela distance digits, "You're 650 m away — keep walking", route link, outline "Stamp anyway" button, and muted "Stamp anyway gives a dashed stamp." The card retains `role="status"`.
+- At ≥960px, one `.cw-walk-ticket` fills the side column: print "This walk", vertical Start/Finish route, kind plus ✓ stamped and miniature seal, → current in Gate Blue, skipped struck and muted, or upcoming; then the seals grid. Hide the mini route and header with `display:none` on phone/tablet, leaving the same seals grid below the content. No IDs or controls are duplicated.
+- Both primary and secondary start gates separate small 改札 from the arrow by 10px (primary gap; secondary suffix margin).
+
+### Stamp result and printed savings
+- Above the arrival seal, a centred print label says "Stamp 1 of 3 · GPS checked" or "Stamp 1 of 3 · without GPS". The ordinal counts stamps collected, not skipped stops.
+- New arrivals keep `press` and gain a pure CSS ring behind the seal in the category ink, scaling and fading over 400ms. Both run only with `prefers-reduced-motion: no-preference`; reduced motion shows the final state instantly. GPS stamps call guarded `navigator.vibrate?.(18)` once; self stamps do not vibrate.
+- Announce "Stamped: <kind>" through `#notice`. Focus "Did you use it?" (programmatically focusable, with a unique ID surviving re-render), or Next stop when there are no chips; the button remains in the tab order.
+- Chips start with the English offer/item text and show a mini yellow sticker with Sale Red digits when a printed saving exists. Pressed chips use an Ink Green border, decorative ✓ prefix and `aria-pressed="true"`; accessible names still start with the item text. Unpriced offers can be recorded as used without adding yen.
+- Beneath chips, and when proceeding through later stops, show "¥3,300 saved on this walk · printed on the flyer" with Sale Red Dela digits and print suffix. Update instantly from `savings(usedEntries([o]))`; hide at zero. Never estimate yen.
+
+### Finished ticket
+- Done uses `.cw-ticket.cw-used-ticket`, print Today/date and No. 000N, "Walk done", and km · min · ~steps. A 20px punch near the top-right uses Desk fill with an inner Rule rim in both themes.
+- The print-face `.cw-tally` shows collected stamps, km, ~steps and ~kcal; steps and kcal explicitly say estimate. Show Sale Red "¥3,300 saved · printed on the flyers" only above zero. Route estimates come from `estimates`; savings come only from printed values.
+- A 120px vermilion seal overlaps the lower right at −9°, inset to avoid page overflow. Reuse `sealHTML`, one `#ink` filter, unique arc/textPath IDs, WORTH THE WALK arc, 済 centre and today's boxed Japan date. It is decorative (`aria-hidden="true"`) and never animates.
+- Below: this walk's stamp cards, primary "See your stamp card", text "Back to my mailbox", and a muted remaining-candidate count when they were not on this walk and have never been stamped or skipped. At ≥960px, centre the done screen in a 640px column.
+
 ### Station stamp (SVG seal)
 - `viewBox 0 0 100 100`: outer ring r46 stroke 4.2; inner ring r39.5 stroke 1.1; place kind in print face on an arc (path M19 52 A31 31 0 0 1 81 52); central kanji in Dela Gothic One 27px (体 lessons/fitness · 洗 cleaners/services · 市 shops/food · 道 dojos/other); date "2026.10.12" in a 38×11 box
 - Ink per category (section 2), rotated −9°…+9° (deterministic from the stamp id), ink filter: fractal-noise speckle (alpha matrix `-1.9 1.8`) + small displacement (scale 2.4)
 - Self-reported: dashed outer ring (`7 4`), opacity .55
 - Arrival animation: scale 1.35 → 1 with a slight overshoot (`cubic-bezier(.2,1.6,.4,1)`, 0.5s); none with reduced motion
 - Empty slot: dashed Rule circle; the first says "Next stamp"
+- The "Next stamp" spot has a faint decorative 歩 inside the dashed circle, with the label readable below it.
 
 ### Stamp rally card
 - Card with 1.5px Rule border and a 10px dot grid; 3 columns of stamps; heading "6 places stamped" + print "EACH KIND OF PLACE HAS ITS OWN INK"
 - Tallies: three columns with a 2px ink top rule: walks · km + steps · ¥ saved (Sale Red, "saved, printed on flyers"); hide zeros
+- In the stamp sheet, wrap the rally in the shared ticket texture, border and shadow; a print header reads "Stamp rally · October" (current Japan month) with the collected count. Keep stats beneath the ticket and retain past-walk and flyer history controls.
 
 ### First visit
 - Before the first photo: a decorative 200px hero scene at the top of the welcome, before the kicker. Three small printed flyers point along a dashed gate-blue route to a miniature ticket with a yellow trial sticker and a Vermilion seal. The scene is `aria-hidden`; its unique `hero-arc` and `hero-arc-text` use the one shared `#ink` filter. The seal never animates. Fixed flyer-paper colours retain their paper appearance in both themes.
@@ -157,6 +179,8 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Ask for the walking start inline only before reading or loading the sample. Offer one location reading or line/station selects; default to 40 minutes. Settings opens only from its header button.
 - Store the GPS start on the phone to four decimal places; round all start coordinates to two decimal places for merge and locate requests. Stations from older saved states remain valid.
 - The sample mailbox has eight fictional flyers, seven drawn non-interactive previews and a slim clear-sample strip: print label, explanatory text and Clear sample share a row when space allows and wrap on phone. Left edges align; Paper Shade background, Rule border, 10px radius, 8px × 12px padding. It uses the real route and stamp flow, with no model calls.
+- Sample contacts are inert in all views, including persisted samples with websites: How to use says "Made-up shop — nothing to call."; flyer sheets expose no phone/site links, and the Home bucket has no Call link. Sample walk stops also omit external route links, including the keep-walking card, so sample taps cannot open an external site or dial a made-up number. Real flyer contacts and routes retain their existing behaviour.
+- No dependencies or network calls are added. Browser acceptance keeps walk, stamped-stop, done and stamps screenshots at 390/1280px, adds walk-far at both widths, and retains overflow/44px checks at 320/390/768/960/1280/1440px. The browser cannot be launched in this editing session; screenshot generation and live visual verification remain reviewer-run.
 - Each stage has one muted sentence naming the next action: photo selection, reading, ticket, walk and printed savings.
 
 ### Sheets

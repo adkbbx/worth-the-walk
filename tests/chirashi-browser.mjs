@@ -54,15 +54,23 @@ async function overflow(page,label) {
   for (const dialog of await page.locator('dialog[open]').all()) assert.ok(await dialog.evaluate(el => el.scrollWidth<=el.clientWidth),label+': sheet overflow');
   assert.deepEqual(await page.locator('.cw-main button, .cw-main a, dialog[open] button, dialog[open] a, select').evaluateAll(els => els.filter(el => el.getClientRects().length).filter(el => { const r=el.getBoundingClientRect(); return r.width<43.9 || r.height<43.9; }).map(el => el.textContent.trim())),[],label+': controls have 44px targets');
 }
+async function resize(page,size) {
+  await page.setViewportSize(size);
+  // The media-query change event moves the tray asynchronously after a resize.
+  if (await page.locator('.cw-tray-anchor').count() && await page.locator('.cw-mailbox-tray').count()) {
+    const parent=size.width>=960 ? '.cw-home-side' : '.cw-answer';
+    await page.locator(parent+' .cw-mailbox-tray').waitFor({state:'visible'});
+  }
+}
 async function bothWidths(page,label,screenshot=false) {
   await page.evaluate(() => document.fonts.ready);
-  await page.setViewportSize({width:390,height:844}); await overflow(page,label+' 390');
+  await resize(page,{width:390,height:844}); await overflow(page,label+' 390');
   if (screenshot && !capturedScreens.has(label)) await page.screenshot({path:`.impeccable/review/chirashi-${label}.png`,fullPage:true});
-  await page.setViewportSize({width:1280,height:900}); await overflow(page,label+' 1280');
+  await resize(page,{width:1280,height:900}); await overflow(page,label+' 1280');
   if (screenshot && !capturedScreens.has(label)) await page.screenshot({path:`.impeccable/review/chirashi-${label}-desktop.png`,fullPage:true});
   if (screenshot) capturedScreens.add(label);
-  for (const width of [320,768,960,1440]) { await page.setViewportSize({width,height:900}); await overflow(page,label+' '+width); }
-  await page.setViewportSize({width:390,height:844});
+  for (const width of [320,768,960,1440]) { await resize(page,{width,height:900}); await overflow(page,label+' '+width); }
+  await resize(page,{width:390,height:844});
 }
 async function ticketChecks(page) {
   const ticket=page.locator('.cw-ticket');
@@ -85,6 +93,22 @@ async function sealChecks(page) {
   assert.equal(new Set(ids).size,ids.length,'all textPath IDs and referenced arc IDs are unique, including repeated stamps');
   assert.ok(await page.locator('textPath').evaluateAll(paths => paths.every(path => document.getElementById(path.getAttribute('href').slice(1)))),'every textPath has an arc');
 }
+async function lineChecks(page) {
+  const o=active(await readState(page)), map=page.locator('.cw-board .cw-line-map');
+  assert.equal(await map.count(),1);
+  assert.equal(await map.getAttribute('aria-hidden'),'true');
+  assert.equal(await map.locator('[data-line-stop]').count(),o.stopIds.length,'one line dot per stop, including groceries');
+  assert.equal(await map.locator('.cw-line-dot').count(),o.stopIds.length+2,'line includes start and finish dots');
+  assert.equal(await map.locator('[data-line-stop].current').count(),1);
+  assert.equal(await map.locator('[data-line-stop].current').getAttribute('data-line-stop'),o.stopIds[o.cursor]);
+  assert.equal(await map.locator('.current em').textContent(),'次');
+  for (const id of o.skipped ?? []) assert.equal(await map.locator(`[data-line-stop="${id}"].skipped`).count(),1);
+  for (const s of o.stamps) assert.equal(await map.locator(`[data-line-stop="${s.stopId}"].stamped`).count(),1);
+}
+async function sampleLinkChecks(root) {
+  assert.equal(await root.locator('a[href^="tel:"]').count(),0,'sample numbers never dial');
+  assert.equal(await root.locator('a[href^="http:"], a[href^="https:"], a[href^="//"]').count(),0,'sample views cannot open external sites');
+}
 async function newPhone(options={}) {
   const context=await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation'],reducedMotion:'reduce',...options});
   const page=await context.newPage(); page.on('pageerror',e => errors.push(e.message)); await page.clock.setFixedTime(clock); page.on('dialog',async d => { if (d.type()!=='beforeunload') errors.push('Unexpected dialog: '+d.message()); await d.accept(); });
@@ -104,12 +128,13 @@ async function welcome(page) {
   assert.equal(await page.locator('#hero-arc').count(),1);
   assert.equal(await page.locator('#ink').count(),1);
   assert.equal(await page.locator('.cw-hero-seal').evaluate(el => getComputedStyle(el).animationName),'none');
-  await page.setViewportSize({width:390,height:844}); await page.evaluate(() => window.scrollTo(0,0));
+  await resize(page,{width:390,height:844}); await page.evaluate(() => window.scrollTo(0,0));
   for (const el of [page.locator('.cw-welcome h1'),page.locator('.cw-welcome-copy > .cw-muted'),page.locator('[data-action=take-photo]'),page.locator('[data-action=choose-photos]')]) {
     assert.ok(await el.evaluate(el => { const r=el.getBoundingClientRect(); return r.top>=0 && r.bottom<=innerHeight; }),'welcome essentials fit above the fold');
   }
   await bothWidths(page,'welcome',true);
-  await page.setViewportSize({width:1280,height:900});
+  await resize(page,{width:1280,height:900});
+  await page.locator('.cw-home.cw-home-single').waitFor({state:'visible'});
   assert.ok(await page.locator('.cw-home').evaluate(el => el.classList.contains('cw-home-single')),'empty side does not reserve a desktop column');
   assert.ok(await page.locator('.cw-welcome').evaluate(el => {
     const copy=el.querySelector('.cw-welcome-copy').getBoundingClientRect();
@@ -117,7 +142,7 @@ async function welcome(page) {
       const r=node.getBoundingClientRect(); return r.left>=copy.right && r.right<=innerWidth;
     });
   }),'desktop scene clears the text column and keeps the seal in the viewport');
-  await page.setViewportSize({width:390,height:844});
+  await resize(page,{width:390,height:844});
 }
 async function chooseStart(page) {
   await page.getByRole('heading',{name:'Where do you start walking?',exact:true}).waitFor();
@@ -240,11 +265,11 @@ try {
   assert.ok(await page.getByRole('button',{name:'Read 7 flyers',exact:true}).evaluate(el => { const r=el.getBoundingClientRect(); return r.bottom<=innerHeight && r.top>=0; }),'read action sits above the bottom edge');
   await bothWidths(page,'snap',true);
   for (const width of [320,390,768,1280,1440]) {
-    await page.setViewportSize({width,height:844});
+    await resize(page,{width,height:844});
     await page.evaluate(() => window.scrollTo(0,document.documentElement.scrollHeight));
     assert.ok(await page.getByText('Add every page of every flyer, then tap Read.',{exact:true}).evaluate(el => el.getBoundingClientRect().bottom <= document.querySelector('.cw-read-dock').getBoundingClientRect().top),'last hint clears the read dock');
   }
-  await page.setViewportSize({width:390,height:844});
+  await resize(page,{width:390,height:844});
   await page.getByRole('button',{name:'Read 7 flyers',exact:true}).click();
   await chooseStart(page);
   await page.locator('#reading-progress').waitFor(); await page.locator('.cw-stop-row').first().waitFor();
@@ -288,11 +313,11 @@ try {
   for (const bucket of ['home','toss','keep']) { await page.locator(`[data-action=bucket-sheet][data-id=${bucket}]`).click(); await page.locator('#sheet[open]').waitFor(); await bothWidths(page,bucket+'-sheet'); if (bucket==='home') assert.match(await page.locator('#sheet a[href^="tel:"]').getAttribute('href'),/^tel:\d+$/); if (bucket==='keep') { assert.equal(await page.locator('#sheet img').count(),0); assert.ok(await page.getByText('Nothing from these was saved.',{exact:true}).isVisible()); } await page.getByRole('button',{name:'Close sheet',exact:true}).click(); }
   await bothWidths(page,'answer',true);
   assert.equal(await page.locator('.cw-mailbox-tray').count(),1);
-  assert.ok(await page.locator('.cw-answer .cw-mailbox-tray').isVisible());
-  await page.setViewportSize({width:1280,height:900});
-  assert.ok(await page.locator('.cw-home-side .cw-mailbox-tray').isVisible());
+  await page.locator('.cw-answer .cw-mailbox-tray').waitFor({state:'visible'});
+  await resize(page,{width:1280,height:900});
+  await page.locator('.cw-home-side .cw-mailbox-tray').waitFor({state:'visible'});
   assert.ok(await page.locator('.cw-home-side [data-action=choose-photos]').evaluate(el => { const primary=el.parentElement.querySelector('[data-action=take-photo]').getBoundingClientRect(), r=el.getBoundingClientRect(); return Math.abs(r.left-primary.left)<1 && Math.abs(r.width-primary.width)<1; }),'photo chooser aligns under its button');
-  await page.setViewportSize({width:390,height:844});
+  await resize(page,{width:390,height:844});
   const dojo=sorted.flyers.find(f => f.category==='lesson'), dojoRow=page.locator(`[data-flyer="${dojo.id}"]`);
   await dojoRow.locator('[data-action=flyer-sheet]').click(); await page.locator('#sheet[open]').waitFor();
   await page.getByRole('heading',{name:'How to use',exact:true}).waitFor(); assert.match(await page.locator('#sheet').textContent(),/This photo shows 3 flyers/);
@@ -319,6 +344,7 @@ try {
   const rejected=moved.flyers.find(f => f.category==='fitness'); await page.locator(`[data-flyer="${rejected.id}"] [data-action=not-for-me]`).click();
   await page.locator(`[data-flyer="${rejected.id}"]`).waitFor({state:'detached'}); assert.equal((await readState(page)).labels[rejected.id],0);
   await page.getByRole('button',{name:'Start the walk →',exact:true}).click(); await page.locator('.cw-walk-mode').waitFor();
+  await lineChecks(page);
   await bothWidths(page,'walk',true);
   assert.match(await page.getByRole('link',{name:'Open route in Google Maps',exact:true}).getAttribute('href'),/travelmode=walking/);
   await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.locator('.cw-walk-mode').waitFor();
@@ -330,7 +356,22 @@ try {
     await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.locator('.cw-walk-mode').waitFor(); state=await readState(page); outing=active(state);
   }
   const first=state.flyers.find(f => f.id===outing.stopIds[0]); await context.setGeolocation({latitude:first.location.lat,longitude:first.location.lon,accuracy:1});
-  await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.locator('.cw-stamp.gps').waitFor();
+  await page.evaluate(() => {
+    window.stampVibrations=[];
+    Object.defineProperty(navigator,'vibrate',{configurable:true,value:duration => { window.stampVibrations.push(duration); return true; }});
+    const original=navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+    navigator.geolocation.getCurrentPosition=(...args) => { window.releaseStampLocation=() => original(...args); };
+  });
+  await page.getByRole('button',{name:"I'm here",exact:true}).click();
+  assert.equal(await page.locator('[data-action=here]').getAttribute('aria-busy'),'true');
+  assert.equal(await page.locator('[data-action=here]').textContent(),'Checking location…');
+  assert.equal(await page.locator('.cw-spinner').evaluate(el => getComputedStyle(el).animationName),'none','reduced motion keeps the spinner still');
+  await page.evaluate(() => window.releaseStampLocation()); await page.locator('.cw-stamp.gps').waitFor();
+  assert.equal(await page.locator('.cw-stamp-label').textContent(),'Stamp 1 of 2 · GPS checked');
+  assert.match(await page.locator('#notice').textContent(),/^Stamped: /);
+  assert.equal(await page.getByRole('heading',{name:'Did you use it?',exact:true}).evaluate(el => el===document.activeElement),true);
+  assert.deepEqual(await page.evaluate(() => window.stampVibrations),[18],'one short vibration per GPS stamp');
+  await lineChecks(page);
   await sealChecks(page); await bothWidths(page,'stamped-stop',true);
   assert.equal(await page.locator('#stamps-button').getAttribute('aria-label'),'Your stamps');
   assert.equal(await page.locator('#stamps-button .cw-stamp-count').textContent(),'1');
@@ -341,17 +382,45 @@ try {
   assert.ok(chips.length>0,'a stamped stop always offers something to mark as used');
   const pick=chips.map((c,i) => ({...c,i,value:printedValue(first[c.kind==='offer' ? 'offers' : 'items'][c.index])})).sort((a,b) => (b.value ?? -1)-(a.value ?? -1))[0];
   const used=page.locator('[data-action=used]').nth(pick.i), expectedYen=pick.value ?? 0;
-  await used.click(); assert.equal(await used.getAttribute('aria-pressed'),'true'); await page.getByRole('button',{name:'Next stop →',exact:true}).click();
+  await used.click(); assert.equal(await used.getAttribute('aria-pressed'),'true');
+  assert.doesNotMatch(await used.getAttribute('aria-label'),/^✓/,'chip accessible names start with the item');
+  if (expectedYen>0) {
+    assert.equal(await page.locator('.cw-walk-savings').textContent(),`¥${expectedYen.toLocaleString('en-US')} saved on this walk · printed on the flyer`);
+    assert.ok(await used.locator('.cw-chip-price').isVisible());
+    await used.click(); assert.equal(await used.getAttribute('aria-pressed'),'false');
+    assert.equal(await page.locator('.cw-walk-savings').count(),0,'zero savings stays hidden');
+    await used.click(); assert.ok(await page.locator('.cw-walk-savings').isVisible());
+  } else assert.equal(await page.locator('.cw-walk-savings').count(),0,'unpriced use adds no yen');
+  await page.getByRole('button',{name:'Next stop →',exact:true}).click();
   await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); state=await readState(page); outing=active(state); assert.equal(outing.cursor,1); assert.equal(outing.used.length,1);
   const second=state.flyers.find(f => f.id===outing.stopIds[1]); await context.setGeolocation({latitude:second.location.lat+650/111320,longitude:second.location.lon,accuracy:1});
   await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.getByText(/You're \d+ m away — keep walking/).waitFor();
-  assert.equal(await page.locator('.cw-stamp-arrival .cw-stamp').count(),0); await bothWidths(page,'far-stop');
-  await page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await page.locator('.cw-stamp.self').waitFor(); await page.getByRole('button',{name:'Next stop →',exact:true}).click();
+  assert.equal(await page.locator('.cw-stamp-arrival .cw-stamp').count(),0);
+  assert.equal(await page.locator('.cw-far').getAttribute('role'),'status');
+  assert.ok(await page.locator('.cw-far').getByRole('link',{name:'Open route in Google Maps',exact:true}).isVisible());
+  assert.ok(await page.getByText('Stamp anyway gives a dashed stamp.',{exact:true}).isVisible());
+  await bothWidths(page,'walk-far',true);
+  await page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await page.locator('.cw-stamp.self').waitFor();
+  assert.equal(await page.locator('.cw-stamp-label').textContent(),'Stamp 2 of 2 · without GPS');
+  assert.match(await page.locator('#notice').textContent(),/^Stamped: /);
+  await lineChecks(page);
+  const resultHeading=page.locator('.cw-used h2');
+  assert.equal(await (await resultHeading.count() ? resultHeading : page.locator('[data-action=next-stop]')).evaluate(el => el===document.activeElement),true);
+  await page.getByRole('button',{name:'Next stop →',exact:true}).click();
   await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
+  assert.equal(await page.locator('.cw-done .cw-ticket').count(),1,'done is a used ticket');
+  assert.equal(await page.locator('.cw-finished-seal').getAttribute('aria-hidden'),'true');
+  assert.equal(await page.locator('.cw-finished-seal .mark').textContent(),'済');
+  assert.equal(await page.locator('.cw-finished-seal textPath').textContent(),'WORTH THE WALK');
+  assert.match(await page.locator('.cw-done .cw-tally').textContent(),/2stamps collected.*km.*~[\d,]+steps · estimate.*~\d+kcal · estimate/);
+  assert.ok(await page.getByRole('button',{name:'Back to my mailbox',exact:true}).isVisible());
+  await sealChecks(page);
   if (expectedYen>0) assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));
   const done=(await readState(page)).outings.at(-1); assert.equal(done.status,'done'); assert.equal(done.stamps.length,2); assert.equal(savings(done.used.map(u => ({entry:state.flyers.find(f => f.id===u.flyerId)[u.kind==='offer' ? 'offers' : 'items'][u.index]}))).yen,expectedYen);
   assert.equal(await page.locator('#stamps-button .cw-stamp-count').textContent(),'2');
-  await bothWidths(page,'done',true); await page.locator('.cw-done').getByRole('button',{name:'Your stamps',exact:true}).click(); await page.locator('#sheet[open]').waitFor();
+  await bothWidths(page,'done',true); await page.locator('.cw-done').getByRole('button',{name:'See your stamp card',exact:true}).click(); await page.locator('#sheet[open]').waitFor();
+  assert.ok(await page.locator('.cw-month-rally').getByText('Stamp rally · October',{exact:true}).isVisible());
+  assert.equal(await page.locator('.cw-spot-mark').textContent(),'歩');
   assert.equal(await page.locator('#sheet [data-stamp]').count(),2); assert.equal(await page.locator('#sheet [data-history-flyer]').count(),5);
   await sealChecks(page);
   await page.locator('#sheet [data-history-flyer] [data-action=flyer-sheet]').first().click(); await page.getByRole('heading',{name:'How to use',exact:true}).waitFor();
@@ -496,9 +565,23 @@ try {
   assert.deepEqual(sampleCalls,[],'sample creation makes no model, merge, locate or ranking requests');
   assert.equal((await rows(sample.page,'thumbs')).filter(t => t.pageId.startsWith('sample-')).length,7); assert.deepEqual(await rows(sample.page),[]);
   await ticketChecks(sample.page); await bothWidths(sample.page,'sample',true);
+  // A persisted sample may contain a made-up website as well as its phone number.
+  await sample.page.evaluate(key => { const s=JSON.parse(localStorage.getItem(key)); for (const f of s.flyers.filter(f => f.sample && f.bucket !== 'keep')) f.websites=['https://sample.invalid']; localStorage.setItem(key,JSON.stringify(s)); },key);
   await sample.page.reload(); await sample.page.getByText('Demo mode',{exact:true}).waitFor();
   assert.equal((await readState(sample.page)).flyers.filter(f => f.sample).length,8,'sample marker survives reload, including the letter');
   assert.equal(await sample.page.locator('.cw-home img[src^="blob:"]').count(),7);
+  await sample.page.locator('#stamps-button').click();
+  for (const f of sampleState.flyers.filter(f => f.bucket !== 'keep')) {
+    await sample.page.locator(`#sheet [data-history-flyer="${f.id}"] [data-action=flyer-sheet]`).click();
+    await sampleLinkChecks(sample.page.locator('#sheet[open]'));
+    assert.ok(await sample.page.getByText('Made-up shop — nothing to call.',{exact:true}).isVisible());
+    await sample.page.keyboard.press('Escape');
+  }
+  await sample.page.keyboard.press('Escape');
+  await sample.page.locator('.cw-tray [data-id=home]').click();
+  await sampleLinkChecks(sample.page.locator('#sheet[open]'));
+  assert.equal(await sample.page.locator('#sheet').getByRole('link',{name:'Call',exact:true}).count(),0);
+  await sample.page.keyboard.press('Escape');
   await sample.page.locator('#settings-button').click();
   assert.ok(await sample.page.getByText('Starting from your location',{exact:true}).isVisible());
   assert.equal(await sample.page.locator('#setup-weight').isVisible(),false);
@@ -506,18 +589,53 @@ try {
   assert.deepEqual((await readState(sample.page)).settings.place,sampleState.settings.place,'Save preserves the active GPS start');
   await sample.page.getByRole('button',{name:'Start the walk →',exact:true}).click();
   await sample.page.getByText("This place is made up. Tap I'm here, then Stamp anyway to try a stamp.",{exact:true}).waitFor();
+  await lineChecks(sample.page); await sampleLinkChecks(sample.page.locator('.cw-walk-mode'));
   await sample.page.getByRole('button',{name:"I'm here",exact:true}).click();
   await sample.page.getByText(/You're \d+ m away — keep walking/).waitFor();
+  await sampleLinkChecks(sample.page.locator('.cw-walk-mode'));
   await sample.page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await sample.page.locator('.cw-stamp.self').waitFor();
+  const sampleOuting=active(await readState(sample.page));
+  assert.equal(await sample.page.locator('.cw-stamp-label').textContent(),`Stamp 1 of ${sampleOuting.stopIds.length} · without GPS`);
+  await sampleLinkChecks(sample.page.locator('.cw-walk-mode'));
   await sealChecks(sample.page);
   assert.ok(await sample.page.getByText('Tap what you used. Only printed prices count as savings.',{exact:true}).isVisible());
   await sample.page.getByRole('button',{name:'Next stop →',exact:true}).click();
-  while (await sample.page.locator('.cw-walk-mode').count()) await sample.page.getByRole('button',{name:'Skip this stop',exact:true}).click();
+  while (await sample.page.locator('.cw-walk-mode').count()) { await lineChecks(sample.page); await sampleLinkChecks(sample.page.locator('.cw-walk-mode')); await sample.page.getByRole('button',{name:'Skip this stop',exact:true}).click(); }
+  assert.equal(await sample.page.locator('.cw-done-summary').count(),0,'unused sample deals do not invent savings');
   await sample.page.getByRole('button',{name:'Back to my mailbox',exact:true}).click();
   await sample.page.getByRole('button',{name:'Clear sample',exact:true}).click(); await welcome(sample.page);
   assert.equal((await readState(sample.page)).outings.length,0); assert.deepEqual((await readState(sample.page)).labels,{});
   assert.equal((await rows(sample.page,'thumbs')).filter(t => t.pageId.startsWith('sample-')).length,0);
   assert.deepEqual(sampleCalls,[],'the whole sample stamp loop stays local');
+  // Six fictional stops exercise the smallest board and the no-chip focus fallback.
+  const longLine=await newPhone({colorScheme:'dark',reducedMotion:'no-preference'});
+  await longLine.page.addInitScript(({key,sampleState}) => {
+    const s=structuredClone(sampleState), template=s.flyers.find(f => f.bucket==='walk');
+    s.settings.theme='dark';
+    s.flyers=Array.from({length:6},(_,i) => ({...structuredClone(template),id:'line-fixture-'+i,pageIds:[],category:i===5 ? 'supermarket' : 'lesson',business:{kind:i===5 ? 'Grocery stop' : 'Fictional practice studio',name:'Made-up shop '+(i+1)},offers:[],items:[]}));
+    s.outings=[{id:'line-fixture-walk',createdAt:'2026-10-11T02:00:00Z',start:s.settings.place,end:s.settings.place,stopIds:s.flyers.map(f => f.id),meters:1000,minutes:16,mode:'walk',status:'active',cursor:3,skipped:['line-fixture-0'],stamps:[{stopId:'line-fixture-1',kind:'gps',at:'2026-10-11T02:00:00Z',distance:0}],used:[]}];
+    localStorage.setItem(key,JSON.stringify(s));
+    navigator.geolocation.getCurrentPosition=(_success,failure) => failure({code:1});
+    window.stampVibrations=[];
+    Object.defineProperty(navigator,'vibrate',{configurable:true,value:duration => { window.stampVibrations.push(duration); throw new Error('No haptics'); }});
+  },{key,sampleState});
+  await open(longLine.page); await lineChecks(longLine.page);
+  assert.equal(await longLine.page.locator('[data-line-stop]').count(),6);
+  await bothWidths(longLine.page,'six-stop-line');
+  await resize(longLine.page,{width:1280,height:900});
+  await longLine.page.locator('.cw-mini-route').waitFor({state:'visible'});
+  assert.equal(await longLine.page.locator('.cw-mini-route [aria-current=step]').count(),1);
+  await longLine.page.getByRole('button',{name:"I'm here",exact:true}).click();
+  await longLine.page.locator('.cw-stamp.self').waitFor();
+  assert.equal(await longLine.page.locator('.cw-stamp-label').textContent(),'Stamp 2 of 6 · without GPS','skipped stops do not count as collected stamps');
+  assert.equal(await longLine.page.locator('.cw-used').count(),0);
+  assert.equal(await longLine.page.getByRole('button',{name:'Next stop →',exact:true}).evaluate(el => el===document.activeElement),true,'no chips focuses Next stop');
+  assert.deepEqual(await longLine.page.evaluate(() => window.stampVibrations),[],'self stamps do not vibrate');
+  assert.equal(await longLine.page.locator('.cw-seal-impression').evaluate(el => getComputedStyle(el,'::before').animationName),'ink-splat');
+  await longLine.page.emulateMedia({reducedMotion:'reduce'});
+  assert.equal(await longLine.page.locator('.cw-seal-impression').evaluate(el => getComputedStyle(el,'::before').animationName),'none');
+  assert.equal(await longLine.page.locator('.cw-seal.new').evaluate(el => getComputedStyle(el).animationName),'none');
+  await longLine.context.close();
   await sample.page.locator('#settings-button').click(); await sample.page.getByLabel('Dark',{exact:true}).check(); await sample.page.keyboard.press('Escape');
   await sample.page.emulateMedia({colorScheme:'dark'}); await bothWidths(sample.page,'welcome-dark',true);
   await sample.page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
@@ -568,7 +686,7 @@ try {
   assert.ok(merges.every(m => !m.home || typeof m.home.stationId==='string' && coarse(m.home.lat) && coarse(m.home.lon)),'stations and GPS both use coarse merge coordinates');
   assert.ok(locates.every(l => coarse(l.lat) && coarse(l.lon)),'all locate start coordinates are coarse');
   console.log('Chirashi browser: PASS · welcome → inline start → sample/photo → answer → walk · visual grouping · implicit labels · GPS/self stamps · printed savings · thumbnails/privacy · separate contexts · adaptive reading/merge recovery · train starts · 60/90 min · focus/escaping · 390/1280px · GPS request privacy · sample cleanup · station compatibility.');
-  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,reading,settings,answer,flyer-sheet,page-sheet,walk,done,stamps}.png');
+  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,reading,settings,answer,flyer-sheet,page-sheet,walk,walk-far,stamped-stop,done,stamps}.png and -desktop.png');
 } finally {
   for (const release of releases) release();
   await browser?.close();
