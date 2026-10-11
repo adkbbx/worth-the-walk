@@ -2,7 +2,7 @@ services:
   - type: web
     name: worth-the-walk
     runtime: node
-    plan: free
+    plan: starter
     buildCommand: npm ci --omit=dev && node scripts/build.mjs
     startCommand: node scripts/serve.mjs
     healthCheckPath: /api/config
