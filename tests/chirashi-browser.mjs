@@ -11,6 +11,20 @@ const key = 'worth-the-walk-v1';
 let server, browser, serverError, logs = '';
 const errors = [], reads = [], merges = [], ranks = [];
 const readState = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
+const pendingPhotos = page => page.evaluate(() => new Promise((resolve,reject) => {
+  const request=indexedDB.open('worth-the-walk-photos',1);
+  request.onerror=() => reject(request.error);
+  request.onsuccess=() => {
+    const db=request.result, transaction=db.transaction('pages','readonly'), rows=transaction.objectStore('pages').getAll();
+    transaction.oncomplete=() => { db.close(); resolve(rows.result.map(p => ({pageId:p.pageId,type:p.blob?.type,size:p.blob?.size,rotation:p.rotation,status:p.status}))); };
+    transaction.onerror=() => { db.close(); reject(transaction.error); };
+  };
+}));
+async function inViewport(locator,label) {
+  assert.ok(await locator.evaluate(el => {
+    const box=el.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth;
+  }),`${label}: outside viewport`);
+}
 async function overflow(page,label) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`${label}: horizontal overflow`);
 }
@@ -48,6 +62,7 @@ try {
   let fixtureIndex = 0;
   await page.route('**/api/read-page',async route => {
     const request = route.request().postDataJSON(), index = fixtureIndex++;
+    if (index === 2) await new Promise(resolve => setTimeout(resolve,1500));
     reads.push(request);
     assert.equal(request.tiles.length,6,'2 × 3 or 3 × 2 tiling');
     for (const tile of request.tiles) { assert.match(tile,/^data:image\/jpeg;base64,/); assert.ok(Buffer.byteLength(tile) <= 2*1024*1024); }
@@ -91,22 +106,38 @@ try {
   await page.getByRole('button',{name:'Read 1 page',exact:true}).waitFor();
   await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
   await page.locator('#photos-input').setInputFiles(files);
+  await page.waitForFunction(() => document.querySelectorAll('.cw-photo').length === 3 && !document.querySelector('[data-action=read]').disabled);
   assert.equal(await page.locator('.cw-photo').count(),3);
   await page.getByRole('button',{name:'Rotate page 1'}).click();
-  assert.match(await page.locator('.cw-photo img').first().getAttribute('style'),/90deg/);
+  await page.waitForFunction(() => document.querySelector('.cw-photo').dataset.rotation === '90' && !document.querySelector('[data-action=read]').disabled);
+  await page.waitForFunction(() => document.querySelector('.cw-photo img').naturalWidth > 0);
+  assert.equal(await page.locator('.cw-photo').first().getAttribute('data-rotation'),'90');
+  assert.ok(await page.locator('.cw-photo img').first().evaluate(img => img.naturalWidth > img.naturalHeight),'rotation is baked into the prepared preview');
+  const selected=await pendingPhotos(page);
+  assert.equal(selected.length,3);
+  assert.ok(selected.every(p => p.type === 'image/jpeg' && p.size > 0),'prepared JPEGs stored before reading');
   await page.getByRole('button',{name:'Read 3 pages',exact:true}).click();
+  await page.getByRole('heading',{name:'Reading your mailbox',exact:true}).waitFor();
+  await inViewport(page.locator('#reading-heading'),'reading heading');
+  assert.ok(await page.locator('#reading-card').evaluate(el => el.getBoundingClientRect().top >= 0 && el.getBoundingClientRect().top < innerHeight));
+  assert.equal(await page.locator('progress').count(),1);
+  await page.waitForFunction(() => document.querySelector('progress')?.value > 0);
+  await page.locator('[data-flyer]').first().waitFor();
+  assert.ok(Object.values((await readState(page)).pages).length < 3,'a flyer card appears before the delayed last page finishes');
+  assert.ok(await page.locator('[data-flyer]').first().isVisible());
   await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 3,key);
-  await page.locator('[data-action=read]').waitFor({state:'detached'});
+  await page.locator('#reading-card').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-bucket]').count(),4);
   assert.match(await page.locator('#mailbox-stat').textContent(),/3 flyers sorted → 2 outings, 1 deal, 0 safe to throw away/);
   assert.equal(await page.locator('#progress').textContent(),'');
   assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#panel h1')),true);
   assert.equal(await page.locator('[data-bucket=toss]').getAttribute('open'),null);
-  assert.ok(await page.evaluate(() => window.readProgress.some(p => /Reading page \d of 3 · part \d of 6/.test(p))));
+  assert.ok(await page.evaluate(() => window.readProgress.some(p => /Read page \d\. \d of 3 pages read\./.test(p))),'polite announcements happen per page');
+  assert.deepEqual(await pendingPhotos(page),[],'completed page blobs deleted');
   await page.locator('#photos-input').setInputFiles(files);
   await page.getByRole('button',{name:'Read 3 pages',exact:true}).click();
   await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 6,key);
-  await page.locator('[data-action=read]').waitFor({state:'detached'});
+  await page.locator('#reading-card').waitFor({state:'detached'});
   const sorted = await readState(page);
   assert.equal(reads.length,6);
   assert.equal(merges.length,6);
@@ -222,6 +253,90 @@ try {
   // Desktop uses the same phone-first content, without stretched text or overflow.
   await page.setViewportSize({width:1280,height:900});
   for (const name of ['mailbox','walk','stamps','history']) { await page.locator(`[data-tab=${name}]`).click(); await overflow(page,`desktop ${name}`); }
+  // Exercise the real-phone batch and recovery separately from the six-fixture assertions above.
+  const phoneContext=await browser.newContext({viewport:{width:390,height:844}});
+  const phone=await phoneContext.newPage(); phone.on('pageerror',error => errors.push(error.message));
+  await phone.goto(base); await phone.getByText('Demo mode',{exact:true}).waitFor();
+  await phone.locator('#setup-line').selectOption('skytree');
+  await phone.locator('#setup-station').selectOption(firstStation.id);
+  await phone.getByRole('button',{name:'Save',exact:true}).click();
+  const sevenFiles=Array.from({length:7},(_,i) => ({...files[i%files.length],name:`phone-page-${i+1}.png`}));
+  await phone.locator('#photos-input').setInputFiles(sevenFiles);
+  await phone.getByRole('button',{name:'Read 7 pages',exact:true}).waitFor();
+  await phone.waitForFunction(() => !document.querySelector('[data-action=read]').disabled);
+  await phone.evaluate(() => scrollTo(0,0));
+  await inViewport(phone.getByRole('button',{name:'Read 7 pages',exact:true}),'sticky Read 7 pages');
+  assert.equal(await phone.locator('.cw-photos').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
+  const pageIds=await phone.locator('.cw-photo [data-action=rotate]').evaluateAll(buttons => buttons.map(b => b.dataset.id));
+  let inFlight=0,maxInFlight=0,blockReads=false,aborted=0;
+  const completed=new Set();
+  await phone.route('**/api/read-page',async route => {
+    const request=route.request().postDataJSON();
+    if (blockReads) {
+      aborted++;
+      await new Promise(resolve => setTimeout(resolve,500));
+      await route.abort('failed').catch(() => {}); // A navigation may already have cancelled it.
+      return;
+    }
+    inFlight++; maxInFlight=Math.max(maxInFlight,inFlight);
+    try {
+      const index=pageIds.indexOf(request.pageId);
+      await new Promise(resolve => setTimeout(resolve,index === 6 ? 1500 : 400));
+      const tile=structuredClone(merges[0].pages[0].tiles[0]);
+      const group=index === 6 ? 0 : index < 0 ? 10 : index;
+      tile.business.name=`Phone test ${group}`; tile.phones=[`0120000${String(group).padStart(3,'0')}`]; tile.websites=[]; tile.address=null;
+      const tiles=request.tiles.map(() => tile);
+      await route.fulfill({status:200,contentType:'application/x-ndjson',body:tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\n')+'\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles})});
+      completed.add(request.pageId);
+    } finally { inFlight--; }
+  });
+  await phone.getByRole('button',{name:'Read 7 pages',exact:true}).click();
+  await phone.locator('#reading-card').waitFor();
+  await inViewport(phone.locator('#reading-heading'),'seven-page reading heading');
+  assert.equal(await phone.locator('#reading-progress').getAttribute('max'),'42');
+  assert.equal(await phone.locator('#reading-progress').evaluate(el => el.value),0);
+  assert.match(await phone.locator('#reading-time').textContent(),/Gemma is reading the first parts/);
+  await phone.waitForFunction(() => document.querySelector('progress')?.value > 0);
+  await phone.locator('[data-flyer]').first().waitFor();
+  assert.equal(completed.has(pageIds[6]),false,'results arrive before the last page');
+  await phone.waitForFunction(({key,id}) => JSON.parse(localStorage.getItem(key)).flyers.some(f => f.pageIds.includes(id)),{key,id:pageIds[0]});
+  const firstCardId=(await readState(phone)).flyers.find(f => f.pageIds.includes(pageIds[0])).id;
+  await phone.locator('#reading-card').waitFor({state:'detached'});
+  assert.equal(maxInFlight,3,'at most three pages read concurrently');
+  const phoneState=await readState(phone);
+  assert.equal(Object.keys(phoneState.pages).length,7);
+  assert.equal(phoneState.flyers.length,6,'later matching page replaces its previous flyer card');
+  const joined=phoneState.flyers.find(f => f.pageIds.includes(pageIds[0]));
+  assert.deepEqual(new Set(joined.pageIds),new Set([pageIds[0],pageIds[6]]));
+  assert.equal(joined.id,firstCardId,'an expanded group keeps its flyer identity');
+  assert.equal(await phone.locator(`[data-flyer="${joined.id}"]`).count(),1);
+  assert.deepEqual(await pendingPhotos(phone),[]);
+
+  // Abort every request, then reload while workers still hold the selected batch.
+  blockReads=true;
+  await phone.locator('#photos-input').setInputFiles(files);
+  const interruptedRequest=phone.waitForRequest('**/api/read-page');
+  await phone.getByRole('button',{name:'Read 3 pages',exact:true}).click();
+  await phone.locator('#reading-card').waitFor();
+  phone.on('dialog',dialog => dialog.accept());
+  await interruptedRequest;
+  await phone.reload(); await phone.getByText('Demo mode',{exact:true}).waitFor();
+  await phone.getByRole('button',{name:'Resume reading',exact:true}).waitFor();
+  assert.ok(aborted > 0);
+  assert.match(await phone.locator('.cw-resume h2').textContent(),/3 pages waiting from/);
+  assert.match(await phone.locator('.cw-resume').textContent(),/Page 1 · Page 2 · Page 3/);
+  const recoveredPhotos=await pendingPhotos(phone);
+  assert.equal(recoveredPhotos.length,3);
+  assert.ok(recoveredPhotos.every(p => p.type === 'image/jpeg' && p.size > 0));
+  blockReads=false;
+  await phone.getByRole('button',{name:'Resume reading',exact:true}).click();
+  await phone.locator('#reading-card').waitFor({state:'detached'});
+  const resumed=await readState(phone);
+  assert.ok(recoveredPhotos.every(p => resumed.pages[p.pageId]),'every pending page is read after resuming');
+  assert.deepEqual(await pendingPhotos(phone),[],'no pending blobs after resume');
+  assert.ok(!JSON.stringify(resumed).includes('data:image/'));
+  await overflow(phone,'seven-page reading and recovery');
+  await phoneContext.close();
   const empty = await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation']});
   const freshPage = await empty.newPage(); freshPage.on('pageerror',error => errors.push(error.message));
   await freshPage.goto(base); await freshPage.getByText('Demo mode',{exact:true}).waitFor();
@@ -235,7 +350,7 @@ try {
   assert.equal(await freshPage.title(),'Station Points — shops by station');
   assert.equal(await freshPage.getByRole('link',{name:'← Worth the Walk?',exact:true}).getAttribute('href'),'/');
   assert.deepEqual(errors,[],'no browser page errors');
-  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · persistence, privacy, 4 tabs and 1280px verified.`);
+  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · persistence, privacy, 4 tabs, 1280px, sticky seven-page reading, incremental merge and reload recovery verified.`);
   console.log('Screenshots: .impeccable/review/chirashi-{mailbox,walk,stamps,history}.png');
 } finally {
   await browser?.close();

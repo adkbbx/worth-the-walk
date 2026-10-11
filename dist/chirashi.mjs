@@ -32,13 +32,15 @@ function load() {
 let state = load(), coordinates = [], tab = 'mailbox', photos = [], busy = false, setupOpen = !state.settings.home;
 let scores = new Map(), rankModel = '', rankSequence = 0;
 let chosenStops = null, groceryChoice = null, shoppingList = new Set(), historyQuery = '', historyDetail = null;
+let reading = null, preparing = 0, recovering = true, recovered = false, photoStorage = true, wakeLock = null;
+let photoWork = Promise.resolve();
 const stampMessages = new Map();
 function notify(message = '') { $('notice').textContent = message; }
 function save() {
   state.flyers = state.flyers.map(storable);
   for (const f of state.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; }
-  try { localStorage.setItem(KEY,JSON.stringify(state)); }
-  catch { notify('Phone storage is full or unavailable. Keep this page open; new changes could not be saved.'); }
+  try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
+  catch { notify('Phone storage is full or unavailable. Keep this page open; new changes could not be saved.'); return false; }
 }
 function home() {
   const point = coordinates.find(s => s.id === state.settings.home);
@@ -65,11 +67,16 @@ function mailboxStat() {
   return `${state.flyers.length} ${plural(state.flyers.length,'flyer','flyers')} sorted → ${count('walk')} ${plural(count('walk'),'outing','outings')}, ${count('home')} ${plural(count('home'),'deal','deals')}, ${count('toss')} safe to throw away`;
 }
 function row(f) { const h = home(); return featureRow(f,{today:japanToday(),distanceMeters:h && f.location ? distanceMeters(h,f.location) : null}); }
-async function api(path, body) {
-  const response = await fetch(path,body === undefined ? {} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+function requestError(response,data) {
+  const error = new Error(response.status === 429 ? `Reading limit reached for now — try again in ${Math.max(1,Math.ceil(Number(data.retryAfter || response.headers.get('Retry-After')) / 60) || 1)} min` : data.error ?? 'Request failed. Please try again.');
+  error.status = response.status;
+  return error;
+}
+async function api(path, body, signal) {
+  const response = await fetch(path,body === undefined ? {signal} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal});
   if (!response.ok) {
     const data = await response.json().catch(() => ({}));
-    throw new Error(response.status === 429 ? `Reading limit reached. Try again in ${data.retryAfter ?? 60} seconds.` : data.error ?? 'Request failed. Please try again.');
+    throw requestError(response,data);
   }
   return response.json();
 }
@@ -145,20 +152,155 @@ function renderMailbox() {
     const content = list.length ? list.map(flyerCard).join('') : '<p class="cw-muted">No flyers here yet.</p>';
     return key === 'toss' ? `<details class="cw-bucket" data-bucket="toss"><summary>${heading}</summary>${content}</details>` : `<section class="cw-bucket" data-bucket="${key}"><h2>${heading}</h2>${content}</section>`;
   };
-  return `<h1>Your mailbox, sorted.</h1><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p><div class="cw-scan"><h2>Add today's pages</h2><div class="cw-actions"><button type="button" data-action="take-photo" ${busy ? 'disabled' : ''}>Take photo</button><button type="button" data-action="choose-photos" ${busy ? 'disabled' : ''}>Choose photos</button></div><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden><div class="cw-photos">${photos.map((p,i) => `<div class="cw-photo"><div class="cw-photo-preview"><img src="${escape(p.url)}" alt="Page ${i + 1} preview" style="transform:rotate(${p.rotation}deg)"></div><div class="cw-actions"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i + 1}" ${busy ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i + 1}" ${busy ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>${photos.length ? `<div class="cw-actions"><button class="cw-primary" data-action="read" ${busy ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'page','pages')}</button></div>` : '<p class="cw-muted">Each photo is one page. Rotate it before reading.</p>'}</div><p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? '<button data-action="merge-retry">Retry sorting saved readings</button>' : ''}`;
+  return `${reading ? readingCard() : ''}<h1>Your mailbox, sorted.</h1><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p>${recovered && photos.length && !reading ? resumeCard() : ''}${!reading ? addPagesCard() : ''}<p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}`;
+}
+function addPagesCard() {
+  const disabled = busy || preparing || recovering;
+  const rotateIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 2 8M4 4v6h6"/></svg>';
+  const removeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
+  return `<div class="cw-scan"><h2>Add today's pages</h2><div class="cw-actions"><button type="button" data-action="take-photo" ${disabled ? 'disabled' : ''}>Take photo</button><button type="button" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose photos</button></div><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden><div class="cw-photos">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><div class="cw-photo-preview"><img src="${escape(p.url)}" alt="Page ${i + 1} preview"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i + 1}" ${disabled ? 'disabled' : ''}>${rotateIcon}</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i + 1}" ${disabled ? 'disabled' : ''}>${removeIcon}</button></div><p class="cw-meta">Page ${i+1}</p></div>`).join('')}</div>${preparing ? '<p class="cw-muted">Preparing cropped previews…</p>' : ''}${photos.length ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'page','pages')}</button></div>` : '<p class="cw-muted">Each photo is one page. Rotate it before reading.</p>'}${!photoStorage ? '<p class="cw-muted">Keep this screen open until reading finishes.</p>' : ''}</div>`;
+}
+function resumeCard() {
+  const time = new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
+  return `<div class="cw-resume"><h2>${photos.length} ${plural(photos.length,'page','pages')} waiting from ${escape(time)}</h2><p class="cw-muted">${photos.map((_,i) => `Page ${i+1}`).join(' · ')}. Your photos are still on this phone.</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume reading</button><button data-action="discard">Discard</button></div></div>`;
+}
+function pageStatus(p) {
+  return p.status === 'read' ? 'Read ✓' : p.status === 'failed' ? 'Failed' : p.status === 'reading' ? `Reading part ${Math.min(6,p.parts.size+1)} of 6` : 'Waiting';
+}
+function readingCard() {
+  const r = reading;
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1">Reading your mailbox</h2><div class="cw-reading-activity" ${!r.active ? 'hidden' : ''}><span class="cw-activity" aria-hidden="true"></span><span>Gemma is reading your pages…</span></div><label for="reading-progress" id="reading-count"></label><progress id="reading-progress" max="${r.batch.length*6}" value="0"></progress><p id="reading-time" class="cw-meta"></p><p id="reading-message">${escape(r.message)}</p><p class="cw-muted">Keep this screen open. Photos stay on this phone until they're read.</p><button data-action="stop-reading" ${!r.active ? 'hidden' : ''}>Stop reading</button><ul class="cw-reading-pages">${r.batch.map((p,i) => `<li data-reading-page="${escape(p.id)}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div><strong>Page ${i+1}</strong><span data-page-status>${pageStatus(p)}</span><span class="cw-meta" data-page-error>${escape(p.error)}</span></div><button data-action="retry-page" data-id="${escape(p.id)}" aria-label="Retry page ${i+1}" ${p.status !== 'failed' ? 'hidden' : ''}>Retry</button></li>`).join('')}</ul>${!photoStorage ? '<p class="cw-muted">Keep this screen open until reading finishes.</p>' : ''}${!r.active && photos.length ? '<button data-action="resume">Resume reading</button>' : ''}</section>`;
+}
+function updateReading() {
+  if (!reading || !$('reading-progress')) return;
+  const r = reading, count = r.batch.reduce((n,p) => n+p.parts.size,0), total = r.batch.length*6;
+  $('reading-progress').value = count;
+  $('reading-count').textContent = `${count} of ${total} parts read`;
+  const seconds = Math.floor((performance.now()-r.started)/1000);
+  const elapsed = seconds < 60 ? `${seconds} s elapsed` : `${Math.floor(seconds/60)} min ${seconds%60} s elapsed`;
+  const average = r.durations.reduce((n,d) => n+d,0) / r.durations.length;
+  const lanes = Math.min(3,r.batch.filter(p => ['waiting','reading'].includes(p.status)).length) || 1;
+  const remaining = Math.max(1,Math.ceil(average*(total-count)/lanes/60000));
+  $('reading-time').textContent = `${elapsed} · ${!r.active ? 'Reading paused' : !count ? 'Gemma is reading the first parts… usually 15–20 s' : count === total ? 'Sorting your flyers…' : `about ${remaining} min left`}`;
+  $('reading-message').textContent = r.message;
+  for (const row of $('reading-card').querySelectorAll('[data-reading-page]')) {
+    const p = r.batch.find(p => p.id === row.dataset.readingPage);
+    row.querySelector('[data-page-status]').textContent = pageStatus(p);
+    row.querySelector('[data-page-error]').textContent = p.error ?? '';
+    row.querySelector('button').hidden = p.status !== 'failed';
+  }
 }
 
-// Files, bitmaps and image data URLs stay transient. State keeps extracted text only.
-async function tilePage(photo) {
+// Only prepared JPEG Blobs live in IndexedDB. localStorage contains extracted text only.
+async function photoDB(method,value) {
+  let db;
+  try {
+    if (!photoStorage) return method === 'getAll' ? [] : false;
+    db = await new Promise((resolve,reject) => {
+      const request = indexedDB.open('worth-the-walk-photos',1);
+      let expired=false;
+      const fail = error => { expired=true; clearTimeout(timer); reject(error); };
+      const timer = setTimeout(() => fail(new Error('Photo storage unavailable')),3000);
+      request.onupgradeneeded = () => { try { if (!request.result.objectStoreNames.contains('pages')) request.result.createObjectStore('pages',{keyPath:'pageId'}); } catch (error) { fail(error); } };
+      request.onerror = () => fail(request.error);
+      request.onblocked = () => fail(new Error('Photo storage blocked'));
+      request.onsuccess = () => {
+        try { clearTimeout(timer); if (expired) request.result.close(); else resolve(request.result); }
+        catch (error) { fail(error); }
+      };
+    });
+    return await new Promise((resolve,reject) => {
+      const transaction = db.transaction('pages',method === 'getAll' ? 'readonly' : 'readwrite');
+      const request = transaction.objectStore('pages')[method](...(value === undefined ? [] : [value]));
+      transaction.oncomplete = () => resolve(method === 'getAll' ? request.result : true);
+      transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('Photo storage failed'));
+      request.onerror = () => reject(request.error);
+    });
+  } catch {
+    photoStorage = false;
+    notify('Keep this screen open until reading finishes. Photo storage is unavailable.');
+    return method === 'getAll' ? [] : false;
+  } finally { try { db?.close(); } catch {} }
+}
+const storePhoto = p => photoDB('put',{pageId:p.id,blob:p.blob,addedAt:p.addedAt,rotation:p.rotation,status:p.status});
+async function recoverPhotos() {
+  try {
+    const pending = await photoDB('getAll');
+    for (const p of pending.filter(p => record(p) && typeof p.pageId === 'string' && typeof p.addedAt === 'string').sort((a,b) => a.addedAt.localeCompare(b.addedAt))) {
+      if (state.pages[p.pageId] || state.flyers.some(f => f.pageIds.includes(p.pageId))) { await photoDB('delete',p.pageId); continue; }
+      if (!(p.blob instanceof Blob) || !Number.isFinite(Date.parse(p.addedAt))) continue;
+      photos.push({id:p.pageId,file:p.blob,blob:p.blob,url:URL.createObjectURL(p.blob),rotation:p.rotation,sourceRotation:p.rotation,addedAt:p.addedAt,status:'waiting',parts:new Set()});
+    }
+    recovered = photos.length > 0;
+  } finally { recovering = false; render(); }
+}
+const jpeg = canvas => new Promise((resolve,reject) => canvas.toBlob(b => b?.type === 'image/jpeg' ? resolve(b) : reject(new Error('Could not encode the photo. Try another image.')),'image/jpeg',.85));
+function paperBox(sample) {
+  const {width:w,height:h} = sample, data = sample.getContext('2d').getImageData(0,0,w,h).data;
+  const luminance = new Uint8Array(w*h), border = [];
+  for (let i=0;i<luminance.length;i++) {
+    luminance[i] = .2126*data[i*4]+.7152*data[i*4+1]+.0722*data[i*4+2];
+    const x=i%w,y=Math.floor(i/w);
+    if (x < w*.05 || x > w*.95 || y < h*.05 || y > h*.95) border.push(luminance[i]);
+  }
+  border.sort((a,b) => a-b);
+  const threshold = Math.max(100,border[Math.floor(border.length/2)]+40);
+  const seen = new Uint8Array(w*h), queue = new Int32Array(w*h);
+  let largest = null;
+  for (let i=0;i<seen.length;i++) {
+    if (seen[i] || luminance[i] <= threshold) continue;
+    let head=0,tail=1,left=w,right=0,top=h,bottom=0; queue[0]=i; seen[i]=1;
+    while (head < tail) {
+      const n=queue[head++],x=n%w,y=Math.floor(n/w);
+      left=Math.min(left,x); right=Math.max(right,x); top=Math.min(top,y); bottom=Math.max(bottom,y);
+      for (const k of [x ? n-1 : -1,x<w-1 ? n+1 : -1,y ? n-w : -1,y<h-1 ? n+w : -1]) if (k>=0 && !seen[k] && luminance[k]>threshold) { seen[k]=1; queue[tail++]=k; }
+    }
+    if (!largest || tail > largest.count) largest={left,right,top,bottom,count:tail};
+  }
+  if (!largest) return null;
+  const area=(largest.right-largest.left+1)*(largest.bottom-largest.top+1)/(w*h);
+  if (area < .25 || area > .95) return null;
+  return {left:Math.max(0,largest.left/w-.02),top:Math.max(0,largest.top/h-.02),right:Math.min(1,(largest.right+1)/w+.02),bottom:Math.min(1,(largest.bottom+1)/h+.02)};
+}
+async function preparePhoto(photo) {
   const bitmap = await createImageBitmap(photo.file,{imageOrientation:'from-image'});
   try {
-    const turn = photo.rotation % 180 !== 0;
-    const width = turn ? bitmap.height : bitmap.width, height = turn ? bitmap.width : bitmap.height;
-    const scale = Math.min(1,2400/Math.max(width,height));
-    const page = document.createElement('canvas'); page.width = Math.max(1,Math.round(width*scale)); page.height = Math.max(1,Math.round(height*scale));
-    const ctx = page.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,page.width,page.height);
-    ctx.translate(page.width/2,page.height/2); ctx.rotate(photo.rotation*Math.PI/180);
-    ctx.drawImage(bitmap,-bitmap.width*scale/2,-bitmap.height*scale/2,bitmap.width*scale,bitmap.height*scale);
+    const rotation = (photo.rotation-(photo.sourceRotation ?? 0)+360)%360, turn = rotation%180 !== 0;
+    const width=turn ? bitmap.height : bitmap.width,height=turn ? bitmap.width : bitmap.height;
+    const sample = document.createElement('canvas'), small=Math.min(1,256/Math.max(width,height));
+    sample.width=Math.max(1,Math.round(width*small)); sample.height=Math.max(1,Math.round(height*small));
+    const draw = (ctx,scale,left=0,top=0) => {
+      ctx.fillStyle='#fff'; ctx.fillRect(0,0,ctx.canvas.width,ctx.canvas.height);
+      ctx.translate((width/2-left)*scale,(height/2-top)*scale); ctx.rotate(rotation*Math.PI/180);
+      ctx.drawImage(bitmap,-bitmap.width*scale/2,-bitmap.height*scale/2,bitmap.width*scale,bitmap.height*scale);
+    };
+    draw(sample.getContext('2d'),small);
+    const box=paperBox(sample) ?? {left:0,top:0,right:1,bottom:1};
+    const cropW=(box.right-box.left)*width,cropH=(box.bottom-box.top)*height,scale=Math.min(1,2400/Math.max(cropW,cropH));
+    const page=document.createElement('canvas'); page.width=Math.max(1,Math.round(cropW*scale)); page.height=Math.max(1,Math.round(cropH*scale));
+    draw(page.getContext('2d'),scale,box.left*width,box.top*height);
+    const blob=await jpeg(page);
+    if (photo.url) URL.revokeObjectURL(photo.url);
+    photo.blob=blob; photo.url=URL.createObjectURL(blob);
+    page.width=page.height=sample.width=sample.height=0;
+    await storePhoto(photo);
+  } finally { bitmap.close(); }
+}
+async function addPhotos(files) {
+  preparing++; render();
+  try {
+    for (const file of files) {
+      const photo={id:uid('p-'),file,rotation:0,addedAt:now(),status:'waiting',parts:new Set()};
+      try { await preparePhoto(photo); photos.push(photo); render(); }
+      catch (error) { notify(error.message ?? 'Could not prepare this photo. Try another image.'); }
+    }
+  } finally { preparing--; render(); }
+}
+async function tilePage(photo) {
+  const bitmap = await createImageBitmap(photo.blob);
+  const page=document.createElement('canvas'); page.width=bitmap.width; page.height=bitmap.height;
+  try {
+    page.getContext('2d').drawImage(bitmap,0,0);
     const cols = page.height >= page.width ? 2 : 3, rows = cols === 2 ? 3 : 2, result = [];
     for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) {
       const cellW = page.width/cols, cellH = page.height/rows;
@@ -167,31 +309,37 @@ async function tilePage(photo) {
       const right = Math.min(page.width,Math.ceil((x+1)*cellW+cellW*.05)), bottom = Math.min(page.height,Math.ceil((y+1)*cellH+cellH*.05));
       const tile = document.createElement('canvas'); tile.width = right-left; tile.height = bottom-top;
       tile.getContext('2d').drawImage(page,left,top,tile.width,tile.height,0,0,tile.width,tile.height);
-      const blob = await new Promise((resolve,reject) => tile.toBlob(b => b ? resolve(b) : reject(new Error('Could not encode the photo. Try another image.')),'image/jpeg',.85));
+      const blob = await jpeg(tile);
       if (blob.size > 2*1024*1024) throw new Error('This photo is too detailed to read. Try a smaller photo.');
       const dataURL = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Could not read photo.')); reader.readAsDataURL(blob); });
       if (dataURL.length > 2*1024*1024) throw new Error('This photo is too detailed to read. Try a smaller photo.');
-      result.push(dataURL);
-      tile.width = tile.height = 0;
+      result.push(dataURL); tile.width = tile.height = 0;
     }
-    page.width = page.height = 0; return result;
-  } finally { bitmap.close(); }
+    return result;
+  } finally { bitmap.close(); page.width=page.height=0; }
 }
-async function readPage(photo,index,total) {
+async function readPage(photo,session) {
+  photo.status='reading'; photo.parts.clear(); photo.error=''; updateReading();
+  await storePhoto(photo);
   const tiles = await tilePage(photo);
-  const response = await fetch('/api/read-page',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pageId:photo.id,tiles})});
-  if (!response.ok) { const e = await response.json().catch(() => ({})); throw new Error(e.retryAfter ? `Reading limit reached. Try again in ${e.retryAfter} seconds.` : e.error ?? 'Photo reading failed. Try again.'); }
+  session.controller.signal.throwIfAborted();
+  let lastPart=performance.now();
+  const response = await fetch('/api/read-page',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pageId:photo.id,tiles}),signal:session.controller.signal});
+  if (!response.ok) { const e = await response.json().catch(() => ({})); throw requestError(response,e); }
   const reader = response.body.getReader(), decoder = new TextDecoder();
   const page = {id:photo.id,scannedAt:japanToday(),tiles:Array(tiles.length).fill(null)};
-  let buffer = '', parts = 0, done = false, failed = 0;
+  let buffer = '', done = false, failed = 0;
   function line(text) {
     if (!text.trim()) return;
     const event = JSON.parse(text);
     if (event.type === 'tile' || event.type === 'tile-error') {
-      if (Number.isInteger(event.index) && event.index >= 0 && event.index < page.tiles.length) page.tiles[event.index] = event.tile ?? null;
-      if (event.type === 'tile-error') failed++;
-      $('progress').textContent = `Reading page ${index + 1} of ${total} · part ${++parts} of ${tiles.length}`;
-    } else if (event.type === 'done' && Array.isArray(event.tiles)) { page.tiles = event.tiles; done = true; }
+      if (Number.isInteger(event.index) && event.index >= 0 && event.index < tiles.length && !photo.parts.has(event.index)) {
+        page.tiles[event.index] = event.tile ?? null; photo.parts.add(event.index);
+        if (event.type === 'tile-error') failed++;
+        const time=performance.now(); session.durations.push(time-lastPart); lastPart=time;
+        updateReading();
+      }
+    } else if (event.type === 'done' && Array.isArray(event.tiles) && event.tiles.length === tiles.length) { page.tiles = event.tiles; done = true; }
   }
   try {
     while (true) {
@@ -199,59 +347,142 @@ async function readPage(photo,index,total) {
       let end; while ((end = buffer.indexOf('\n')) >= 0) { line(buffer.slice(0,end)); buffer = buffer.slice(end+1); }
       if (chunk.done) break;
     }
-    line(buffer);
+    line(buffer); session.controller.signal.throwIfAborted();
     if (!done) throw new Error('Reading was interrupted. Your photo is ready to try again.');
     if (page.tiles.every(t => !t)) throw new Error('No parts could be read. Try a clearer photo.');
-    state.pages[page.id] = page; save();
+    state.pages[page.id] = page;
+    const saved=save();
+    photo.status='read'; photo.parts=new Set(tiles.map((_,i) => i));
+    // Never remove the recovery copy until extracted text was saved successfully.
+    if (saved) await photoDB('delete',photo.id);
+    photo.file=null; photo.blob=null;
+    photos=photos.filter(p => p.id !== photo.id);
+    $('progress').textContent = `Read page ${session.batch.indexOf(photo)+1}. ${session.batch.filter(p => p.status === 'read').length} of ${session.batch.length} pages read.`;
     if (failed) notify(`${failed} parts could not be read. Check the printed flyer before using an offer.`);
-    return page.id;
+    updateReading(); return page.id;
   } finally { reader.releaseLock(); }
 }
-async function mergeGroups(affected = null) {
+async function mergeGroups(affected = null,signal) {
   const groups = groupPages(Object.values(state.pages),state.overrides);
   const selected = affected ? groups.filter(g => g.pageIds.some(id => affected.has(id))) : groups.filter(g => !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
-  // Stage the replacement before removing old flyers, so failed merges are retryable.
-  const results = [];
+  const staged=[];
+  const originalFlyers=[...state.flyers];
   for (let i = 0; i < selected.length; i++) {
-    const group = selected[i]; $('progress').textContent = `Sorting flyer ${i+1} of ${selected.length}…`;
-    const old = state.flyers.find(f => f.pageIds.length === group.pageIds.length && f.pageIds.every(id => group.pageIds.includes(id)));
-    const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,tiles:state.pages[id].tiles.filter(Boolean)})),scanDate:japanToday(),home:home()});
+    signal?.throwIfAborted();
+    const group = selected[i];
+    if (!reading?.active) $('progress').textContent = `Sorting flyer ${i+1} of ${selected.length}…`;
+    const oldFlyers = state.flyers.filter(f => f.pageIds.some(id => group.pageIds.includes(id)));
+    const old = oldFlyers.find(f => f.pageIds.length === group.pageIds.length) ?? (!affected ? oldFlyers[0] : null);
+    // Stage each replacement before removing any old flyer, so a failed merge is retryable.
+    const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,tiles:state.pages[id].tiles.filter(Boolean)})),scanDate:japanToday(),home:home()},signal);
+    signal?.throwIfAborted();
     const stored = storable(result.flyer);
-    results.push(stored);
-    if (stored.bucket === 'keep') {
-      // Discard private readings immediately, even if a later group's merge fails.
-      state.flyers = [...state.flyers.filter(f => !f.pageIds.some(id => stored.pageIds.includes(id))),stored];
-      save();
+    if (affected) {
+      staged.push(stored);
+      if (stored.bucket === 'keep') {
+        state.flyers=[...state.flyers.filter(f => !f.pageIds.some(id => stored.pageIds.includes(id))),stored]; save();
+      }
+      continue;
     }
+    state.flyers = [...state.flyers.filter(f => !f.pageIds.some(id => group.pageIds.includes(id))),stored];
+    // A page correction can change entry indices. Follow printed text/value, not the old index.
+    for (const outing of state.outings) for (const used of [...outing.used]) {
+      const previous = oldFlyers.find(f => f.id === used.flyerId); if (!previous) continue;
+      const key = used.kind === 'offer' ? 'offers' : 'items', entry = previous[key]?.[used.index];
+      const index = (stored[key] ?? []).findIndex(e => JSON.stringify({...e,page:null}) === JSON.stringify({...entry,page:null}));
+      if (index >= 0) { used.flyerId = stored.id; used.index = index; }
+      else outing.used = outing.used.filter(u => u !== used);
+    }
+    save(); chosenStops = null; groceryChoice = null; render();
   }
-  const pageIds = new Set(selected.flatMap(g => g.pageIds));
-  const oldFlyers = state.flyers.filter(f => f.pageIds.some(id => pageIds.has(id)));
-  state.flyers = [...state.flyers.filter(f => !f.pageIds.some(id => pageIds.has(id))),...results];
-  // A page correction can change entry indices. Follow printed text/value, not the old index.
-  for (const outing of state.outings) for (const used of [...outing.used]) {
-    const old = oldFlyers.find(f => f.id === used.flyerId); if (!old) continue;
-    const key = used.kind === 'offer' ? 'offers' : 'items', entry = old[key]?.[used.index];
-    const match = results.map(f => ({f,index:(f[key] ?? []).findIndex(e => JSON.stringify({...e,page:null}) === JSON.stringify({...entry,page:null}))})).find(m => m.index >= 0);
-    if (match) { used.flyerId = match.f.id; used.index = match.index; }
-    else outing.used = outing.used.filter(u => u !== used);
+  if (affected) {
+    const ids=new Set(selected.flatMap(g => g.pageIds));
+    state.flyers=[...state.flyers.filter(f => !f.pageIds.some(id => ids.has(id))),...staged];
+    for (const outing of state.outings) for (const used of [...outing.used]) {
+      const old=originalFlyers.find(f => f.id === used.flyerId && f.pageIds.some(id => ids.has(id))); if (!old) continue;
+      const key=used.kind === 'offer' ? 'offers' : 'items', entry=old[key]?.[used.index];
+      const match=staged.map(f => ({f,index:(f[key] ?? []).findIndex(e => JSON.stringify({...e,page:null}) === JSON.stringify({...entry,page:null}))})).find(m => m.index >= 0);
+      if (match) { used.flyerId=match.f.id; used.index=match.index; }
+      else outing.used=outing.used.filter(u => u !== used);
+    }
+    save(); chosenStops=null; groceryChoice=null; render();
   }
-  save(); chosenStops = null; groceryChoice = null; await rank(); $('progress').textContent = '';
+  if (!reading?.active) { await rank(); $('progress').textContent = ''; }
 }
-async function readPhotos() {
-  if (!home()) { setupOpen = true; renderSetup(); render(); notify('Choose your home station before reading.'); return; }
-  if (!photos.length || busy) return;
-  busy = true; notify(); render();
-  const batch = [...photos], success = new Set(), failures = []; let next = 0;
+async function acquireWakeLock(session) {
+  if (!session?.active || session.controller.signal.aborted || document.visibilityState !== 'visible' || !navigator.wakeLock || wakeLock || session.lockRequest) return;
+  session.lockRequest=true;
   try {
-    await Promise.all(Array.from({length:Math.min(2,batch.length)},async () => {
-      while (next < batch.length) { const index = next++; try { success.add(await readPage(batch[index],index,batch.length)); } catch (e) { failures.push(e.message); } }
+    const lock=await navigator.wakeLock.request('screen');
+    if (!session.active || session.controller.signal.aborted) { await lock.release(); return; }
+    wakeLock=lock; lock.addEventListener('release',() => { if (wakeLock === lock) wakeLock=null; });
+  } catch { /* Unsupported, denied, or low battery: reading still works. */ }
+  finally { session.lockRequest=false; }
+}
+async function releaseWakeLock() {
+  const lock=wakeLock; wakeLock=null;
+  try { await lock?.release(); } catch {}
+}
+function guardUnload(event) { event.preventDefault(); event.returnValue=''; }
+function stopReading(message='Reading stopped. Your unread pages are kept for later.') {
+  if (!reading?.active) return;
+  reading.message=message; reading.controller.abort(); updateReading();
+  window.removeEventListener('beforeunload',guardUnload); void releaseWakeLock();
+}
+async function readPhotos(ids=null) {
+  if (!home()) { setupOpen = true; renderSetup(); render(); notify('Choose your home station before reading.'); return; }
+  if (!photos.length || busy || preparing || recovering) return;
+  const batch=photos.filter(p => !ids || ids.includes(p.id)); if (!batch.length) return;
+  busy=true; recovered=false; tab='mailbox'; notify();
+  const session={batch,queue:[...batch],controller:new AbortController(),active:true,started:performance.now(),durations:[],message:''};
+  reading=session;
+  for (const p of batch) { p.status='waiting'; p.parts.clear(); p.error=''; }
+  render(); $('reading-card').scrollIntoView({block:'start'}); $('reading-heading').focus({preventScroll:true});
+  window.addEventListener('beforeunload',guardUnload); void acquireWakeLock(session);
+  const timer=setInterval(updateReading,1000);
+  let mergeWork=Promise.resolve();
+  const sortReadings=() => {
+    mergeWork=mergeWork.then(async () => {
+      if (session.controller.signal.aborted) return;
+      try { await mergeGroups(null,session.controller.signal); }
+      catch (error) {
+        if (error.name !== 'AbortError') {
+          session.message=`Your readings are saved. Sorting failed: ${error.message}. Use Retry sorting saved readings.`; notify(session.message);
+          if (error.status === 429) stopReading(error.message);
+        }
+      }
+    });
+  };
+  try {
+    // Commit all prepared images before the first request; IndexedDB failure falls back to memory.
+    for (const p of batch) await storePhoto(p);
+    await Promise.all(Array.from({length:Math.min(3,batch.length)},async () => {
+      while (session.queue.length && !session.controller.signal.aborted) {
+        const p=session.queue.shift();
+        try { await readPage(p,session); sortReadings(); }
+        catch (error) {
+          p.status=error.name === 'AbortError' ? 'waiting' : 'failed';
+          p.error=error.name === 'AbortError' ? '' : error.message || 'Network failure. Retry this page.';
+          if (error.status === 429) stopReading(error.message);
+          else if (error.name !== 'AbortError') { session.message='Some pages could not be read. Retry the failed pages.'; notify(p.error); }
+          await storePhoto(p);
+          $('progress').textContent=`Page ${batch.indexOf(p)+1}: ${pageStatus(p)}${p.error ? '. '+p.error : ''}`;
+          updateReading();
+        }
+      }
     }));
-    for (const p of photos.filter(p => success.has(p.id))) URL.revokeObjectURL(p.url);
-    photos = photos.filter(p => !success.has(p.id));
-    if (success.size) await mergeGroups();
-    if (failures.length) notify(failures.join(' '));
-    $('progress').textContent = success.size ? '' : 'No pages read. Try again.';
-  } finally { busy = false; render(); focusHeading(); }
+    await mergeWork;
+  } finally {
+    clearInterval(timer); session.active=false; window.removeEventListener('beforeunload',guardUnload); await releaseWakeLock();
+    for (const p of batch.filter(p => p.status === 'read')) URL.revokeObjectURL(p.url);
+    // Remove completed rows before revoking their preview URLs on a paused card.
+    session.batch=session.batch.filter(p => p.status !== 'read');
+    if (!session.batch.length) reading=null;
+    busy=false; render();
+    if (!reading) { $('progress').textContent=''; focusHeading(); }
+    else $('progress').textContent=session.message || 'Reading paused. Your unread pages are kept for later.';
+    await rank();
+  }
 }
 function arrivalStatus(f,minutes) {
   // Lessons and events print class times, not opening hours, so they never rule a stop out.
@@ -398,6 +629,8 @@ function render() {
   const headingFocused = $('panel').contains(document.activeElement) && /^H[1-3]$/.test(document.activeElement.tagName);
   $('panel').hidden = setupOpen; $('panel').setAttribute('aria-label',tab[0].toUpperCase()+tab.slice(1));
   $('panel').innerHTML = tab === 'mailbox' ? renderMailbox() : tab === 'walk' ? renderWalk() : tab === 'stamps' ? renderStamps() : renderHistory();
+  document.body.classList.toggle('cw-has-photos',tab === 'mailbox' && !setupOpen && photos.length > 0 && !reading);
+  updateReading();
   if (tossOpen) { const toss = $('panel').querySelector('[data-bucket=toss]'); if (toss) toss.open = true; }
   if (focusKey) [...$('panel').querySelectorAll('[data-action=rate]')].find(b => b.dataset.id === focusKey.id && b.dataset.label === focusKey.label)?.focus({preventScroll:true});
   for (const b of document.querySelectorAll('[data-tab]')) { if (b.dataset.tab === tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
@@ -419,9 +652,29 @@ async function action(button) {
     case 'close-setup': setupOpen = false; renderSetup(); render(); break;
     case 'take-photo': $('camera-input').click(); break;
     case 'choose-photos': $('photos-input').click(); break;
-    case 'rotate': if (!busy) { const p = photos.find(p => p.id === id); p.rotation = (p.rotation+90)%360; render(); } break;
-    case 'remove-photo': if (!busy) { const p = photos.find(p => p.id === id); URL.revokeObjectURL(p.url); photos = photos.filter(p => p.id !== id); render(); } break;
+    case 'rotate': if (!busy && !preparing) {
+      const p = photos.find(p => p.id === id); if (!p) break;
+      preparing++; p.rotation = (p.rotation+90)%360; render();
+      try { await preparePhoto(p); } finally { preparing--; render(); }
+    } break;
+    case 'remove-photo': if (!busy && !preparing) {
+      const p = photos.find(p => p.id === id); if (!p) break;
+      await photoDB('delete',id); URL.revokeObjectURL(p.url); photos = photos.filter(p => p.id !== id); render();
+    } break;
     case 'read': await readPhotos(); break;
+    case 'resume': await readPhotos(); break;
+    case 'stop-reading': stopReading(); break;
+    case 'retry-page': {
+      const p=photos.find(p => p.id === id); if (!p || p.status !== 'failed') break;
+      if (reading?.active && !reading.controller.signal.aborted) {
+        p.status='waiting'; p.error=''; p.parts.clear(); reading.queue.push(p); updateReading();
+      } else await readPhotos([id]);
+      break;
+    }
+    case 'discard': if (!busy && !preparing) {
+      for (const p of photos) { await photoDB('delete',p.id); URL.revokeObjectURL(p.url); }
+      photos=[]; recovered=false; reading=null; render();
+    } break;
     case 'continue-walk': changeTab('walk'); break;
     case 'rate': if (flyer(id)?.bucket === 'keep') break; state.labels[id] = Number(button.dataset.label); save(); render(); await rank(); break;
     case 'merge-retry': if (!busy) { busy = true; render(); try { await mergeGroups(); } finally { busy = false; render(); } } break;
@@ -444,8 +697,9 @@ $('settings-button').addEventListener('click',() => { setupOpen = !setupOpen || 
 document.addEventListener('change',event => {
   const input = event.target;
   if (input.id === 'photos-input' || input.id === 'camera-input') {
-    for (const file of input.files) if (file.type.startsWith('image/')) photos.push({id:uid('p-'),file,url:URL.createObjectURL(file),rotation:0});
-    input.value = ''; render();
+    const files=[...input.files].filter(file => file.type.startsWith('image/'));
+    input.value = '';
+    photoWork=photoWork.then(() => addPhotos(files)); safely(() => photoWork);
   } else if (input.dataset.stop) {
     if (chosenStops === null) chosenStops = new Set(candidates().map(f => f.id));
     if (input.checked) chosenStops.add(input.dataset.stop); else chosenStops.delete(input.dataset.stop); render();
@@ -491,8 +745,10 @@ document.addEventListener('submit',event => {
     });
   }
 });
-window.addEventListener('pagehide',() => { for (const p of photos) URL.revokeObjectURL(p.url); });
+document.addEventListener('visibilitychange',() => { if (reading?.active) void acquireWakeLock(reading); });
+window.addEventListener('pagehide',() => { stopReading(); void releaseWakeLock(); });
 renderSetup(); render();
+await recoverPhotos();
 try {
   const response = await fetch('/station-coordinates.json'); if (!response.ok) throw new Error();
   coordinates = await response.json(); render();
