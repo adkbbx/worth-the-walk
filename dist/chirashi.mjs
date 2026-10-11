@@ -1,5 +1,5 @@
 import {stations, railLines, stationsOnLine, stores, walletOptions} from '/catalog.mjs';
-import {groupPages, storable, printedValue, savings, featureRow, parseDeadline} from '/mailbox.mjs';
+import {groupPages, storable, printedValue, savings, featureRow, parseDeadline, needsDetail} from '/mailbox.mjs';
 import {distanceMeters, neighbours, nearestStation, orderStops, planOuting, walkMinutes, estimates, mapsLink, groceryOnTheWay, openStatus} from '/walks.mjs';
 import {japanToday, storePrograms, reward, nextBonus} from '/rules.mjs';
 
@@ -141,11 +141,12 @@ function fixControl(f) {
   return `<details><summary>${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')} · Fix pages</summary><form data-fix="${escape(f.id)}">${f.pageIds.map((id,index) => `<label class="cw-field">Page ${index + 1}<select name="${escape(id)}"><option value="keep">Keep in this flyer</option>${state.flyers.filter(other => other.id !== f.id && other.bucket !== 'keep').map(other => `<option value="${escape(other.id)}">Move to ${escape(other.business?.name ?? 'another flyer')}</option>`).join('')}<option value="split">Split into new flyer</option></select></label>`).join('')}<button type="submit" ${busy ? 'disabled' : ''}>Save pages &amp; re-read groups</button></form></details>`;
 }
 function pendingGroups() {
-  return groupPages(Object.values(state.pages),state.overrides).some(g => !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
+  return groupPages(Object.values(state.pages),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
 }
 function flyerCard(f) {
+  const readingPrices = reading?.active && reading.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing');
   const reason = f.category === 'buying_service' ? 'Buying service — they come to you; only if you need it' : f.category === 'junk_removal' ? 'Removal service — keep only if you need it' : f.category === 'real_estate' ? 'Property advert — keep only if you need it' : 'No in-person deal to walk to';
-  return `<article class="cw-card" data-flyer="${escape(f.id)}"><h3${f.business?.name ? ' lang="ja"' : ''}>${escape(f.business?.name ?? (f.bucket === 'keep' ? 'Personal or official mail' : 'Flyer'))}${f.business?.branch ? ` <span class="cw-branch">${escape(f.business.branch)}</span>` : ''}</h3><p class="cw-kind">${escape(f.business?.kind ?? f.category?.replaceAll('_',' '))}${expired(f) ? ' · expired' : ''}</p>${scores.has(f.id) ? `<p class="cw-meta">Likely for you · ${Math.round(scores.get(f.id)*100)}%</p>` : ''}${f.summary_en ? `<p>${escape(f.summary_en)}</p>` : ''}${f.bucket === 'toss' ? `<p class="cw-muted">${reason}</p>` : ''}${f.deadline ? `<p class="cw-meta">Until ${formatDate(f.deadline)}${expired(f) ? ' · expired' : ''}</p>` : ''}${fixControl(f)}${f.bucket === 'keep' ? '<p class="cw-muted">Keep the original. Personal details are not saved.</p>' : entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '')}${rating(f)}</article>`;
+  return `<article class="cw-card" data-flyer="${escape(f.id)}"><h3${f.business?.name ? ' lang="ja"' : ''}>${escape(f.business?.name ?? (f.bucket === 'keep' ? 'Personal or official mail' : 'Flyer'))}${f.business?.branch ? ` <span class="cw-branch">${escape(f.business.branch)}</span>` : ''}</h3><p class="cw-kind">${escape(f.business?.kind ?? f.category?.replaceAll('_',' '))}${expired(f) ? ' · expired' : ''}</p>${scores.has(f.id) ? `<p class="cw-meta">Likely for you · ${Math.round(scores.get(f.id)*100)}%</p>` : ''}${readingPrices ? '<p class="cw-meta" data-reading-prices role="status">Reading prices…</p>' : ''}${f.summary_en ? `<p>${escape(f.summary_en)}</p>` : ''}${f.bucket === 'toss' ? `<p class="cw-muted">${reason}</p>` : ''}${f.deadline ? `<p class="cw-meta">Until ${formatDate(f.deadline)}${expired(f) ? ' · expired' : ''}</p>` : ''}${fixControl(f)}${f.bucket === 'keep' ? '<p class="cw-muted">Keep the original. Personal details are not saved.</p>' : entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '')}${rating(f)}</article>`;
 }
 function renderMailbox() {
   const bucket = key => {
@@ -167,29 +168,34 @@ function resumeCard() {
   return `<div class="cw-resume"><h2>${photos.length} ${plural(photos.length,'page','pages')} waiting from ${escape(time)}</h2><p class="cw-muted">${photos.map((_,i) => `Page ${i+1}`).join(' · ')}. Your photos are still on this phone.</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume reading</button><button data-action="discard">Discard</button></div></div>`;
 }
 function pageStatus(p) {
-  return p.status === 'read' ? 'Read ✓' : p.status === 'failed' ? 'Failed' : p.status === 'reading' ? `Reading part ${Math.min(6,p.parts.size+1)} of 6` : 'Waiting';
+  return p.status === 'read' ? 'Read ✓' : p.status === 'failed' ? 'Failed' : p.status === 'detailing' ? `read · checking prices (${Math.min(6,p.parts.size+1)} of 6)` : p.status === 'reading' ? 'Reading page' : 'Waiting';
 }
 function readingCard() {
   const r = reading;
-  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1">Reading your mailbox</h2><div class="cw-reading-activity" ${!r.active ? 'hidden' : ''}><span class="cw-activity" aria-hidden="true"></span><span>Gemma is reading your pages…</span></div><label for="reading-progress" id="reading-count"></label><progress id="reading-progress" max="${r.batch.length*6}" value="0"></progress><p id="reading-time" class="cw-meta"></p><p id="reading-message">${escape(r.message)}</p><p class="cw-muted">Keep this screen open. Photos stay on this phone until they're read.</p><button data-action="stop-reading" ${!r.active ? 'hidden' : ''}>Stop reading</button><ul class="cw-reading-pages">${r.batch.map((p,i) => `<li data-reading-page="${escape(p.id)}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div><strong>Page ${i+1}</strong><span data-page-status>${pageStatus(p)}</span><span class="cw-meta" data-page-error>${escape(p.error)}</span></div><button data-action="retry-page" data-id="${escape(p.id)}" aria-label="Retry page ${i+1}" ${p.status !== 'failed' ? 'hidden' : ''}>Retry</button></li>`).join('')}</ul>${!photoStorage ? '<p class="cw-muted">Keep this screen open until reading finishes.</p>' : ''}${!r.active && photos.length ? '<button data-action="resume">Resume reading</button>' : ''}</section>`;
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1">Reading your mailbox</h2><div class="cw-reading-activity" ${!r.active ? 'hidden' : ''}><span class="cw-activity" aria-hidden="true"></span><span>Gemma is reading your pages…</span></div><label for="reading-progress" id="reading-count"></label><progress id="reading-progress" max="${r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0)}" value="0"></progress><p id="reading-time" class="cw-meta"></p><p id="reading-message">${escape(r.message)}</p><p class="cw-muted">Keep this screen open. Photos stay on this phone until they're read.</p><button data-action="stop-reading" ${!r.active ? 'hidden' : ''}>Stop reading</button><ul class="cw-reading-pages">${r.batch.map((p,i) => `<li data-reading-page="${escape(p.id)}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div><strong>Page ${i+1}</strong><span data-page-status>${pageStatus(p)}</span><span class="cw-meta" data-page-error>${escape(p.error)}</span></div><button data-action="retry-page" data-id="${escape(p.id)}" aria-label="Retry page ${i+1}" ${p.status !== 'failed' ? 'hidden' : ''}>Retry</button></li>`).join('')}</ul>${!photoStorage ? '<p class="cw-muted">Keep this screen open until reading finishes.</p>' : ''}${!r.active && photos.length ? '<button data-action="resume">Resume reading</button>' : ''}</section>`;
 }
 function updateReading() {
   if (!reading || !$('reading-progress')) return;
-  const r = reading, count = r.batch.reduce((n,p) => n+p.parts.size,0), total = r.batch.length*6;
+  const r = reading, count = r.batch.reduce((n,p) => n+(p.wholeRead ? 1 : 0)+p.parts.size,0), total = r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0);
+  $('reading-progress').max = total;
   $('reading-progress').value = count;
-  $('reading-count').textContent = `${count} of ${total} parts read`;
+  $('reading-count').textContent = `${count} of ${total} calls read`;
   const seconds = Math.floor((performance.now()-r.started)/1000);
   const elapsed = seconds < 60 ? `${seconds} s elapsed` : `${Math.floor(seconds/60)} min ${seconds%60} s elapsed`;
   const average = r.durations.reduce((n,d) => n+d,0) / r.durations.length;
-  const lanes = Math.min(3,r.batch.filter(p => ['waiting','reading'].includes(p.status)).length) || 1;
+  const lanes = Math.min(3,r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status)).length) || 1;
   const remaining = Math.max(1,Math.ceil(average*(total-count)/lanes/60000));
-  $('reading-time').textContent = `${elapsed} · ${!r.active ? 'Reading paused' : !count ? 'Gemma is reading the first parts… usually 15–20 s' : count === total ? 'Sorting your flyers…' : `about ${remaining} min left`}`;
+  $('reading-time').textContent = `${elapsed} · ${!r.active ? 'Reading paused' : !count ? 'Gemma is reading the first pages… usually 15–20 s' : count === total ? 'Sorting your flyers…' : `about ${remaining} min left`}`;
   $('reading-message').textContent = r.message;
   for (const row of $('reading-card').querySelectorAll('[data-reading-page]')) {
     const p = r.batch.find(p => p.id === row.dataset.readingPage);
     row.querySelector('[data-page-status]').textContent = pageStatus(p);
     row.querySelector('[data-page-error]').textContent = p.error ?? '';
     row.querySelector('button').hidden = p.status !== 'failed';
+  }
+  for (const badge of $('panel').querySelectorAll('[data-reading-prices]')) {
+    const f=flyer(badge.closest('[data-flyer]').dataset.flyer);
+    badge.hidden=!r.active || !r.batch.some(p => f?.pageIds.includes(p.id) && p.status === 'detailing');
   }
 }
 
@@ -212,6 +218,7 @@ async function photoDB(method,value) {
       };
     });
     return await new Promise((resolve,reject) => {
+      setTimeout(() => reject(new Error('Photo storage timed out')),3000);
       const transaction = db.transaction('pages',method === 'getAll' ? 'readonly' : 'readwrite');
       const request = transaction.objectStore('pages')[method](...(value === undefined ? [] : [value]));
       transaction.oncomplete = () => resolve(method === 'getAll' ? request.result : true);
@@ -229,7 +236,7 @@ async function recoverPhotos() {
   try {
     const pending = await photoDB('getAll');
     for (const p of pending.filter(p => record(p) && typeof p.pageId === 'string' && typeof p.addedAt === 'string').sort((a,b) => a.addedAt.localeCompare(b.addedAt))) {
-      if (state.pages[p.pageId] || state.flyers.some(f => f.pageIds.includes(p.pageId))) { await photoDB('delete',p.pageId); continue; }
+      if ((state.pages[p.pageId] && !state.pages[p.pageId].detailPending) || state.flyers.some(f => f.bucket === 'keep' && f.pageIds.includes(p.pageId))) { await photoDB('delete',p.pageId); continue; }
       if (!(p.blob instanceof Blob) || !Number.isFinite(Date.parse(p.addedAt))) continue;
       photos.push({id:p.pageId,file:p.blob,blob:p.blob,url:URL.createObjectURL(p.blob),rotation:p.rotation,sourceRotation:p.rotation,addedAt:p.addedAt,status:'waiting',parts:new Set()});
     }
@@ -278,7 +285,7 @@ async function preparePhoto(photo) {
     };
     draw(sample.getContext('2d'),small);
     const box=paperBox(sample) ?? {left:0,top:0,right:1,bottom:1};
-    const cropW=(box.right-box.left)*width,cropH=(box.bottom-box.top)*height,scale=Math.min(1,2400/Math.max(cropW,cropH));
+    const cropW=(box.right-box.left)*width,cropH=(box.bottom-box.top)*height,scale=Math.min(1,2048/Math.max(cropW,cropH));
     const page=document.createElement('canvas'); page.width=Math.max(1,Math.round(cropW*scale)); page.height=Math.max(1,Math.round(cropH*scale));
     draw(page.getContext('2d'),scale,box.left*width,box.top*height);
     const blob=await jpeg(page);
@@ -313,30 +320,33 @@ async function tilePage(photo) {
       tile.getContext('2d').drawImage(page,left,top,tile.width,tile.height,0,0,tile.width,tile.height);
       const blob = await jpeg(tile);
       if (blob.size > 2*1024*1024) throw new Error('This photo is too detailed to read. Try a smaller photo.');
-      const dataURL = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Could not read photo.')); reader.readAsDataURL(blob); });
-      if (dataURL.length > 2*1024*1024) throw new Error('This photo is too detailed to read. Try a smaller photo.');
+      const dataURL = await imageURL(blob);
       result.push(dataURL); tile.width = tile.height = 0;
     }
     return result;
   } finally { bitmap.close(); page.width=page.height=0; }
 }
-async function readPage(photo,session) {
-  photo.status='reading'; photo.parts.clear(); photo.error=''; updateReading();
-  await storePhoto(photo);
-  const tiles = await tilePage(photo);
+async function imageURL(blob) {
+  const dataURL = await new Promise((resolve,reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('Could not read photo.')); reader.readAsDataURL(blob); });
+  if (dataURL.length > 2*1024*1024) throw new Error('This photo is too detailed to read. Try a smaller photo.');
+  return dataURL;
+}
+async function readPass(photo,session,tiles,mode) {
   session.controller.signal.throwIfAborted();
   let lastPart=performance.now();
-  const response = await fetch('/api/read-page',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pageId:photo.id,tiles}),signal:session.controller.signal});
+  const response = await fetch('/api/read-page',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({pageId:photo.id,tiles,mode}),signal:session.controller.signal});
   if (!response.ok) { const e = await response.json().catch(() => ({})); throw requestError(response,e); }
   const reader = response.body.getReader(), decoder = new TextDecoder();
   const page = {id:photo.id,scannedAt:japanToday(),tiles:Array(tiles.length).fill(null)};
+  const seen = new Set();
   let buffer = '', done = false, failed = 0;
   function line(text) {
     if (!text.trim()) return;
     const event = JSON.parse(text);
     if (event.type === 'tile' || event.type === 'tile-error') {
-      if (Number.isInteger(event.index) && event.index >= 0 && event.index < tiles.length && !photo.parts.has(event.index)) {
-        page.tiles[event.index] = event.tile ?? null; photo.parts.add(event.index);
+      if (Number.isInteger(event.index) && event.index >= 0 && event.index < tiles.length && !seen.has(event.index)) {
+        seen.add(event.index); page.tiles[event.index] = event.tile ?? null;
+        if (mode === 'tiles') photo.parts.add(event.index);
         if (event.type === 'tile-error') failed++;
         const time=performance.now(); session.durations.push(time-lastPart); lastPart=time;
         updateReading();
@@ -352,21 +362,52 @@ async function readPage(photo,session) {
     line(buffer); session.controller.signal.throwIfAborted();
     if (!done) throw new Error('Reading was interrupted. Your photo is ready to try again.');
     if (page.tiles.every(t => !t)) throw new Error('No parts could be read. Try a clearer photo.');
-    state.pages[page.id] = page;
-    const saved=save();
-    photo.status='read'; photo.parts=new Set(tiles.map((_,i) => i));
-    // Never remove the recovery copy until extracted text was saved successfully.
-    if (saved) await photoDB('delete',photo.id);
-    photo.file=null; photo.blob=null;
-    photos=photos.filter(p => p.id !== photo.id);
-    $('progress').textContent = `Read page ${session.batch.indexOf(photo)+1}. ${session.batch.filter(p => p.status === 'read').length} of ${session.batch.length} pages read.`;
     if (failed) notify(`${failed} parts could not be read. Check the printed flyer before using an offer.`);
-    updateReading(); return page.id;
+    return page.tiles;
   } finally { reader.releaseLock(); }
+}
+async function readPage(photo,session,sortReadings) {
+  photo.status='reading'; photo.parts.clear(); photo.error=''; updateReading();
+  await storePhoto(photo);
+  let page=state.pages[photo.id];
+  if (!page?.detailPending) {
+    const tiles=await readPass(photo,session,[await imageURL(photo.blob)],'page');
+    photo.wholeRead=true; photo.detailNeeded=needsDetail(tiles[0]);
+    page={id:photo.id,scannedAt:japanToday(),tiles,detailPending:photo.detailNeeded,detailed:false,needsMerge:true};
+    state.pages[page.id]=page;
+    save();
+  } else { photo.wholeRead=true; photo.detailNeeded=true; }
+  photo.status=photo.detailNeeded ? 'detailing' : 'read';
+  updateReading();
+  // Queue the merge immediately. Detail work starts after the first card is shown.
+  await sortReadings(page.id);
+  if (photo.detailNeeded) {
+    const tiles=await readPass(photo,session,await tilePage(photo),'tiles');
+    page.tiles=[page.tiles[0],...tiles]; page.detailed=true; page.detailPending=false; page.needsMerge=true;
+    photo.parts=new Set(tiles.map((_,i) => i)); photo.status='read';
+    save(); updateReading();
+    await sortReadings(page.id);
+  }
+  const saved=save();
+  // Keep the recovery copy until all required readings are saved successfully.
+  if (saved) await photoDB('delete',photo.id);
+  photo.file=null; photo.blob=null;
+  photos=photos.filter(p => p.id !== photo.id);
+  $('progress').textContent = `Read page ${session.batch.indexOf(photo)+1}. ${session.batch.filter(p => p.status === 'read').length} of ${session.batch.length} pages read.`;
+  updateReading();
+}
+function replaceFlyers(current,replacements) {
+  const pending=new Set(replacements), result=[];
+  for (const old of current) {
+    const matches=replacements.filter(f => f.pageIds.some(id => old.pageIds.includes(id)));
+    if (!matches.length) result.push(old);
+    for (const f of matches) if (pending.delete(f)) result.push(f);
+  }
+  return [...result,...pending];
 }
 async function mergeGroups(affected = null,signal) {
   const groups = groupPages(Object.values(state.pages),state.overrides);
-  const selected = affected ? groups.filter(g => g.pageIds.some(id => affected.has(id))) : groups.filter(g => !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
+  const selected = affected ? groups.filter(g => g.pageIds.some(id => affected.has(id))) : groups.filter(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
   const staged=[];
   const originalFlyers=[...state.flyers];
   for (let i = 0; i < selected.length; i++) {
@@ -374,9 +415,9 @@ async function mergeGroups(affected = null,signal) {
     const group = selected[i];
     if (!reading?.active) $('progress').textContent = `Sorting flyer ${i+1} of ${selected.length}…`;
     const oldFlyers = state.flyers.filter(f => f.pageIds.some(id => group.pageIds.includes(id)));
-    const old = oldFlyers.find(f => f.pageIds.length === group.pageIds.length) ?? (!affected ? oldFlyers[0] : null);
+    const old = oldFlyers.find(f => f.pageIds.length === group.pageIds.length) ?? oldFlyers.find(f => f.pageIds.every(id => group.pageIds.includes(id)));
     // Stage each replacement before removing any old flyer, so a failed merge is retryable.
-    const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,tiles:state.pages[id].tiles.filter(Boolean)})),scanDate:japanToday(),home:home()},signal);
+    const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,detailed:Boolean(state.pages[id].detailed),tiles:state.pages[id].tiles})),scanDate:japanToday(),home:home()},signal);
     signal?.throwIfAborted();
     const stored = storable(result.flyer);
     if (affected) {
@@ -386,7 +427,8 @@ async function mergeGroups(affected = null,signal) {
       }
       continue;
     }
-    state.flyers = [...state.flyers.filter(f => !f.pageIds.some(id => group.pageIds.includes(id))),stored];
+    state.flyers = replaceFlyers(state.flyers,[stored]);
+    for (const id of group.pageIds) if (state.pages[id]) state.pages[id].needsMerge=false;
     // A page correction can change entry indices. Follow printed text/value, not the old index.
     for (const outing of state.outings) for (const used of [...outing.used]) {
       const previous = oldFlyers.find(f => f.id === used.flyerId); if (!previous) continue;
@@ -399,7 +441,8 @@ async function mergeGroups(affected = null,signal) {
   }
   if (affected) {
     const ids=new Set(selected.flatMap(g => g.pageIds));
-    state.flyers=[...state.flyers.filter(f => !f.pageIds.some(id => ids.has(id))),...staged];
+    state.flyers=replaceFlyers(state.flyers,staged);
+    for (const id of ids) if (state.pages[id]) state.pages[id].needsMerge=false;
     for (const outing of state.outings) for (const used of [...outing.used]) {
       const old=originalFlyers.find(f => f.id === used.flyerId && f.pageIds.some(id => ids.has(id))); if (!old) continue;
       const key=used.kind === 'offer' ? 'offers' : 'items', entry=old[key]?.[used.index];
@@ -438,15 +481,15 @@ async function readPhotos(ids=null) {
   busy=true; recovered=false; tab='mailbox'; notify();
   const session={batch,queue:[...batch],controller:new AbortController(),active:true,started:performance.now(),durations:[],message:''};
   reading=session;
-  for (const p of batch) { p.status='waiting'; p.parts.clear(); p.error=''; }
+  for (const p of batch) { p.status='waiting'; p.parts.clear(); p.error=''; p.wholeRead=Boolean(state.pages[p.id]?.detailPending); p.detailNeeded=p.wholeRead; }
   render(); $('reading-card').scrollIntoView({block:'start'}); $('reading-heading').focus({preventScroll:true});
   window.addEventListener('beforeunload',guardUnload); void acquireWakeLock(session);
   const timer=setInterval(updateReading,1000);
   let mergeWork=Promise.resolve();
-  const sortReadings=() => {
-    mergeWork=mergeWork.then(async () => {
+  const sortReadings=id => {
+    mergeWork=mergeWork.catch(() => {}).then(async () => {
       if (session.controller.signal.aborted) return;
-      try { await mergeGroups(null,session.controller.signal); }
+      try { await mergeGroups(new Set([id]),session.controller.signal); }
       catch (error) {
         if (error.name !== 'AbortError') {
           session.message=`Your readings are saved. Sorting failed: ${error.message}. Use Retry sorting saved readings.`; notify(session.message);
@@ -454,6 +497,7 @@ async function readPhotos(ids=null) {
         }
       }
     });
+    return mergeWork;
   };
   try {
     // Commit all prepared images before the first request; IndexedDB failure falls back to memory.
@@ -461,7 +505,7 @@ async function readPhotos(ids=null) {
     await Promise.all(Array.from({length:Math.min(3,batch.length)},async () => {
       while (session.queue.length && !session.controller.signal.aborted) {
         const p=session.queue.shift();
-        try { await readPage(p,session); sortReadings(); }
+        try { await readPage(p,session,sortReadings); }
         catch (error) {
           p.status=error.name === 'AbortError' ? 'waiting' : 'failed';
           p.error=error.name === 'AbortError' ? '' : error.message || 'Network failure. Retry this page.';
@@ -703,7 +747,9 @@ async function action(button) {
     } break;
     case 'remove-photo': if (!busy && !preparing) {
       const p = photos.find(p => p.id === id); if (!p) break;
-      await photoDB('delete',id); URL.revokeObjectURL(p.url); photos = photos.filter(p => p.id !== id); render();
+      // Update the screen first; the stored copy is deleted in the background so a slow delete never blocks new photos.
+      URL.revokeObjectURL(p.url); photos = photos.filter(p => p.id !== id); render();
+      photoDB('delete',id).catch(() => {});
     } break;
     case 'read': await readPhotos(); break;
     case 'resume': await readPhotos(); break;
@@ -749,7 +795,7 @@ document.addEventListener('change',event => {
   if (input.id === 'photos-input' || input.id === 'camera-input') {
     const files=[...input.files].filter(file => file.type.startsWith('image/'));
     input.value = '';
-    photoWork=photoWork.then(() => addPhotos(files)); safely(() => photoWork);
+    photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork);
   } else if (input.dataset.stop) {
     if (chosenStops === null) chosenStops = new Set(candidates().filter(stopSelected).map(f => f.id));
     if (input.checked) chosenStops.add(input.dataset.stop); else chosenStops.delete(input.dataset.stop); render();

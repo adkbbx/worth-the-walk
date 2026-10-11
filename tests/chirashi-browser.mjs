@@ -10,6 +10,7 @@ const base = 'http://127.0.0.1:4180';
 const key = 'worth-the-walk-v1';
 let server, browser, serverError, logs = '';
 const errors = [], reads = [], merges = [], ranks = [];
+const fixtures = JSON.parse(await readFile(new URL('./fixtures/tiles.json',import.meta.url),'utf8'));
 const readState = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
 const pendingPhotos = page => page.evaluate(() => new Promise((resolve,reject) => {
   const request=indexedDB.open('worth-the-walk-photos',1);
@@ -42,6 +43,11 @@ async function waitForServer() {
   throw new Error(`Mock server did not start: ${logs}`);
 }
 try {
+  // Regenerate shared browser rules before importing the updated app.
+  const build=spawn(process.execPath,['scripts/build.mjs'],{cwd:new URL('..',import.meta.url),stdio:['ignore','pipe','pipe'],windowsHide:true});
+  let buildOutput='';
+  build.stdout.on('data',chunk => { buildOutput+=chunk; });build.stderr.on('data',chunk => { buildOutput+=chunk; });
+  const [buildCode]=await once(build,'exit');assert.equal(buildCode,0,buildOutput);
   server = spawn(process.execPath,['scripts/serve.mjs','--mock'],{
     cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4180',HOST:'127.0.0.1',MOCK_GEMMA:'1',SENTRY_DSN:''},stdio:['ignore','pipe','pipe'],windowsHide:true,
   });
@@ -55,25 +61,43 @@ try {
   // Opening hours and deadlines depend on the clock; a fixed Saturday morning keeps the run repeatable.
   await page.clock.setFixedTime(new Date('2026-10-17T10:30:00+09:00'));
   await page.clock.setFixedTime(new Date('2026-10-11T02:00:00Z'));
-  // The server's demo returns the same six unrelated tile fixtures for EVERY page.
-  // Arrange those real streamed fixtures as separate fictional page readings.
+  // Arrange synthetic fixtures as separate whole pages and optional price tiles.
   // A second batch is necessary: three single-flyer pages cannot produce six cards.
   const fixtureOrder = [0,2,3,4,5,0];
   let fixtureIndex = 0;
+  const pageIndices = new Map();
+  let marketId, detailStarted=false, detailFinished=false;
+  let detailBegin;
+  const detailBegun=new Promise(resolve => { detailBegin=resolve; });
   await page.route('**/api/read-page',async route => {
-    const request = route.request().postDataJSON(), index = fixtureIndex++;
-    if (index === 2) await new Promise(resolve => setTimeout(resolve,1500));
+    const request = route.request().postDataJSON();
+    const index = request.mode === 'page' ? fixtureIndex++ : pageIndices.get(request.pageId);
+    if (request.mode === 'page') pageIndices.set(request.pageId,index);
     reads.push(request);
-    assert.equal(request.tiles.length,6,'2 × 3 or 3 × 2 tiling');
+    assert.ok(['page','tiles'].includes(request.mode));
+    assert.equal(request.tiles.length,request.mode === 'page' ? 1 : 6,'whole page first, optional 2 × 3 or 3 × 2 tiling');
+    if (request.mode === 'tiles') {
+      assert.equal(index,1,'only the supermarket needs detail');
+      detailStarted=true;
+      detailBegin();
+      await new Promise(resolve => setTimeout(resolve,1500));
+    } else if (index === 2) await new Promise(resolve => setTimeout(resolve,1500));
     for (const tile of request.tiles) { assert.match(tile,/^data:image\/jpeg;base64,/); assert.ok(Buffer.byteLength(tile) <= 2*1024*1024); }
     const response = await route.fetch(); assert.equal(response.status(),200);
     const events = (await response.text()).trim().split('\n').map(line => JSON.parse(line));
-    const tile = structuredClone(events.find(e => e.type === 'done').tiles[fixtureOrder[index]]);
+    assert.equal(events.find(e => e.type === 'done').tiles.length,request.tiles.length);
+    const tile = structuredClone(fixtures[fixtureOrder[index]]);
+    if (index === 1 && request.mode === 'page') {
+      marketId=request.pageId;
+      tile.items[0].price_yen=999;
+      tile.items.push({name_ja:'架空誤読品',name_en:'Misread item',price_yen:888,conditions:[]});
+    }
     if (index === 5) { tile.business.name = '架空テスト教室'; tile.phones = ['0120-000-666']; }
     const tiles = request.tiles.map(() => tile);
     // Deliberately include CRLF and an unterminated final line.
     const body = tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\r\n')+'\r\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles});
     await route.fulfill({status:200,contentType:'application/x-ndjson',body});
+    if (request.mode === 'tiles') detailFinished=true;
   });
   page.on('request',request => {
     if (request.url().endsWith('/api/merge')) merges.push(request.postDataJSON());
@@ -105,8 +129,11 @@ try {
   await page.locator('#photos-input').setInputFiles([files[0]]);
   await page.getByRole('button',{name:'Read 1 page',exact:true}).waitFor();
   await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
+  assert.equal(await page.locator('.cw-photo').count(),0,'a removed photo disappears immediately');
   await page.locator('#photos-input').setInputFiles(files);
-  await page.waitForFunction(() => document.querySelectorAll('.cw-photo').length === 3 && !document.querySelector('[data-action=read]').disabled,null,{timeout:90000});
+  // A failed earlier photo step once left every later selection ignored; this wait catches that regression.
+  try { await page.waitForFunction(() => document.querySelectorAll('.cw-photo').length === 3 && !document.querySelector('[data-action=read]').disabled,null,{timeout:60000}); }
+  catch (error) { console.log('Photo selection stalled:', await page.evaluate(() => ({photos:document.querySelectorAll('.cw-photo').length, read:document.querySelector('[data-action=read]')?.outerHTML?.slice(0,200), progress:document.querySelector('#progress')?.textContent, notice:document.querySelector('#notice')?.textContent, changes:window.__changes, choose:document.querySelector('[data-action=choose-photos]')?.disabled})), 'errors', errors); throw error; }
   assert.equal(await page.locator('.cw-photo').count(),3);
   await page.getByRole('button',{name:'Rotate page 1'}).click();
   await page.waitForFunction(() => document.querySelector('.cw-photo').dataset.rotation === '90' && !document.querySelector('[data-action=read]').disabled,null,{timeout:90000});
@@ -116,6 +143,7 @@ try {
   const selected=await pendingPhotos(page);
   assert.equal(selected.length,3);
   assert.ok(selected.every(p => p.type === 'image/jpeg' && p.size > 0),'prepared JPEGs stored before reading');
+  assert.ok(await page.locator('.cw-photo img').evaluateAll(imgs => imgs.every(img => Math.max(img.naturalWidth,img.naturalHeight) <= 2048)),'whole pages fit the image limit');
   await page.getByRole('button',{name:'Read 3 pages',exact:true}).click();
   await page.getByRole('heading',{name:'Reading your mailbox',exact:true}).waitFor();
   await inViewport(page.locator('#reading-heading'),'reading heading');
@@ -125,6 +153,17 @@ try {
   await page.locator('[data-flyer]').first().waitFor();
   assert.ok(Object.values((await readState(page)).pages).length < 3,'a flyer card appears before the delayed last page finishes');
   assert.ok(await page.locator('[data-flyer]').first().isVisible());
+  await page.getByRole('heading',{name:/架空若葉合気道場/}).waitFor();
+  await page.locator('[data-reading-prices]').waitFor();
+  assert.equal(detailFinished,false,'the service card appears before supermarket details finish');
+  const serviceId=reads.find(r => pageIndices.get(r.pageId) === 0).pageId;
+  await page.waitForFunction(id => [...document.querySelectorAll('[data-reading-page]')].find(row => row.dataset.readingPage === id)?.querySelector('[data-page-status]').textContent === 'Read ✓',serviceId);
+  await detailBegun;
+  assert.equal(detailStarted,true);
+  assert.equal(await page.locator('#reading-progress').getAttribute('max'),'9','three whole reads plus six supermarket details');
+  assert.match(await page.locator(`[data-reading-page="${marketId}"] [data-page-status]`).textContent(),/read · checking prices \(\d of 6\)/);
+  const preliminaryMarket=(await readState(page)).flyers.find(f => f.pageIds.includes(marketId));
+  const preliminaryOrder=(await readState(page)).flyers.map(f => f.id);
   await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 3,key);
   await page.locator('#reading-card').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-bucket]').count(),4);
@@ -134,13 +173,22 @@ try {
   assert.equal(await page.locator('[data-bucket=toss]').getAttribute('open'),null);
   assert.ok(await page.evaluate(() => window.readProgress.some(p => /Read page \d\. \d of 3 pages read\./.test(p))),'polite announcements happen per page');
   assert.deepEqual(await pendingPhotos(page),[],'completed page blobs deleted');
+  const market=(await readState(page)).flyers.find(f => f.pageIds.includes(marketId));
+  assert.equal(market.id,preliminaryMarket.id,'detail replaces the existing card');
+  assert.equal((await readState(page)).flyers.findIndex(f => f.id === market.id),preliminaryOrder.indexOf(market.id),'card stays in place');
+  assert.equal(market.items.length,3);assert.equal(market.items[0].price_yen,158);
+  assert.equal(await page.locator('[data-reading-prices]').count(),0);
+  assert.equal(reads.filter(r => r.pageId === serviceId).length,1,'service page makes exactly one read request');
+  assert.deepEqual(reads.filter(r => r.pageId === marketId).map(r => [r.mode,r.tiles.length]),[['page',1],['tiles',6]]);
+  const storedPage=(await readState(page)).pages[marketId];
+  assert.equal(storedPage.tiles.length,7);assert.equal(storedPage.detailed,true);
   await page.locator('#photos-input').setInputFiles(files);
   await page.getByRole('button',{name:'Read 3 pages',exact:true}).click();
   await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 6,key);
   await page.locator('#reading-card').waitFor({state:'detached'});
   const sorted = await readState(page);
-  assert.equal(reads.length,6);
-  assert.equal(merges.length,6);
+  assert.equal(reads.length,7);
+  assert.equal(merges.length,7);
   const kept = sorted.flyers.find(f => f.bucket === 'keep');
   assert.deepEqual(Object.keys(kept).sort(),['bucket','category','id','pageIds']);
   assert.ok(kept.pageIds.every(id => !sorted.pages[id]),'personal mail tiles discarded');
@@ -283,6 +331,7 @@ try {
       const index=pageIds.indexOf(request.pageId);
       await new Promise(resolve => setTimeout(resolve,index === 6 ? 1500 : 400));
       const tile=structuredClone(merges[0].pages[0].tiles[0]);
+      tile.category='lesson';tile.items=[];
       const group=index === 6 ? 0 : index < 0 ? 10 : index;
       tile.business.name=`Phone test ${group}`; tile.phones=[`0120000${String(group).padStart(3,'0')}`]; tile.websites=[]; tile.address=null;
       const tiles=request.tiles.map(() => tile);
@@ -293,9 +342,9 @@ try {
   await phone.getByRole('button',{name:'Read 7 pages',exact:true}).click();
   await phone.locator('#reading-card').waitFor();
   await inViewport(phone.locator('#reading-heading'),'seven-page reading heading');
-  assert.equal(await phone.locator('#reading-progress').getAttribute('max'),'42');
+  assert.equal(await phone.locator('#reading-progress').getAttribute('max'),'7');
   assert.equal(await phone.locator('#reading-progress').evaluate(el => el.value),0);
-  assert.match(await phone.locator('#reading-time').textContent(),/Gemma is reading the first parts/);
+  assert.match(await phone.locator('#reading-time').textContent(),/Gemma is reading the first pages/);
   await phone.waitForFunction(() => document.querySelector('progress')?.value > 0);
   await phone.locator('[data-flyer]').first().waitFor();
   assert.equal(completed.has(pageIds[6]),false,'results arrive before the last page');
@@ -337,6 +386,48 @@ try {
   assert.ok(!JSON.stringify(resumed).includes('data:image/'));
   await overflow(phone,'seven-page reading and recovery');
   await phoneContext.close();
+  // Failed detail reads keep the whole-page card and resume only prices after reload.
+  const detailContext=await browser.newContext({viewport:{width:390,height:844}});
+  const detailPage=await detailContext.newPage();detailPage.on('pageerror',error => errors.push(error.message));
+  const adaptiveReads=[];
+  let failDetail=true,failDetailMerge=true;
+  await detailPage.route('**/api/read-page',async route => {
+    const request=route.request().postDataJSON();adaptiveReads.push(request);
+    if (request.mode === 'tiles' && failDetail) { failDetail=false;await route.abort('failed');return; }
+    const tile=structuredClone(fixtures[2]);
+    if (request.mode === 'page') tile.items[0].price_yen=999;
+    const tiles=request.tiles.map(() => tile);
+    await route.fulfill({status:200,contentType:'application/x-ndjson',body:tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\n')+'\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles})});
+  });
+  await detailPage.route('**/api/merge',async route => {
+    if (failDetailMerge && route.request().postDataJSON().pages.some(p => p.detailed)) {
+      failDetailMerge=false;
+      await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic merge failure'})});
+    } else await route.continue();
+  });
+  await detailPage.goto(base);await detailPage.getByText('Demo mode',{exact:true}).waitFor();
+  await detailPage.locator('#setup-line').selectOption('skytree');await detailPage.locator('#setup-station').selectOption(firstStation.id);
+  await detailPage.getByRole('button',{name:'Save',exact:true}).click();
+  await detailPage.locator('#photos-input').setInputFiles([files[0]]);
+  await detailPage.getByRole('button',{name:'Read 1 page',exact:true}).click();
+  await detailPage.getByRole('button',{name:'Retry page 1',exact:true}).waitFor();
+  await detailPage.locator('[data-action=stop-reading]').waitFor({state:'hidden'});
+  const pendingDetailState=await readState(detailPage),detailId=adaptiveReads[0].pageId;
+  const detailFlyerId=pendingDetailState.flyers[0].id;
+  assert.equal(pendingDetailState.pages[detailId].detailPending,true);
+  assert.equal((await pendingPhotos(detailPage)).length,1,'detail failure keeps the prepared photo');
+  assert.equal(await detailPage.locator(`[data-flyer="${detailFlyerId}"]`).count(),1,'whole-page card survives detail failure');
+  await detailPage.reload();await detailPage.getByRole('button',{name:'Resume reading',exact:true}).waitFor();
+  await detailPage.getByRole('button',{name:'Resume reading',exact:true}).click();
+  await detailPage.locator('#reading-card').waitFor({state:'detached'});
+  assert.deepEqual(adaptiveReads.map(r => [r.mode,r.tiles.length]),[['page',1],['tiles',6],['tiles',6]],'resume does not repeat the whole-page call');
+  assert.deepEqual(await pendingPhotos(detailPage),[]);
+  assert.equal((await readState(detailPage)).pages[detailId].needsMerge,true);
+  await detailPage.getByRole('button',{name:'Retry sorting saved readings',exact:true}).click();
+  await detailPage.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers[0].items[0].price_yen === 158,key);
+  assert.equal((await readState(detailPage)).flyers[0].id,detailFlyerId,'merge retry retains the preliminary card identity');
+  assert.equal(adaptiveReads.length,3,'merge retries use saved readings');
+  await overflow(detailPage,'adaptive detail recovery');await detailContext.close();
   // Walk recovery uses fictional flyers and Tobu Skytree coordinates only.
   const walkContext=await browser.newContext({viewport:{width:390,height:844}});
   const walkPage=await walkContext.newPage(); walkPage.on('pageerror',error => errors.push(error.message));
@@ -431,7 +522,7 @@ try {
   assert.equal(await freshPage.title(),'Station Points — shops by station');
   assert.equal(await freshPage.getByRole('link',{name:'← Worth the Walk?',exact:true}).getAttribute('href'),'/');
   assert.deepEqual(errors,[],'no browser page errors');
-  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · persistence, privacy, 4 tabs, 1280px, sticky seven-page reading, incremental merge, reload recovery, walk address lookup, train starts and longer walks verified.`);
+  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · adaptive whole-page reads, delayed price details, card replacement, detail and merge recovery, persistence, privacy, 4 tabs, 1280px, sticky seven-page reading, incremental merge, reload recovery, walk address lookup, train starts and longer walks verified.`);
   console.log('Screenshots: .impeccable/review/chirashi-{mailbox,walk,stamps,history}.png');
 } finally {
   await browser?.close();

@@ -98,7 +98,8 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
         }
         if (req.method === 'POST' && pathname === '/api/read-page') {
           const body = parse(readPageSchema, await readBody(req, limits[pathname]));
-          reserve(req, body.tiles.length);
+          // The schema requires exactly one image for a whole-page read.
+          reserve(req, body.mode === 'page' ? 1 : body.tiles.length);
           res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store', 'X-Accel-Buffering': 'no' });
           res.flushHeaders();
           // Serialize complete lines even when multiple tile callbacks finish together.

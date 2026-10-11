@@ -150,11 +150,16 @@ export function dedupeItems(items) {
     seen.add(key);return true;
   });
 }
+// Whole-page readings retain identity; successful detail reads own the item prices.
+export function readingsForMerge(page) {
+  return list(page.tiles,Infinity).map((tile,index)=>
+    page.detailed && index===0 && tile ? {...tile,items:[]} : tile).filter(Boolean);
+}
 export function mergeFallback(pages) {
   const flyer={...emptyTile(),id:'f-'+pages[0]?.id,pageIds:pages.map(p=>p.id)},categories=new Map();
   const phones=new Set(),websites=new Set(),offers=new Set();
   pages.forEach((p,page)=>{
-    for(const raw of list(p.tiles,Infinity)) {
+    for(const raw of readingsForMerge(p)) {
       const tile=normalizeTile(raw);
       for(const key of ['name','branch','kind'])flyer.business[key] ??= tile.business[key];
       for(const key of ['summary_en','address','hours','valid_from_text','valid_to_text'])flyer[key] ??= tile[key];
@@ -181,6 +186,18 @@ export function bucketOf(flyer) {
   if(flyer.category==='food_delivery' || flyer.delivery)return 'home';
   if(['buying_service','junk_removal','real_estate'].includes(flyer.category) || flyer.comes_to_you)return 'toss';
   return IN_PERSON.includes(flyer.category) ? 'walk' : 'toss';
+}
+export function needsDetail(tile) {
+  if(!tile || bucketOf(tile)!=='walk' || !['supermarket','drugstore','cleaning','restaurant','shop'].includes(tile.category))return false;
+  if((tile.items?.length ?? 0)>=2)return true;
+  const printed=[tile.summary_en,...(tile.offers ?? []).flatMap(o=>[o.text_ja,o.text_en]),
+    ...(tile.items ?? []).flatMap(i=>[i.name_ja,i.name_en,i.unit])].filter(s=>typeof s==='string').join(' ').normalize('NFKC');
+  // A translation or summary can repeat the same printed amounts.
+  const offerText=(tile.offers ?? []).map(o=>o.text_ja || o.text_en || '').join(' ');
+  const amounts=value=>[...String(value ?? '').normalize('NFKC').matchAll(/[¥￥]\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s*円/g)].length;
+  return /price\s*(?:list|table)|menu|料金表|価格表|お品書き|メニュー/i.test(printed) ||
+    Math.max(amounts(tile.summary_en),amounts(offerText))>=3 ||
+    (tile.offers ?? []).flatMap(o=>[o.regular_yen,o.offer_yen,o.discount_yen]).filter(value=>yen(value)!==null).length>=3;
 }
 export function needsLookup(flyer) {
   return bucketOf(flyer)==='walk' && !text(flyer.address);

@@ -12,6 +12,29 @@ import { createTools, rulesRank } from '../agent/tools.mjs';
 import { createCallQueue, modelCall, hedged } from '../agent/queue.mjs';
 import { FEATURES, normalizeTile } from '../src/mailbox.mjs';
 import { createServer } from '../scripts/serve.mjs';
+import { PAGE_PROMPT, TILE_PROMPT } from '../agent/prompts.mjs';
+
+test('whole-page and tile modes select their own prompts through the hedged reader', async () => {
+  const app = createApp({ env: { GRADIENT_MODEL_ACCESS_KEY: 'synthetic' }, fetch: noFetch });
+  const calls = [];
+  for (const name of ['pageReader','flyerReader']) app.mastra.getAgent(name).generate = async (messages,options) => {
+    calls.push({name,messages,options}); return {text:JSON.stringify(fixtures[0])};
+  };
+  await app.readPage({pageId:'whole',tiles:[image],mode:'page'});
+  await app.readPage({pageId:'detail',tiles:[image],mode:'tiles'});
+  assert.deepEqual(calls.map(call => call.name),['pageReader','flyerReader']);
+  assert.equal(calls[0].messages[0].content[0].text,PAGE_PROMPT);
+  assert.equal(calls[1].messages[0].content[0].text,TILE_PROMPT);
+  assert.match(PAGE_PROMPT,/ONE whole page/);assert.doesNotMatch(PAGE_PROMPT,/this tile|the tile/);
+  assert.ok(calls.every(call => call.options.abortSignal instanceof AbortSignal));
+});
+
+test('mock whole-page read returns one normalized synthetic fixture', async () => {
+  const app = createApp({env,fetch:noFetch}), events=[];
+  const result=await app.readPage({pageId:'whole',tiles:[image],mode:'page'},event=>events.push(event));
+  assert.deepEqual(result.tiles,[normalizeTile(fixtures[0])]);
+  assert.deepEqual(events.map(event=>event.type),['tile','done']);
+});
 
 process.env.MOCK_GEMMA = '1';
 const env = { MOCK_GEMMA: '1' };
@@ -328,6 +351,9 @@ test('HTTP rejects non-image URLs, invalid base64, too many tiles, invalid featu
     assert.equal((await request(server, '/api/read-page', { method: 'POST', body: { pageId: 'bad', tiles } })).status, 400);
   }
   assert.equal((await request(server, '/api/read-page', { method: 'POST', body: '{bad' })).status, 400);
+  for (const body of [{pageId:'bad',tiles:[image,image],mode:'page'},{pageId:'bad',tiles:[image],mode:'unknown'}]) {
+    assert.equal((await request(server,'/api/read-page',{method:'POST',body})).status,400);
+  }
   for (const row of [[0], Array(FEATURES.length).fill('0')]) {
     assert.equal((await request(server, '/api/rank', { method: 'POST', body: { train: [], predict: [{ id: 'bad', row }] } })).status, 400);
   }
@@ -356,6 +382,26 @@ test('HTTP rejects tile 241 and spoofed forwarding headers, and resets after one
   assert.equal(JSON.parse(limited.text).retryAfter, 3600); assert.equal(limited.headers['retry-after'], '3600');
   assert.equal((await send(1, '192.0.2.2')).status, 429);
   time += 3_600_000; assert.equal((await send(1)).status, 200);
+});
+
+test('HTTP whole-page mode consumes exactly one of the shared 240 tile reads', async t => {
+  const server=await startServer(t);
+  const send=(count,mode='tiles')=>request(server,'/api/read-page',{method:'POST',body:{pageId:'rate',tiles:Array(count).fill(image),mode}});
+  for(let i=0;i<26;i++) assert.equal((await send(9)).status,200);
+  const page=await send(1,'page');assert.equal(page.status,200);
+  assert.deepEqual(JSON.parse(page.text.trim().split('\n').at(-1)).tiles,[normalizeTile(fixtures[0])]);
+  assert.equal((await send(5)).status,200);
+  assert.equal((await send(1,'page')).status,429);
+});
+
+test('mock merge carries detail metadata through schema and replaces inaccurate whole-page prices', async () => {
+  const whole=structuredClone(fixtures[2]);whole.items[0].price_yen=999;
+  whole.items.push({name_ja:'架空誤読品',price_yen:888});
+  const app=createApp({env});
+  const merged=await app.mergeFlyer({...mergeInput(),pages:[{id:'price-page',detailed:true,tiles:[whole,...Array(6).fill(fixtures[2])]}]});
+  assert.equal(merged.business.name,whole.business.name);assert.deepEqual(merged.phones,whole.phones);
+  assert.equal(merged.address,whole.address);assert.equal(merged.items.length,3);
+  assert.equal(merged.items[0].price_yen,158);assert.equal(merged.items[0].price_tax_incl_yen,171);
 });
 
 test('TRUST_PROXY uses the last forwarded entry, ignoring spoofed earlier entries', async t => {

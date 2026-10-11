@@ -7,9 +7,9 @@ import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { Observability } from '@mastra/observability';
 import { SentryExporter } from '@mastra/sentry';
 import { z } from 'zod';
-import { parseJsonLoose, normalizeTile, mergeFallback, finalizeFlyer, matchChain, storable, dedupeItems } from '../src/mailbox.mjs';
+import { parseJsonLoose, normalizeTile, mergeFallback, finalizeFlyer, matchChain, storable, dedupeItems, readingsForMerge } from '../src/mailbox.mjs';
 import { visionModel, textModel, modelInfo } from './models.mjs';
-import { TILE_PROMPT, MERGE_PROMPT } from './prompts.mjs';
+import { PAGE_PROMPT, TILE_PROMPT, MERGE_PROMPT } from './prompts.mjs';
 import { createTools, rulesRank } from './tools.mjs';
 import { readPageSchema, mergeSchema, locateSchema, rankSchema } from './schemas.mjs';
 import { modelCall, hedged } from './queue.mjs';
@@ -111,6 +111,7 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
   const fixtures = mock ? JSON.parse(readFileSync(new URL('../tests/fixtures/tiles.json', import.meta.url), 'utf8')) : null;
   const { gsiGeocode, serpapiPlace, rankFlyers, serpapi: budget } = createTools({ fetch, env, serpapi, tabpfn });
   const flyerReader = new Agent({ id: 'flyer-reader', name: 'flyer-reader', instructions: TILE_PROMPT, model: visionModel(env) });
+  const pageReader = new Agent({ id: 'page-reader', name: 'page-reader', instructions: PAGE_PROMPT, model: visionModel(env) });
   const flyerMerger = new Agent({ id: 'flyer-merger', name: 'flyer-merger', instructions: MERGE_PROMPT, model: textModel(env) });
 
   async function locate(input) {
@@ -123,7 +124,9 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
   const readStep = createStep({
     id: 'read-tiles', inputSchema: readPageSchema, outputSchema: z.unknown(),
     execute: async ({ inputData, requestContext, tracingContext }) => {
-      const { pageId, tiles } = inputData;
+      const { pageId, tiles, mode } = inputData;
+      const reader = mode === 'page' ? pageReader : flyerReader;
+      const prompt = mode === 'page' ? PAGE_PROMPT : TILE_PROMPT;
       annotate(tracingContext, { 'chirashi.tile_count': tiles.length, 'chirashi.page_count': 1 });
       const onEvent = requestContext.get('onEvent') ?? (() => {});
       const results = Array(tiles.length).fill(null);
@@ -137,9 +140,9 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
               if (mock) tile = normalizeTile(fixtures[index % fixtures.length]);
               else {
                 const [header, base64] = tiles[index].split(',');
-                const output = await hedged(abortSignal => modelCall(() => flyerReader.generate([{
+                const output = await hedged(abortSignal => modelCall(() => reader.generate([{
                   role: 'user', content: [
-                    { type: 'text', text: TILE_PROMPT },
+                    { type: 'text', text: prompt },
                     { type: 'image', image: new Uint8Array(Buffer.from(base64, 'base64')), mediaType: header.slice(5).split(';')[0] },
                   ],
                 }], { tracingContext, requestContext, abortSignal })));
@@ -171,12 +174,12 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
       if (!mock) {
         try {
           // Price-list items are merged by code below: rewriting 50 menu items made the model merge take ~25 s per flyer.
-          const readings = pages.flatMap((page, index) => page.tiles.filter(Boolean).map(tile => ({ ...normalizeTile(tile), items: undefined, page: index })));
+          const readings = pages.flatMap((page, index) => readingsForMerge(page).map(tile => ({ ...normalizeTile(tile), items: undefined, page: index })));
           const output = await hedged(abortSignal => modelCall(() => flyerMerger.generate([{
             role: 'user', content: JSON.stringify(compact(readings)),
           }], { tracingContext, requestContext, abortSignal }), { priority: 'high' }), { after: 30_000 });
           if (!output.error) merged = normalizeMerged({ ...parseJsonLoose(output.text), items: [] }, pages);
-          if (merged) merged.items = dedupeItems(pages.flatMap((page, index) => page.tiles.filter(Boolean)
+          if (merged) merged.items = dedupeItems(pages.flatMap((page, index) => readingsForMerge(page)
             .flatMap(tile => normalizeTile(tile).items.map(item => ({ ...item, page: index })))));
         } catch { /* Invalid or failed model merges use the existing deterministic rules. */ }
       }
@@ -210,7 +213,7 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
       options: { defaultIntegrations: false, sendDefaultPii: false } })],
     spanOutputProcessors: [privacyProcessor],
   } } }) : undefined;
-  const mastra = new Mastra({ agents: { flyerReader, flyerMerger }, workflows: { readPage: readWorkflow, mergeFlyer: mergeWorkflow, rankFlyers: rankWorkflow },
+  const mastra = new Mastra({ agents: { flyerReader, pageReader, flyerMerger }, workflows: { readPage: readWorkflow, mergeFlyer: mergeWorkflow, rankFlyers: rankWorkflow },
     logger: noopLogger, ...(observability ? { observability } : {}) });
 
   async function run(name, inputData, onEvent) {

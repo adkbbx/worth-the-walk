@@ -1,9 +1,107 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
-import {CATEGORIES,OFFER_KINDS,BUCKETS,IN_PERSON,parseJsonLoose,yen,normalizeTile,phoneKey,domainKey,normText,pageKeys,groupPages,dedupeItems,mergeFallback,bucketOf,needsLookup,parseDeadline,finalizeFlyer,storable,printedValue,savings,CHAINS,matchChain,matchBranch,FEATURES,featureRow} from '../src/mailbox.mjs';
+import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
+import {CATEGORIES,OFFER_KINDS,BUCKETS,IN_PERSON,parseJsonLoose,yen,normalizeTile,phoneKey,domainKey,normText,pageKeys,groupPages,dedupeItems,mergeFallback,bucketOf,needsDetail,needsLookup,parseDeadline,finalizeFlyer,storable,printedValue,savings,CHAINS,matchChain,matchBranch,FEATURES,featureRow} from '../src/mailbox.mjs';
 
 const tile=raw=>normalizeTile(raw);
 const page=(id,raw)=>({id,tiles:[tile(raw)]});
 const empty={business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false};
+
+test('needsDetail gates every category by walkable price-list evidence',()=>{
+  const items=[{name_ja:'架空りんご',price_yen:100},{name_ja:'架空たまご',price_yen:200}];
+  const detailed=['supermarket','drugstore','cleaning','restaurant','shop'];
+  for(const category of CATEGORIES) {
+    assert.equal(needsDetail(tile({category,items})),detailed.includes(category),category+' items');
+    assert.equal(needsDetail(tile({category,summary_en:'A printed price list.'})),detailed.includes(category),category+' list');
+    assert.equal(needsDetail(tile({category,offers:[{text_ja:'１００円 ２００円 ￥３００'}]})),detailed.includes(category),category+' amounts');
+    assert.equal(needsDetail(tile({category,offers:[{offer_yen:100},{offer_yen:200},{offer_yen:300}]})),detailed.includes(category),category+' offer prices');
+    assert.equal(needsDetail(tile({category})),false,category+' no list');
+    assert.equal(needsDetail(tile({category,items,delivery:true})),false,category+' delivery');
+    assert.equal(needsDetail(tile({category,items,comes_to_you:true})),false,category+' visiting');
+  }
+  assert.equal(needsDetail(tile({category:'buying_service',summary_en:'Gold buying prices ¥100 ¥200 ¥300'})),false);
+  assert.equal(needsDetail(tile({category:'food_delivery',items})),false);
+  assert.equal(needsDetail(tile({category:'fitness',offers:[{text_ja:'架空ピラティス体験 通常3,300円 → 1,000円'}]})),false);
+  assert.equal(needsDetail(tile({category:'cleaning',offers:[{text_ja:'架空店 料金表'}]})),true);
+  assert.equal(needsDetail(tile({category:'shop',offers:[{text_ja:'100円 200円'}]})),false);
+  assert.equal(needsDetail(tile({category:'shop',summary_en:'A trial for ¥100, normally ¥200.',offers:[{text_ja:'通常200円 体験100円',text_en:'A trial for ¥100, normally ¥200.',regular_yen:200,offer_yen:100}]})),false,'translations do not double-count printed amounts');
+  assert.equal(needsDetail(tile({category:'restaurant',items:items.slice(0,1)})),false);
+  assert.equal(needsDetail(null),false);
+});
+
+test('detail readings replace preliminary items while retaining whole-page identity',()=>{
+  const whole=tile({category:'supermarket',business:{name:'架空市場'},phones:['0120-000-222'],address:'架空町1-2',items:[{name_ja:'架空りんご',price_yen:999},{name_ja:'架空誤読品',price_yen:888}]});
+  const closeup=tile({category:'supermarket',items:[{name_ja:'架空りんご',price_yen:158,price_tax_incl_yen:171}]});
+  const pages=[{id:'page',detailed:true,tiles:[whole,closeup,closeup,null]}], before=JSON.stringify(pages);
+  const merged=mergeFallback(pages);
+  assert.equal(merged.business.name,whole.business.name);assert.equal(merged.address,whole.address);
+  assert.deepEqual(merged.phones,whole.phones);assert.deepEqual(merged.items.map(i=>[i.name_ja,i.price_yen,i.price_tax_incl_yen,i.page]),[['架空りんご',158,171,0]]);
+  assert.equal(JSON.stringify(pages),before);
+  assert.equal(mergeFallback([{...pages[0],detailed:false}]).items.length,3,'legacy readings retain their items');
+});
+
+// Exercise the browser's actual read/merge orchestration without launching a browser.
+function browserReadingHarness(whole,{pauseDetail=false,pendingPage=null}={}) {
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const code=source.slice(source.indexOf('async function readPass('),source.indexOf('async function acquireWakeLock('));
+  const requests=[],renders=[],deleted=[],state={pages:pendingPage ? {p:pendingPage} : {},flyers:[],overrides:{},outings:[]};
+  const photo={id:'p',blob:new Blob(['synthetic photo']),file:null,status:'waiting',parts:new Set()};
+  let release,started,tilesMade=0;
+  const detailGate=new Promise(resolve=>{release=resolve;}),detailStarted=new Promise(resolve=>{started=resolve;});
+  const exact=tile({category:'supermarket',items:[{name_ja:'架空りんご',price_yen:158,price_tax_incl_yen:171},{name_ja:'架空たまご',price_yen:238}]});
+  const session={batch:[photo],controller:new AbortController(),durations:[]};
+  const sandbox={state,photos:[photo],reading:{active:true},chosenStops:null,groceryChoice:null,
+    performance,TextDecoder,needsDetail,groupPages,storable,japanToday:()=> '2026-10-11',home:()=>null,
+    updateReading:()=>{},storePhoto:async()=>{},save:()=>true,notify:()=>{},$:()=>({textContent:''}),
+    photoDB:async(method,id)=>{if(method==='delete')deleted.push(id);},
+    imageURL:async()=> 'data:image/jpeg;base64,AAAA',
+    tilePage:async()=>{tilesMade++;return Array(6).fill('data:image/jpeg;base64,AAAA');},
+    render:()=>renders.push(structuredClone(state.flyers)),
+    api:async(path,body)=>({flyer:{...mergeFallback(body.pages),id:body.flyerId,location:null}}),
+    fetch:async(path,init)=>{
+      const request=JSON.parse(init.body);requests.push(request);
+      if(request.mode==='tiles') {started();if(pauseDetail)await detailGate;}
+      const tiles=request.tiles.map(()=>request.mode==='page'?whole:exact);
+      const events=tiles.map((tile,index)=>({type:'tile',index,tile}));
+      events.push({type:'done',pageId:request.pageId,tiles});
+      return new Response(events.map(event=>JSON.stringify(event)).join('\r\n'));
+    }};
+  const {readPage,mergeGroups,replaceFlyers}=runInNewContext(code+'\n({readPage,mergeGroups,replaceFlyers})',sandbox);
+  return {state,photo,requests,renders,deleted,detailStarted,release,replaceFlyers,
+    tilesMade:()=>tilesMade,read:()=>readPage(photo,session,id=>mergeGroups(new Set([id]),session.controller.signal))};
+}
+
+test('browser service path reads once, merges immediately and never prepares price tiles',async()=>{
+  const h=browserReadingHarness(tile({category:'fitness',business:{name:'架空ピラティス'},offers:[{text_ja:'体験1,000円',offer_yen:1000}]}));
+  await h.read();
+  assert.deepEqual(h.requests.map(r=>[r.mode,r.tiles.length]),[['page',1]]);
+  assert.equal(h.tilesMade(),0);assert.equal(h.state.flyers[0].business.name,'架空ピラティス');
+  assert.equal(h.photo.status,'read');assert.deepEqual(h.deleted,['p']);
+});
+
+test('browser price path shows the preliminary card before detail resolves, then replaces its prices and identity in place',async()=>{
+  const h=browserReadingHarness(tile({category:'supermarket',business:{name:'架空市場'},phones:['0120-000-222'],address:'架空町1-2',items:[{name_ja:'架空りんご',price_yen:999},{name_ja:'架空誤読品',price_yen:888}]}),{pauseDetail:true});
+  const pending=h.read();await h.detailStarted;
+  assert.equal(h.state.flyers.length,1);const id=h.state.flyers[0].id;
+  assert.equal(h.state.flyers[0].items[0].price_yen,999);assert.equal(h.photo.status,'detailing');
+  assert.equal(h.state.pages.p.detailPending,true);assert.deepEqual(h.deleted,[]);
+  h.release();await pending;
+  assert.deepEqual(h.requests.map(r=>[r.mode,r.tiles.length]),[['page',1],['tiles',6]]);
+  assert.equal(h.state.pages.p.tiles.length,7);assert.equal(h.state.pages.p.detailed,true);
+  assert.equal(h.state.flyers.length,1);assert.equal(h.state.flyers[0].id,id);
+  assert.equal(h.state.flyers[0].business.name,'架空市場');assert.equal(h.state.flyers[0].items.length,2);
+  assert.equal(h.state.flyers[0].items[0].price_yen,158);assert.equal(h.state.flyers[0].items[0].price_tax_incl_yen,171);
+  assert.equal(h.state.pages.p.needsMerge,false);assert.deepEqual(h.deleted,['p']);
+  assert.deepEqual(structuredClone(h.replaceFlyers([{id:'a',pageIds:['a']},{id:'b',pageIds:['b']},{id:'c',pageIds:['c']}],[{id:'b',pageIds:['b'],updated:true}])).map(f=>f.id),['a','b','c']);
+});
+
+test('browser resumes saved whole-page readings with only a detail request',async()=>{
+  const whole=tile({category:'supermarket',business:{name:'架空市場'},summary_en:'Printed price list.'});
+  const h=browserReadingHarness(whole,{pendingPage:{id:'p',scannedAt:'2026-10-11',tiles:[whole],detailPending:true}});
+  await h.read();
+  assert.deepEqual(h.requests.map(r=>[r.mode,r.tiles.length]),[['tiles',6]]);
+  assert.equal(h.state.pages.p.detailPending,false);assert.equal(h.state.flyers[0].business.name,'架空市場');
+});
 
 test('exported vocabularies match the contract',()=>{
   assert.deepEqual(CATEGORIES,['lesson','fitness','cleaning','shop','supermarket','drugstore','restaurant','clinic','event','food_delivery','buying_service','junk_removal','real_estate','official_or_personal','other']);

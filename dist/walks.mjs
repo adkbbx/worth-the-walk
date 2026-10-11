@@ -9,6 +9,16 @@ export function distanceMeters(a,b) {
 export function walkMinutes(meters) {
   return Math.round(meters*DETOUR/WALK_M_PER_MIN);
 }
+export function nearestStation(stations,coordinates,point) {
+  let nearest=null;
+  for(const station of stations) {
+    const location=coordinates.find(c=>c.id===station.id);
+    if(!location || !Number.isFinite(location.lat) || !Number.isFinite(location.lon))continue;
+    const meters=distanceMeters(location,point);
+    if(!nearest || meters<nearest.meters)nearest={station,meters};
+  }
+  return nearest;
+}
 export function estimates(meters,weightKg=60) {
   const routeMeters=Math.round(meters*DETOUR), minutes=walkMinutes(meters);
   return {routeMeters,minutes,steps:Math.round(routeMeters/0.7),kcal:Math.round(3.5*weightKg*minutes/60)};
