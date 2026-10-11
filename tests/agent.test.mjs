@@ -10,7 +10,7 @@ import { createSerpApi } from '../agent/serpapi.mjs';
 import { privacyProcessor, createApp } from '../agent/mastra.mjs';
 import { createTools, rulesRank } from '../agent/tools.mjs';
 import { createCallQueue, modelCall, hedged } from '../agent/queue.mjs';
-import { FEATURES, normalizeTile } from '../src/mailbox.mjs';
+import { FEATURES, normalizeTile, bucketOf } from '../src/mailbox.mjs';
 import { createServer } from '../scripts/serve.mjs';
 import { PAGE_PROMPT, TILE_PROMPT } from '../agent/prompts.mjs';
 
@@ -53,6 +53,59 @@ const predict = [
 const mergeInput = (tiles = fixtures.slice(0, 2)) => ({ flyerId: 'dojo',
   pages: tiles.map((tile, index) => ({ id: `p${index}`, tiles: [tile] })),
   scanDate: '2026-10-11', home: { stationId: 'test', lat: 35.5, lon: 139.5 } });
+
+test('single whole-page reading skips the merge model and preserves the normalized flyer fields', async () => {
+  let merges = 0, lookups = 0;
+  const app = createApp({ env: { GRADIENT_MODEL_ACCESS_KEY: 'synthetic' }, fetch: async () => {
+    lookups++; return response([{ geometry: { coordinates: [139.505, 35.505] } }]);
+  } });
+  const reading = normalizeTile({ ...fixtures[0], summary_en: 's'.repeat(180), address: fixtures[1].address,
+    items: [{ name_ja: '架空茶', name_en: 'Tea', price_yen: 158 }],
+    websites: ['https://example.invalid'], hours: '10:00–18:00', valid_from_text: '10/1', valid_to_text: '11/30', flyer_count: 2 });
+  app.mastra.getAgent('pageReader').generate = async () => ({ text: JSON.stringify(reading) });
+  app.mastra.getAgent('flyerMerger').generate = async () => { merges++; throw new Error('Unexpected merge call'); };
+  const read = await app.readPage({ pageId: 'whole', tiles: [image], mode: 'page' });
+  const flyer = await app.mergeFlyer({ ...mergeInput(), pages: [{ id: read.pageId, tiles: read.tiles }] });
+  assert.equal(merges, 0); assert.equal(lookups, 1); assert.equal(flyer.location.source, 'gsi');
+  for (const key of ['business', 'category', 'address', 'phones', 'websites', 'hours', 'valid_from_text', 'valid_to_text', 'comes_to_you', 'delivery', 'flyer_count']) {
+    assert.deepEqual(flyer[key], reading[key], key);
+  }
+  assert.equal(flyer.summary_en, reading.summary_en.slice(0, 120));
+  assert.deepEqual(flyer.offers, reading.offers.map(offer => ({ ...offer, page: 0 })));
+  assert.deepEqual(flyer.items, reading.items.map(item => ({ ...item, page: 0 })));
+  assert.equal(flyer.bucket, bucketOf(reading)); assert.equal(flyer.deadline, '2026-11-30');
+  assert.deepEqual(flyer.pageIds, ['whole']);
+});
+
+test('two-page flyers and detailed single pages still call the merge model once', async () => {
+  for (const detailed of [false, true]) {
+    const app = createApp({ env: { GRADIENT_MODEL_ACCESS_KEY: 'synthetic' }, fetch: noFetch });
+    let merges = 0;
+    app.mastra.getAgent('flyerMerger').generate = async (messages, options) => {
+      merges++; assert.ok(options.abortSignal instanceof AbortSignal);
+      const readings = JSON.parse(messages[0].content);
+      assert.deepEqual(readings.map(reading => reading.page), detailed ? [0, 0] : [0, 1]);
+      return { text: JSON.stringify({ ...fixtures[0], summary_en: 'Merged by model',
+        offers: fixtures[0].offers.map(offer => ({ ...offer, page: detailed ? 0 : 1 })) }) };
+    };
+    const input = mergeInput();
+    if (detailed) input.pages = [{ id: 'detail', detailed: true, tiles: [fixtures[0], fixtures[2]] }];
+    const flyer = await app.mergeFlyer(input);
+    assert.equal(merges, 1); assert.equal(flyer.summary_en, 'Merged by model');
+    assert.equal(flyer.offers[0].page, detailed ? 0 : 1);
+    assert.equal(flyer.items.length, detailed ? fixtures[2].items.length : 0);
+    assert.ok(flyer.items.every(item => item.page === 0));
+  }
+});
+
+test('a failed model merge still falls back to deterministic readings', async () => {
+  const app = createApp({ env: { GRADIENT_MODEL_ACCESS_KEY: 'synthetic' }, fetch: noFetch });
+  let merges = 0;
+  app.mastra.getAgent('flyerMerger').generate = async () => { merges++; return { text: 'invalid JSON' }; };
+  const flyer = await app.mergeFlyer(mergeInput());
+  assert.equal(merges, 1); assert.equal(flyer.business.name, fixtures[0].business.name);
+  assert.equal(flyer.address, fixtures[1].address); assert.equal(flyer.bucket, 'walk');
+});
 
 test('readPage emits one event per tile and a final ordered list, wrapping fixture indices', async () => {
   const app = createApp({ env, fetch: noFetch });
@@ -259,6 +312,11 @@ test('Sentry is conditional and registered workflow traces omit payloads before 
   assert.ok(events.some(event => event.exportedSpan.attributes['chirashi.tile_count'] === 1));
   const readSpan = events.find(event => event.exportedSpan.attributes['chirashi.tile_count'] === 1).exportedSpan;
   assert.equal(exporters[0].buildSpanAttributes(readSpan)['chirashi.tile_count'], 1);
+  await app.mergeFlyer(mergeInput([fixtures[0]]));
+  await observability.flush();
+  const mergeSpan = events.find(event => event.exportedSpan.attributes['chirashi.merge'] === 'code').exportedSpan;
+  assert.equal(exporters[0].buildSpanAttributes(mergeSpan)['chirashi.merge'], 'code');
+  assert.doesNotMatch(JSON.stringify(events), /data:image|無料体験|0120-000-111/);
 });
 
 test('privacy processor keeps models and numeric usage while dropping content, secrets and queried URLs', () => {
@@ -271,13 +329,16 @@ test('privacy processor keeps models and numeric usage while dropping content, s
       'gen_ai.tool.call.arguments': '{}', 'gen_ai.tool.call.result': '{}',
       'gen_ai.tool.name': 'data:image/png;base64,AAAA', 'gen_ai.agent.name': 'x'.repeat(201),
       'gen_ai.response.finish_reasons': ['stop'], provider: 'https://example.test/?token=secret',
-      'chirashi.tile_count': 1, 'chirashi.bucket': 'walk', 'chirashi.rank_model': 'rules', 'chirashi.content': 'secret' } });
+      'chirashi.tile_count': 1, 'chirashi.bucket': 'walk', 'chirashi.rank_model': 'rules', 'chirashi.merge': 'code', 'chirashi.content': 'secret' } });
   assert.equal(span.attributes['gen_ai.request.model'], 'gemma');
   assert.equal(span.attributes['gen_ai.usage.input_tokens'], 20);
   assert.equal(span.attributes['gen_ai.usage.output_tokens'], 10);
   assert.deepEqual(span.attributes.usage, { inputTokens: 20, outputTokens: 10 });
   assert.deepEqual(span.attributes['gen_ai.response.finish_reasons'], ['stop']);
   assert.equal(span.attributes['chirashi.bucket'], 'walk');
+  assert.equal(span.attributes['chirashi.merge'], 'code');
+  assert.equal(privacyProcessor.process({ attributes: { 'chirashi.merge': 'model' } }).attributes['chirashi.merge'], 'model');
+  assert.deepEqual(privacyProcessor.process({ attributes: { 'chirashi.merge': 'private flyer text' } }).attributes, {});
   assert.doesNotMatch(JSON.stringify(span), /prompt|output.messages|private|secret|data:|token=|call.arguments/);
 });
 

@@ -7,6 +7,44 @@ const tile=raw=>normalizeTile(raw);
 const page=(id,raw)=>({id,tiles:[tile(raw)]});
 const empty={business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false,flyer_count:1};
 
+test('reading ETA includes unread flyers and sorting backlog, counting known groups once',()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const code=source.slice(source.indexOf('function updateReading()'),source.indexOf('function locateControl('));
+  const elements=new Map(), element=id=>{
+    if(!elements.has(id))elements.set(id,{dataset:{},classList:{toggle(){}},closest:()=>({})});
+    return elements.get(id);
+  };
+  const batch=Array.from({length:5},(_,i)=>({id:'p'+i,status:'waiting',parts:new Set(),wholeRead:false}));
+  const sandbox={reading:{batch,active:true,completed:0,durations:[30000],message:''},state:{pages:{},overrides:{}},
+    groupPages,$:element,allReadingFailed:()=>false,announceReading:()=>{},failedReadingActions:()=>'',
+    focusKey:()=>null,document:{activeElement:null,querySelectorAll:()=>[]}};
+  const update=runInNewContext(code+'\nupdateReading',sandbox);
+  update();
+  assert.match(element('reading-count').textContent,/about 2 min left/,'50 seconds of reading plus 25 seconds of sorting');
+  batch.forEach(p=>{p.wholeRead=true;p.status='read';sandbox.state.pages[p.id]={id:p.id,tiles:[tile({business:{name:p.id}})],needsMerge:true};});
+  // No reads remain, but thirteen distinct saved flyers still need sorting.
+  for(let i=5;i<13;i++) {
+    batch.push({id:'p'+i,status:'read',parts:new Set(),wholeRead:true});
+    sandbox.state.pages['p'+i]={id:'p'+i,tiles:[tile({business:{name:'p'+i}})],needsMerge:true};
+  }
+  update();assert.match(element('reading-count').textContent,/about 2 min left/);
+  Object.values(sandbox.state.pages).forEach(p=>{p.tiles=[tile({business:{name:'Same flyer'},phones:['0120-000-111']})];});
+  update();assert.match(element('reading-count').textContent,/about 1 min left/,'one pending group rather than thirteen pages');
+});
+
+test('stop rows explain absent and unplaced addresses and retain Add address',()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const code=source.slice(source.indexOf('function stopRow('),source.indexOf('function groceryRow('));
+  const stopRow=runInNewContext(code+'\nstopRow',{home:()=>null,escape:String,stack:()=>'',flyerTitle:()=> 'Place',
+    stickerHTML:()=>'',capital:String,closeIcon:'',locateControl:()=>'',reading:null});
+  const flyer={id:'f',pageIds:['p'],category:'lesson',business:{},location:null};
+  for(const [address,message] of [[null,'No address on the flyer'],['Printed address',"Couldn't place this address near your start"]]) {
+    const html=stopRow({...flyer,address});assert.ok(html.includes(message));assert.ok(html.includes('Add address'));
+  }
+  const placed=stopRow({...flyer,location:{lat:35,lon:139}});
+  assert.ok(!placed.includes('No address') && !placed.includes("Couldn't place") && !placed.includes('Add address'));
+});
+
 test('needsDetail gates every category by walkable price-list evidence',()=>{
   const items=[{name_ja:'架空りんご',price_yen:100},{name_ja:'架空たまご',price_yen:200}];
   const detailed=['supermarket','drugstore','cleaning','restaurant','shop'];

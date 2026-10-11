@@ -196,6 +196,7 @@ export function mergeFallback(pages) {
   for(const [category,count] of categories)if(count>most) { flyer.category=category;most=count; }
   flyer.items=dedupeItems(flyer.items);
   flyer.phones=[...phones];flyer.websites=[...websites];
+  if(flyer.summary_en)flyer.summary_en=flyer.summary_en.slice(0,120);
   return {...flyer,bucket:bucketOf(flyer),needsLookup:needsLookup(flyer),deadline:null,chain:null};
 }
 export function bucketOf(flyer) {

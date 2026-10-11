@@ -148,7 +148,7 @@ p { margin:0; }
 .skip { position:fixed; z-index:20; left:16px; top:8px; clip-path:inset(50%); width:1px; height:1px; overflow:hidden; white-space:nowrap; }
 .skip:focus, .skip:focus-visible { clip-path:none; width:auto; height:auto; overflow:visible; white-space:normal; padding:12px; background:var(--paper); }
 .fatal { padding:16px; }
-.cw-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+.cw-sr, body:has(#reading-card) #progress { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 .cw-app { min-height:100dvh; background:var(--paper); }
 .cw-header-inner { padding:16px; justify-content:initial; }
 .cw-brand { color:var(--ink); text-decoration:none; margin-right:auto; min-height:44px; display:flex; flex-direction:column; justify-content:center; }

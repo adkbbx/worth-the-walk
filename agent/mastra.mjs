@@ -71,6 +71,7 @@ export const privacyProcessor = { name: 'omit-flyer-payloads', process(span) {
   const chirashi = {
     'chirashi.tile_count': value => Number.isInteger(value) && value >= 0,
     'chirashi.page_count': value => Number.isInteger(value) && value >= 0,
+    'chirashi.merge': value => ['code', 'model'].includes(value),
     'chirashi.bucket': value => ['walk', 'home', 'keep', 'toss'].includes(value),
     'chirashi.location_source': value => ['gsi', 'serpapi', 'mock', 'none'].includes(value),
     'chirashi.rank_model': value => ['rules', 'tabpfn'].includes(value),
@@ -175,9 +176,11 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
     id: 'merge-and-locate', inputSchema: mergeSchema, outputSchema: z.unknown(),
     execute: async ({ inputData, tracingContext, requestContext }) => {
       const { flyerId, pages, scanDate, home } = inputData;
-      annotate(tracingContext, { 'chirashi.page_count': pages.length, 'chirashi.tile_count': pages.reduce((sum, page) => sum + page.tiles.length, 0) });
+      const useModel = !mock && !(pages.length === 1 && readingsForMerge(pages[0]).length === 1);
+      annotate(tracingContext, { 'chirashi.page_count': pages.length, 'chirashi.tile_count': pages.reduce((sum, page) => sum + page.tiles.length, 0),
+        'chirashi.merge': useModel ? 'model' : 'code' });
       let merged;
-      if (!mock) {
+      if (useModel) {
         try {
           // Price-list items are merged by code below: rewriting 50 menu items made the model merge take ~25 s per flyer.
           const readings = pages.flatMap((page, index) => readingsForMerge(page).map(tile => ({ ...normalizeTile(tile), items: undefined, page: index })));

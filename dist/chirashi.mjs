@@ -777,7 +777,10 @@ function updateReading() {
   const r=reading, calls=r.batch.reduce((n,p) => n+(p.wholeRead ? 1 : 0)+p.parts.size,0), total=r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0);
   const done=r.completed+r.batch.filter(p => p.status === 'read').length, lanes=Math.min(3,r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status)).length) || 1;
   const average=r.durations.reduce((n,d) => n+d,0)/(r.durations.length || 1);
-  const remaining=Math.max(1,Math.ceil((average || 15000)*(total-calls)/lanes/60000));
+  // Known groups need one sort each; unread pages conservatively count as separate flyers.
+  const pendingGroups=groupPages(Object.values(state.pages).filter(p => p.needsMerge && r.batch.some(b => b.id === p.id)),state.overrides).length;
+  const unread=r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status) && !state.pages[p.id]?.needsMerge).length;
+  const remaining=Math.max(1,Math.ceil(((average || 15000)*(total-calls)/lanes+5000*(pendingGroups+unread))/60000));
   $('reading-progress').max=total; $('reading-progress').value=calls;
   $('reading-count').textContent=r.active ? `Reading ${Math.min(done+1,r.batch.length)} of ${r.batch.length} · about ${remaining} min left` : `${done} pages read · paused`;
   const allFailed=allReadingFailed();
@@ -804,7 +807,7 @@ function locateControl(f) {
   return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" aria-invalid="${addressErrors.has(f.id)}"${addressErrors.has(f.id) ? ` aria-describedby="address-error-${escape(f.id)}"` : ''} required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy || offline ? 'disabled' : ''}${offline ? ` aria-describedby="address-offline-${escape(f.id)}"` : ''}>Find address</button>${offline ? `<p id="address-offline-${escape(f.id)}" class="cw-inline-reason">Finding an address needs a connection.</p>` : ''}${addressErrors.has(f.id) ? `<p id="address-error-${escape(f.id)}" class="cw-inline-reason" role="status">${modelText(addressErrors.get(f.id))}</p>` : ''}</form>` : '';
 }
 function stopRow(f,previous=home()) {
-  const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : f.location ? '' : 'No address on the flyer';
+  const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : f.location ? '' : f.address ? "Couldn't place this address near your start" : 'No address on the flyer';
   return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me: ${escape(capital(f.business?.kind ?? f.category))}">${closeIcon}</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
 }
 function routeSummary(p) { const e=estimates(p.meters,state.settings.weightKg); return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps`; }

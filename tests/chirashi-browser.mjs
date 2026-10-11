@@ -494,6 +494,11 @@ async function nonHappyChecks(sampleState) {
   await address.page.locator('.cw-locate').getByText("Couldn't find that. Try the address printed on the flyer (住所) or the full business name.",{exact:true}).waitFor();
   assert.equal(await address.page.locator('#notice').isVisible(),false,'address failure stays inline');
   await address.context.close();
+  const unplaced=await newPhone();
+  await seed(unplaced.page,{...structuredClone(saved),flyers:[{...missing,address:'Fictional printed address'}]}); await open(unplaced.page);
+  assert.ok(await unplaced.page.getByText("Couldn't place this address near your start",{exact:true}).isVisible());
+  assert.ok(await unplaced.page.getByRole('button',{name:'Add address',exact:true}).isVisible());
+  await unplaced.context.close();
 
   const stationFailure=await newPhone(); let failCoordinates=true;
   await stationFailure.page.route('**/station-coordinates.json',route => failCoordinates ? route.fulfill({status:503,body:''}) : route.continue());
@@ -580,6 +585,8 @@ try {
   await page.locator('#reading-progress').waitFor(); await page.locator('.cw-stop-row').first().waitFor();
   assert.ok(await page.getByText('Keep this screen open. Cards appear as each flyer is read.',{exact:true}).isVisible());
   assert.match(await page.locator('#reading-count').textContent(),/Reading \d of 7 · about \d min left/);
+  assert.equal(await page.locator('#progress').getAttribute('aria-live'),'polite');
+  assert.ok(await page.locator('#progress').evaluate(el => getComputedStyle(el).clipPath === 'inset(50%)'),'live progress is visually hidden while the reading card is shown');
   assert.equal(await page.locator('progress').count(),1); assert.ok(Object.keys((await readState(page)).pages).length<7,'first stop appears before last page finishes');
   await page.locator('[data-reading-prices]').waitFor(); assert.equal(detailFinished,false);
   assert.equal(await page.locator('[data-reading-page]').count(),7);

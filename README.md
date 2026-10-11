@@ -9,7 +9,7 @@ No Japanese flyers to hand? Open the app and tap **Try a sample mailbox**: eight
 ## How it works
 
 1. Photograph the pages. Gemma 4 reads each page whole first (one call), so its card appears within seconds. Only walkable price lists (supermarkets, drugstores, cleaners, menus) get a second pass in six overlapping tiles for exact prices.
-2. The app groups pages from the same flyer (shared phone number, website, or name and address), merges the readings, and gives each flyer a short English summary.
+2. The app groups pages from the same flyer (shared phone number, website, or name and address), merges the readings, and gives each flyer a short English summary. Single-page flyers read whole skip the merge call.
 3. The answer is a ticket: the places **worth a walk**, in order, each with its best printed price. The rest of the pile goes to a tray: **Home** (deals to use at home), **Recycle** (safe to throw away), and **Keep** (personal or official mail; nothing from it is stored). Tap a page to correct its group.
 4. The first time it needs a start, the app asks once: **Use my location** or **Pick a station**. Tap ✕ on any place you don't want. TabPFN learns from your ✕ and your stamps; simple rules take over when there are too few labels or a prediction fails.
 5. **Start the walk** turns the screen into a train-door display. At each stop, one GPS reading checked on the phone gives you an ink stamp; without GPS you get a dashed, self-reported stamp. Mark the offers you used. Savings count only values printed on the flyer.
