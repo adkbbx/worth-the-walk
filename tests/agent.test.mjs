@@ -71,7 +71,7 @@ test('readPage emits one event per tile and a final ordered list, wrapping fixtu
 test('mock merge combines two dojo pages, finalizes deadlines and chain fields, and locates via injected fetch', async () => {
   let calls = 0;
   const app = createApp({ env, fetch: async () => { calls++; return response([
-    { geometry: { coordinates: [139.6, 35.6] }, properties: { title: 'テスト住所' } },
+    { geometry: { coordinates: [139.51, 35.51] }, properties: { title: 'テスト住所' } },
   ]); } });
   const flyer = await app.mergeFlyer(mergeInput());
   assert.equal(flyer.id, 'dojo'); assert.deepEqual(flyer.pageIds, ['p0', 'p1']);
@@ -181,7 +181,7 @@ test('locate falls back from a failed address to a nearby business only when hom
   const options = { env: { ...env, SERPAPI_API_KEY: 'synthetic', SERPAPI_LIVE: '1' }, fetch: async url => {
     calls.push(url.hostname);
     return response(url.hostname === 'msearch.gsi.go.jp' ? [] : { local_results: [{
-      gps_coordinates: { latitude: 35, longitude: 139 }, phone: '0120-000-111',
+      gps_coordinates: { latitude: 35.505, longitude: 139.505 }, phone: '0120-000-111',
     }] });
   } };
   const app = createApp({ ...options, serpapi: createSerpApi({ ...options, dir }) });
@@ -281,10 +281,24 @@ test('privacy processor keeps models and numeric usage while dropping content, s
   assert.doesNotMatch(JSON.stringify(span), /prompt|output.messages|private|secret|data:|token=|call.arguments/);
 });
 
+test('automatic lookups reject address matches over 5 km from home; typed addresses are trusted', async () => {
+  let searches = 0;
+  // A partial printed address resolved ~6.7 km from the home station (mergeInput's home is 35.5, 139.5).
+  const far = response => () => response([{ geometry: { coordinates: [139.5, 35.56] }, properties: { title: 'far block' } }]);
+  const app = createApp({ env: { ...env, SERPAPI_API_KEY: 'synthetic' }, fetch: async () => far(response)(),
+    serpapi: { search: async () => { searches++; return { result: null }; } } });
+  assert.equal((await app.mergeFlyer(mergeInput())).location, null);
+  assert.ok(searches >= 1, 'a rejected address falls back to the name search');
+  const typed = await app.locate({ q: '東京都テスト区1-2-3', lat: 35.5, lon: 139.5 });
+  assert.equal(typed.source, 'gsi', 'an address the user typed is never second-guessed');
+  const near = createApp({ env, fetch: async () => response([{ geometry: { coordinates: [139.505, 35.505] }, properties: { title: 'near block' } }]) });
+  assert.equal((await near.mergeFlyer(mergeInput())).location.source, 'gsi');
+});
+
 test('walk-only SerpApi gate skips home, keep, toss and usable GSI results', async () => {
   let searches = 0;
   const app = createApp({ env: { ...env, SERPAPI_API_KEY: 'synthetic' },
-    fetch: async () => response([{ geometry: { coordinates: [139.6, 35.6] } }]),
+    fetch: async () => response([{ geometry: { coordinates: [139.51, 35.51] } }]),
     serpapi: { search: async () => { searches++; return { result: null }; } } });
   for (const index of [3, 4, 5]) await app.mergeFlyer(mergeInput([fixtures[index]]));
   await app.mergeFlyer(mergeInput());

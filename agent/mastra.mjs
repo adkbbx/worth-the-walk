@@ -13,6 +13,10 @@ import { PAGE_PROMPT, TILE_PROMPT, MERGE_PROMPT } from './prompts.mjs';
 import { createTools, rulesRank } from './tools.mjs';
 import { readPageSchema, mergeSchema, locateSchema, rankSchema } from './schemas.mjs';
 import { modelCall, hedged } from './queue.mjs';
+import { distanceMeters } from '../src/walks.mjs';
+
+// About an 80-minute walk: anything further is not "worth a walk" and is usually a mis-matched address.
+const NEAR_HOME_METERS = 5_000;
 
 function compact(value) {
   if (Array.isArray(value)) return value.map(compact);
@@ -114,11 +118,13 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
   const pageReader = new Agent({ id: 'page-reader', name: 'page-reader', instructions: PAGE_PROMPT, model: visionModel(env) });
   const flyerMerger = new Agent({ id: 'flyer-merger', name: 'flyer-merger', instructions: MERGE_PROMPT, model: textModel(env) });
 
-  async function locate(input) {
+  // maxMeters is set only for automatic lookups while reading; an address the user typed is always trusted.
+  async function locate(input, { maxMeters = null } = {}) {
     const { q, name, phones, lat, lon } = locateSchema.parse(input);
     if (!allowLocate) return null;
-    const address = q ? await gsiGeocode({ q }) : null;
-    return address ?? await serpapiPlace({ name, phones, lat, lon });
+    const near = place => place && (maxMeters == null || lat == null || lon == null || distanceMeters({ lat, lon }, place) <= maxMeters) ? place : null;
+    const address = near(q ? await gsiGeocode({ q }) : null);
+    return address ?? near(await serpapiPlace({ name, phones, lat, lon }));
   }
 
   const readStep = createStep({
@@ -192,8 +198,9 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
         annotate(tracingContext, { 'chirashi.location_source': home ? 'mock' : 'none' });
         return { ...flyer, location: home ? mockLocation(flyerId, home) : null };
       }
+      // Mailbox flyers advertise nearby places; a partial printed address ("6-33-3") can match a block ~6 km away.
       const location = await locate({ q: flyer.address ?? undefined, name: flyer.business.name ?? undefined,
-        phones: flyer.phones, lat: home?.lat, lon: home?.lon });
+        phones: flyer.phones, lat: home?.lat, lon: home?.lon }, { maxMeters: NEAR_HOME_METERS });
       annotate(tracingContext, { 'chirashi.location_source': location?.source ?? 'none' });
       return { ...flyer, location };
     },

@@ -551,7 +551,7 @@ function revokeThumbs() { for (const url of thumbURLs.values()) URL.revokeObject
 function thumbnail(id,large = false) {
   const privatePage=state.flyers.some(f => f.bucket === 'keep' && f.pageIds.includes(id));
   const blob=privatePage ? null : thumbBlobs.get(id);
-  if (!blob) return `<span class="cw-thumb cw-placeholder${large ? ' cw-preview' : ''}" role="img" aria-label="Page preview unavailable">▧</span>`;
+  if (!blob) return `<span class="cw-thumb cw-placeholder${large ? ' cw-preview' : ''}" role="img" aria-label="No preview for this page">📄<small>No preview</small></span>`;
   if (!thumbURLs.has(id)) thumbURLs.set(id,URL.createObjectURL(blob));
   return `<img class="cw-thumb${large ? ' cw-preview' : ''}" src="${escape(thumbURLs.get(id))}" alt="${large ? 'Page preview' : 'Flyer page preview'}">`;
 }
@@ -600,7 +600,10 @@ function walkSummary(p) {
 function planWithoutGrocery() { const choice=groceryChoice; groceryChoice=null; try { return plan(); } finally { groceryChoice=choice; } }
 function collapsedRows() {
   const count=bucket => state.flyers.filter(f => f.bucket === bucket).length;
-  return `<div class="cw-collapsed"><button data-action="bucket-sheet" data-id="home">📞 ${count('home')} ${plural(count('home'),'deal','deals')} to order at home <span aria-hidden="true">›</span></button><button data-action="bucket-sheet" data-id="toss">♻ ${count('toss')} ${plural(count('toss'),'flyer','flyers')} safe to recycle <span aria-hidden="true">›</span></button><button data-action="bucket-sheet" data-id="keep">🔒 ${count('keep')} ${plural(count('keep'),'letter','letters')} to keep <span aria-hidden="true">›</span></button></div>`;
+  // Rows with nothing in them are hidden (DESIGN.md: no zero stats).
+  const row=(id,icon,one,many,rest) => count(id) ? `<button data-action="bucket-sheet" data-id="${id}">${icon} ${count(id)} ${plural(count(id),one,many)} ${rest} <span aria-hidden="true">›</span></button>` : '';
+  const rows=row('home','📞','deal','deals','to order at home')+row('toss','♻','flyer','flyers','safe to recycle')+row('keep','🔒','letter','letters','to keep');
+  return rows ? `<div class="cw-collapsed">${rows}</div>` : '';
 }
 function renderHome() {
   const list=candidates(), p=plan();
@@ -709,7 +712,7 @@ $('sheet').addEventListener('cancel',event => { if (sheetTrail.length) { event.p
 $('sheet').addEventListener('close',() => { sheet=null; sheetTrail.length=0; render(); restoreFocus(sheetOpener); sheetOpener=null; });
 function renderSetup() {
   if (!setupOpen) { if ($('setup').open) $('setup').close(); return; }
-  $('setup').innerHTML=`<div class="cw-sheet-top">${state.settings.home ? '<button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button>' : ''}</div><h2 id="setup-heading">Your walk starts here.</h2><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option value="${escape(l.id)}">${escape(l.name)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>`;
+  $('setup').innerHTML=`<div class="cw-sheet-top">${state.settings.home ? '<button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button>' : ''}</div><h2 id="setup-heading">Your walk starts here.</h2><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option value="${escape(l.id)}">${escape(l.name)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
   $('setup-line').value=state.settings.lineId ?? ''; stationOptions(state.settings.home);
   $('setup-line').addEventListener('change',() => stationOptions(null));
   $('setup-form').addEventListener('submit',event => {
@@ -732,6 +735,11 @@ function advance(o,skip=false) { if (!o || o.status !== 'active') return; const 
 async function action(button) {
   const id=button.dataset.id;
   switch (button.dataset.action) {
+    case 'start-fresh': if (confirm('Delete all flyers, walks, stamps and photos saved on this phone? Your home station stays.')) {
+      const next=fresh(); next.settings=state.settings; try { localStorage.setItem(KEY,JSON.stringify(next)); } catch {}
+      try { indexedDB.deleteDatabase('worth-the-walk-photos'); } catch {}
+      location.reload();
+    } break;
     case 'take-photo': $('camera-input').click(); break;
     case 'choose-photos': $('photos-input').click(); break;
     case 'rotate': if (!busy && !preparing) { const p=photos.find(p => p.id === id); if (!p) break; preparing++; p.rotation=(p.rotation+90)%360; render(); try { await preparePhoto(p); } finally { preparing--; render(); } } break;

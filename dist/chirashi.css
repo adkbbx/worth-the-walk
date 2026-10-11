@@ -134,3 +134,8 @@
 .cw-sr { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 @media(min-width:760px) { .cw-main { padding-top:40px; } .cw-sheet { margin:auto; border-radius:var(--radius); max-height:88dvh; padding:20px 28px 28px; } .cw-sheet-top { top:-20px; } .cw-stats { grid-template-columns:repeat(3,minmax(0,1fr)); } .cw-snap h1 br { display:none; } }
 @media(prefers-reduced-motion:reduce) { .chirashi *, .chirashi *::before, .chirashi *::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; } }
+
+/* Pages read before previews existed */
+.chirashi .cw-placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px; font-size:18px; color:var(--muted); background:var(--bg); }
+.chirashi .cw-placeholder small { font-size:10px; line-height:1.2; }
+.chirashi .cw-danger { color:var(--ink); text-decoration:underline; margin-top:16px; }
