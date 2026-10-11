@@ -655,6 +655,12 @@ try {
   assert.equal(await page.locator(`[data-flyer="${movedMarket.id}"] img`).count(),2,'stack updates after Apply');
   const rejected=moved.flyers.find(f => f.category==='fitness'); await page.locator(`[data-flyer="${rejected.id}"] [data-action=not-for-me]`).click();
   await page.locator(`[data-flyer="${rejected.id}"]`).waitFor({state:'detached'}); assert.equal((await readState(page)).labels[rejected.id],0);
+  // A mis-tap can be undone from the toast; the place comes back with its old label.
+  await page.locator('#notice').getByRole('button',{name:'Undo',exact:true}).click();
+  await page.locator(`[data-flyer="${rejected.id}"]`).waitFor(); assert.equal((await readState(page)).labels[rejected.id],undefined);
+  assert.equal(await page.locator('#notice').isVisible(),false,'Undo clears its toast');
+  await page.locator(`[data-flyer="${rejected.id}"] [data-action=not-for-me]`).click();
+  await page.locator(`[data-flyer="${rejected.id}"]`).waitFor({state:'detached'}); assert.equal((await readState(page)).labels[rejected.id],0);
   await page.getByRole('button',{name:'Start the walk →',exact:true}).click(); await page.locator('.cw-walk-mode').waitFor();
   await lineChecks(page);
   await bothWidths(page,'walk',true);

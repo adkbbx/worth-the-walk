@@ -93,7 +93,8 @@ function notify(message = '', {tone='info',actionLabel,onAction} = {}) {
   }
   const close=document.createElement('button'); close.className='cw-toast-close'; close.setAttribute('aria-label','Dismiss'); close.innerHTML=closeIcon;
   close.addEventListener('click',() => notify('')); notice.append(close);
-  if (tone === 'info') noticeTimer=setTimeout(() => notify(''),6000);
+  // Info hides itself; one with an action (Undo) stays a little longer so it can be reached.
+  if (tone === 'info') noticeTimer=setTimeout(() => notify(''),actionLabel ? 10000 : 6000);
 }
 function save() {
   delete state.shoppingList;
@@ -1148,7 +1149,16 @@ async function action(button) {
     case 'bucket-sheet': openSheet('bucket',id,button); break;
     case 'close-sheet': closeSheet(); break;
     case 'close-setup': setupOpen=false; renderSetup(); break;
-    case 'not-for-me': if (flyer(id) && flyer(id).bucket !== 'keep') { state.labels[id]=0; save(); if ($('sheet').open) closeSheet(); render(); await rank(); } break;
+    case 'not-for-me': if (flyer(id) && flyer(id).bucket !== 'keep') {
+      const previous=state.labels[id], place=capital(flyer(id).business?.kind ?? flyer(id).business?.name ?? 'this place');
+      state.labels[id]=0; save(); if ($('sheet').open) closeSheet(); render();
+      // A mis-tap shouldn't cost a place: offer Undo until the next message.
+      notify(`Removed ${place} from today's walk.`,{actionLabel:'Undo',onAction:async () => {
+        if (previous === undefined) delete state.labels[id]; else state.labels[id]=previous;
+        save(); notify(''); render(); await rank();
+      }});
+      await rank();
+    } break;
     case 'all-items': if (allItems.has(id)) allItems.delete(id); else allItems.add(id); render(); break;
     case 'add-address': addressOpen.add(id); render(); [...document.querySelectorAll('[data-locate]')].find(f => f.dataset.locate === id)?.querySelector('input').focus(); break;
     case 'merge-retry': if (!home()) askStart('merge'); else await retryMerge(); break;
