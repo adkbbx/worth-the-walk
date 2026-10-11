@@ -132,6 +132,10 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Opens from the first screen and from the footer line; a ticket stub with a "✂ - - -" tear line on top
 - Heading "Your mail is read by models anyone can run"; four numbered reasons (print-face numbers in circles), each a bold line plus one or two sentences with the real figures (see section 9)
 
+### First visit
+- Before the first photo: the snap hero, then "How it works" (three numbered steps: photograph the pile → get a ticket for today → walk and collect stamps) and an example ticket captioned "Example · sample shops", with "your station" instead of a real station and tiny printed flyers as thumbnails
+- Desktop: the hero stays 520px wide; steps and the example ticket sit side by side; the "Why open models?" stub fills the side column, so the snap card's own link is hidden there
+
 ### Sheets
 - Bottom sheet on phones (top radius 18px), centred 560px dialog on desktop; Ticket Paper; backdrop `rgba(15,20,24,.45)`; focus returns to the opener
 
