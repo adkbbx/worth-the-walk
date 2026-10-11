@@ -13,6 +13,8 @@ const now = () => new Date().toISOString();
 const titles = {walk:'Worth a walk', home:'Deals to use at home', keep:'Keep — not an ad', toss:'Safe to throw away'};
 const fresh = () => ({version:1,settings:{lineId:null,home:null,maxMinutes:40,weightKg:60},pages:{},overrides:{},flyers:[],labels:{},outings:[]});
 const record = value => value && typeof value === 'object' && !Array.isArray(value);
+// Personal letters retain no extracted text; samples also retain their demo marker.
+const savedFlyer = f => f.sample ? {...storable(f),sample:true} : storable(f);
 const pointValid = p => record(p) && Number.isFinite(p.lat) && Math.abs(p.lat) <= 90 && Number.isFinite(p.lon) && Math.abs(p.lon) <= 180;
 function load() {
   try {
@@ -23,18 +25,20 @@ function load() {
     if (!s.outings.every(o => record(o) && typeof o.id === 'string' && Number.isFinite(Date.parse(o.createdAt)) && Array.isArray(o.stopIds) && o.stopIds.every(id => typeof id === 'string') && Array.isArray(o.used) && Array.isArray(o.stamps) && pointValid(o.start) && pointValid(o.end) && Number.isFinite(o.meters) && Number.isFinite(o.minutes) && ['planned','active','done'].includes(o.status) && o.stamps.every(s => record(s) && typeof s.stopId === 'string' && Number.isFinite(Date.parse(s.at)) && ['gps','self'].includes(s.kind)) && o.used.every(u => record(u) && typeof u.flyerId === 'string' && ['offer','item'].includes(u.kind) && Number.isInteger(u.index) && u.index >= 0))) return fresh();
     const base = fresh();
     base.settings = {lineId:railLines.some(l => l.id === s.settings.lineId) ? s.settings.lineId : null,home:stations.some(x => x.id === s.settings.home) ? s.settings.home : null,maxMinutes:[20,40,60,90].includes(s.settings.maxMinutes) ? s.settings.maxMinutes : 40,weightKg:Number.isFinite(s.settings.weightKg) && s.settings.weightKg > 0 ? s.settings.weightKg : 60};
-    base.pages = s.pages; base.overrides = s.overrides; base.flyers = s.flyers.map(storable); base.outings = s.outings;
+    if (pointValid(s.settings.place)) base.settings.place = {lat:s.settings.place.lat,lon:s.settings.place.lon};
+    base.pages = s.pages; base.overrides = s.overrides; base.flyers = s.flyers.map(savedFlyer); base.outings = s.outings;
     base.labels = Object.fromEntries(Object.entries(s.labels).filter(([,v]) => v === 0 || v === 1));
     for (const f of base.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete base.pages[id]; delete base.overrides[id]; }
     return base;
   } catch { return fresh(); }
 }
-let state = load(), coordinates = [], view = state.outings.some(o => o.status === 'active') ? 'walk' : state.outings.at(-1)?.status === 'done' ? 'done' : 'home', photos = [], busy = false, setupOpen = !state.settings.home;
+let state = load(), coordinates = [], view = state.outings.some(o => o.status === 'active') ? 'walk' : state.outings.at(-1)?.status === 'done' ? 'done' : 'home', photos = [], busy = false, setupOpen = false;
 let scores = new Map(), rankModel = '', rankSequence = 0;
 let chosenStops = null, groceryChoice = null, historyQuery = '';
 let sheet = null, sheetOpener = null, setupOpener = null;
 const sheetTrail = [];
 let recentStamp = null;
+let startRequest = null, startPicker = false, startLine = '', startStation = '', locatingStart = false;
 const thumbBlobs = new Map(), thumbURLs = new Map(), allItems = new Set(), addressOpen = new Set();
 let reading = null, preparing = 0, recovering = true, recovered = false, photoStorage = true, wakeLock = null;
 let photoWork = Promise.resolve();
@@ -43,14 +47,61 @@ const stampMessages = new Map();
 function notify(message = '') { $('notice').textContent = message; }
 function save() {
   delete state.shoppingList;
-  state.flyers = state.flyers.map(storable);
+  state.flyers = state.flyers.map(savedFlyer);
   for (const f of state.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; thumbBlobs.delete(id); void photoDB('delete',id,'thumbs'); }
   try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
   catch { notify('Phone storage is full or unavailable. Keep this page open; new changes could not be saved.'); return false; }
 }
 function home() {
-  const point = coordinates.find(s => s.id === state.settings.home);
-  return point && Number.isFinite(point.lat) && Number.isFinite(point.lon) ? {stationId:point.id,lat:point.lat,lon:point.lon} : null;
+  if (state.settings.home) {
+    const point = coordinates.find(s => s.id === state.settings.home);
+    return pointValid(point) ? {stationId:point.id,lat:point.lat,lon:point.lon} : null;
+  }
+  return pointValid(state.settings.place) ? {stationId:null,...state.settings.place,here:true} : null;
+}
+const rounded = (value,digits) => Number(value.toFixed(digits));
+function askStart(type,ids=null) {
+  startRequest={type,ids}; view='home'; render();
+  const heading=$('start-heading'); heading.focus(); heading.scrollIntoView({block:'center'});
+}
+async function continueStart() {
+  if (!home() || !startRequest) return;
+  const request=startRequest; startRequest=null; startPicker=false; render();
+  if (request.type === 'sample') await sampleMailbox();
+  else if (request.type === 'merge') await retryMerge();
+  else await readPhotos(request.ids);
+}
+function useStation(lineId,stationId) {
+  const point=coordinates.find(s => s.id === stationId);
+  if (!pointValid(point)) { notify('Choose a station with available coordinates.'); return false; }
+  state.settings.home=stationId; state.settings.lineId=lineId; delete state.settings.place;
+  groceryChoice=null; save(); return true;
+}
+async function useLocation() {
+  if (locatingStart || busy) return;
+  locatingStart=true; render(); if (setupOpen) renderSetup();
+  try {
+    const position=await new Promise((resolve,reject) => navigator.geolocation ? navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:false,timeout:15000,maximumAge:600000}) : reject(new Error('Location unavailable')));
+    const place={lat:rounded(position.coords.latitude,4),lon:rounded(position.coords.longitude,4)};
+    if (!pointValid(place)) throw new Error('Invalid location');
+    state.settings.place=place; state.settings.home=null; state.settings.lineId=null;
+    groceryChoice=null; save(); notify();
+  } catch { startPicker=true; notify('Location unavailable. Pick a station instead.'); }
+  finally { locatingStart=false; render(); if (setupOpen) renderSetup(); }
+  if (home()) await continueStart();
+  else (setupOpen ? $('setup-line') : $('start-line'))?.focus({preventScroll:true});
+}
+function stationSelects(prefix,lineId,stationId) {
+  const options=(rows,selected) => rows.map(row => `<option value="${escape(row.id)}"${row.id === selected ? ' selected' : ''}>${escape(row.name)}</option>`).join('');
+  return `<label class="cw-field">Train line<select id="${prefix}-line"><option value="">Choose a line</option>${options(railLines,lineId)}</select></label><label class="cw-field">${prefix === 'setup' ? 'Home station' : 'Start station'}<select id="${prefix}-station"><option value="">Choose a station</option>${options(stationsOnLine(stations,lineId),stationId)}</select></label>`;
+}
+function stationOptions(prefix,selected=null) {
+  const line=$(prefix+'-line'), station=$(prefix+'-station');
+  station.innerHTML='<option value="">Choose a station</option>'+stationsOnLine(stations,line.value).map(s => `<option value="${escape(s.id)}">${escape(s.name)}</option>`).join('');
+  station.value=selected ?? '';
+}
+function startChooser() {
+  return startRequest ? `<section class="cw-start" aria-labelledby="start-heading"><h2 id="start-heading" tabindex="-1">Where do you start walking?</h2><p class="cw-muted">We plan the walk from here and back. Your location stays on this phone.</p><button class="cw-primary cw-wide" data-action="use-location" ${locatingStart ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-secondary cw-wide" data-action="pick-station" aria-expanded="${startPicker}" ${locatingStart ? 'disabled' : ''}>Pick a station</button>${startPicker ? stationSelects('start',startLine,startStation)+`<button class="cw-secondary cw-wide" data-action="use-station" ${locatingStart ? 'disabled' : ''}>Use this station</button>` : ''}</section>` : '';
 }
 const stationName = point => stations.find(s => s.id === point?.stationId)?.name ?? 'Station';
 const flyer = id => state.flyers.find(f => f.id === id);
@@ -84,10 +135,10 @@ async function api(path, body, signal) {
 }
 async function rank() {
   const sequence = ++rankSequence;
-  const train = state.flyers.filter(f => f.bucket !== 'keep' && Object.hasOwn(state.labels,f.id)).map(f => ({row:row(f),label:state.labels[f.id]}));
+  const train = state.flyers.filter(f => !f.sample && f.bucket !== 'keep' && Object.hasOwn(state.labels,f.id)).map(f => ({row:row(f),label:state.labels[f.id]}));
   if (train.length < 6 || new Set(train.map(t => t.label)).size < 2) { scores.clear(); rankModel = ''; render(); return; }
   try {
-    const result = await api('/api/rank',{train,predict:state.flyers.filter(f => f.bucket === 'walk').map(f => ({id:f.id,row:row(f)}))});
+    const result = await api('/api/rank',{train,predict:state.flyers.filter(f => !f.sample && f.bucket === 'walk').map(f => ({id:f.id,row:row(f)}))});
     if (sequence !== rankSequence) return;
     scores = new Map(result.scores.map(s => [s.id,s.p])); rankModel = result.model; render();
   } catch (error) { if (sequence === rankSequence) notify(error.message); }
@@ -310,8 +361,13 @@ function replaceFlyers(current,replacements) {
   }
   return [...result,...pending];
 }
+// Round every server-bound start point, including station starts, at this boundary.
+function serverHome() {
+  const h=home();
+  return h ? {stationId:h.stationId ?? "here",lat:Number(h.lat.toFixed(2)),lon:Number(h.lon.toFixed(2))} : null;
+}
 async function mergeGroups(affected = null,signal) {
-  const groups = groupPages(Object.values(state.pages),state.overrides);
+  const groups = groupPages(Object.values(state.pages).filter(p => !state.flyers.some(f => f.sample && f.pageIds.includes(p.id))),state.overrides);
   const selected = affected ? groups.filter(g => g.pageIds.some(id => affected.has(id))) : groups.filter(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
   const staged=[];
   const originalFlyers=[...state.flyers];
@@ -322,7 +378,7 @@ async function mergeGroups(affected = null,signal) {
     const oldFlyers = state.flyers.filter(f => f.pageIds.some(id => group.pageIds.includes(id)));
     const old = oldFlyers.find(f => f.pageIds.length === group.pageIds.length && f.pageIds.every(id => group.pageIds.includes(id))) ?? oldFlyers.find(f => f.pageIds.every(id => group.pageIds.includes(id)));
     // Stage each replacement before removing any old flyer, so a failed merge is retryable.
-    const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,detailed:Boolean(state.pages[id].detailed),tiles:state.pages[id].tiles})),scanDate:japanToday(),home:home()},signal);
+    const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,detailed:Boolean(state.pages[id].detailed),tiles:state.pages[id].tiles})),scanDate:japanToday(),home:serverHome()},signal);
     signal?.throwIfAborted();
     const stored = storable(result.flyer);
     if (affected) {
@@ -380,10 +436,11 @@ function stopReading(message='Reading stopped. Your unread pages are kept for la
   window.removeEventListener('beforeunload',guardUnload); void releaseWakeLock();
 }
 async function readPhotos(ids=null) {
-  if (!home()) { setupOpen = true; renderSetup(); render(); notify('Choose your home station before reading.'); return; }
+  if (!home()) { askStart('read',ids); return; }
   if (!photos.length || busy || preparing || recovering) return;
   const batch=photos.filter(p => !ids || ids.includes(p.id)); if (!batch.length) return;
-  busy=true; recovered=false; view='home'; notify();
+  busy=true; recovered=false; view='home';
+  const cleared=await clearSample(); notify(cleared ? 'Sample mailbox cleared.' : '');
   const session={batch,queue:[...batch],controller:new AbortController(),active:true,started:performance.now(),durations:[],message:''};
   reading=session;
   for (const p of batch) { p.status='waiting'; p.parts.clear(); p.error=''; p.wholeRead=Boolean(state.pages[p.id]?.detailPending); p.detailNeeded=p.wholeRead; }
@@ -458,7 +515,7 @@ function plan() {
   const h = home(); if (!h) return null;
   const selected = candidates().filter(f => f.location && stopSelected(f)).map(f => stop(f.id));
   if (groceryChoice) { const g = stop(groceryChoice); if (g) selected.push(g); }
-  const starts = [h,...neighbours(stations,stationsOnLine,h.stationId,1).map(n => coordinates.find(s => s.id === n.station.id)).filter(Boolean).map(s => ({stationId:s.id,lat:s.lat,lon:s.lon}))];
+  const starts = [h,...(h.stationId ? neighbours(stations,stationsOnLine,h.stationId,1) : []).map(n => coordinates.find(s => s.id === n.station.id)).filter(Boolean).map(s => ({stationId:s.id,lat:s.lat,lon:s.lon}))];
   const plans = starts.map((start,index) => ({...planOuting({start,end:h,stops:selected,maxMinutes:state.settings.maxMinutes}),mode:index ? 'early' : 'home'}));
   const stationPoint = p => {
     const nearest = nearestStation(stations,coordinates,p);
@@ -584,20 +641,21 @@ function thumbnail(id,large = false) {
 }
 function stack(f,interactive = true) {
   if (!f || f.bucket === 'keep') return '';
+  interactive=interactive && !f.sample;
   return `<span class="cw-stack">${f.pageIds.slice(0,3).map((id,i) => interactive ? `<button type="button" class="cw-thumb-button" style="--tile:${i}" data-action="page-sheet" data-id="${escape(id)}" aria-label="Open page ${f.pageIds.indexOf(id)+1} of ${escape(f.business?.name ?? 'flyer')}">${thumbnail(id)}</button>` : `<span class="cw-thumb-button" style="--tile:${i}">${thumbnail(id)}</span>`).join('')}</span>`;
 }
 function pageStatus(p) { return p.status === 'read' ? 'Read' : p.status === 'failed' ? 'Failed' : p.status === 'detailing' ? 'Reading prices' : p.status === 'reading' ? 'Reading' : 'Waiting'; }
-function pendingGroups() { return groupPages(Object.values(state.pages),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id)))); }
+function pendingGroups() { return groupPages(Object.values(state.pages).filter(p => !state.flyers.some(f => f.sample && f.pageIds.includes(p.id))),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id)))); }
 function addPagesCard() {
-  const disabled=busy || preparing || recovering;
-  return `<section class="cw-snap" aria-label="Photograph flyers">${state.flyers.length ? '<h2>Add more flyers</h2>' : '<h1>One good reason to go outside.</h1>'}<p class="cw-muted">Your mailbox, turned into a little walk.</p><button class="${state.flyers.length || photos.length || reading ? 'cw-secondary' : 'cw-primary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>Photograph your flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>` : ''}<p class="cw-tip">One photo per page, flat, in good light.</p>${!state.flyers.length ? '<button class="cw-text cw-narrow-only" data-action="why-open">Why open models?</button>' : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button></div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
+  const disabled=busy || preparing || recovering, welcome=!state.flyers.length && !photos.length && !reading;
+  return `<section class="cw-snap" aria-label="Photograph flyers">${welcome ? `<p class="cw-print">For the flyers (<span lang="ja">チラシ</span>) in your mailbox</p><h1>One good reason to go outside.</h1><p class="cw-muted">Photograph the flyers in your mailbox. We'll find the ones worth walking to, plan a short walk past them, and give you a stamp at each stop.</p>` : `<h2>${state.flyers.length ? 'Add more flyers' : 'Your mailbox'}</h2>`}<button class="${welcome ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>Photograph my flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button>${welcome ? `<div class="cw-sample-invite"><button class="cw-secondary cw-wide" data-action="sample" ${disabled || startRequest ? 'disabled' : ''}>Try a sample mailbox</button><p class="cw-muted">No flyers to hand? Try it with made-up shops.</p></div>` : ''}<input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div><p class="cw-muted">Add every page of every flyer, then tap Read.</p>` : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled || startRequest ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button></div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
 }
 function resumeCard() {
   const time=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
   return `<div class="cw-resume"><p>${photos.length} pages waiting from ${escape(time)}</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button class="cw-text" data-action="discard">Discard</button></div></div>`;
 }
 function readingCard() {
-  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p id="reading-message" class="cw-meta">${escape(reading.message)}</p>${reading.batch.filter(p => p.status === 'failed').map(p => `<div class="cw-actions"><p class="cw-meta">${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}">Retry page ${reading.batch.indexOf(p)+1}</button></div>`).join('')}${!reading.active && photos.length ? '<div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button data-action="discard">Discard</button></div>' : ''}</section>`;
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p class="cw-muted">Keep this screen open. Cards appear as each flyer is read.</p><p id="reading-message" class="cw-meta">${escape(reading.message)}</p>${reading.batch.filter(p => p.status === 'failed').map(p => `<div class="cw-actions"><p class="cw-meta">${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}">Retry page ${reading.batch.indexOf(p)+1}</button></div>`).join('')}${!reading.active && photos.length ? '<div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button data-action="discard">Discard</button></div>' : ''}</section>`;
 }
 function updateReading() {
   if (!reading || !$('reading-progress')) return;
@@ -615,7 +673,7 @@ function locateControl(f) {
 }
 function stopRow(f,previous=home()) {
   const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : 'No location yet';
-  return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me" title="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
+  return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
 }
 function routeSummary(p) { const e=estimates(p.meters,state.settings.weightKg); return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps`; }
 function stationHTML(point) {
@@ -633,8 +691,8 @@ function routeHTML(p,list) {
   const onRoute=new Set(p.stops.map(s => s.id)), others=list.filter(f => !onRoute.has(f.id));
   let previous=p.start;
   const rows=p.stops.map((point,i) => { const content=point.flyer ? stopRow(point.flyer,previous) : groceryRow(point); previous=point; return `<li class="cw-route-stop"><span class="cw-dot" aria-hidden="true">${i+1}</span>${content}</li>`; }).join('');
-  const start=p.start.stationId === state.settings.home ? 'From '+stationHTML(p.start) : `Take the train to ${escape(stationName(p.start))}, then walk${stations.find(s => s.id === p.start.stationId)?.ja ? ` <span lang="ja">${escape(stations.find(s => s.id === p.start.stationId).ja)}</span>` : ''}`;
-  const end=(p.end.stationId === state.settings.home ? 'Home · ' : 'Train home from ')+stationHTML(p.end);
+  const start=p.start.here ? 'From where you are' : p.start.stationId === state.settings.home ? 'From '+stationHTML(p.start) : `Take the train to ${escape(stationName(p.start))}, then walk${stations.find(s => s.id === p.start.stationId)?.ja ? ` <span lang="ja">${escape(stations.find(s => s.id === p.start.stationId).ja)}</span>` : ''}`;
+  const end=p.end.here ? 'Back to where you started' : (p.end.stationId === state.settings.home ? 'Home · ' : 'Train home from ')+stationHTML(p.end);
   return `<ol class="cw-route cw-stop-list"><li class="cw-route-station"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">${start}</div></li>${rows}<li class="cw-route-station cw-route-end"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">${end}</div></li>${others.length ? `<li class="cw-off-route-label cw-print">Not on today's route</li>${others.map(f => `<li class="cw-off-route-row">${stopRow(f)}</li>`).join('')}` : ''}${p.dropped?.length ? `<li class="cw-off-route-row">${droppedHTML(p)}</li>` : ''}</ol>`;
 }
 function walkSummary(p) {
@@ -645,24 +703,24 @@ function walkSummary(p) {
 }
 function planWithoutGrocery() { const choice=groceryChoice; groceryChoice=null; try { return plan(); } finally { groceryChoice=choice; } }
 function collapsedRows() {
-  const slot=(id,label,one,many) => { const n=state.flyers.filter(f => f.bucket === id).length; return n ? `<button class="cw-slot" data-action="bucket-sheet" data-id="${id}"><em>${label}</em><b>${n}</b><span>${plural(n,one,many)}</span></button>` : ''; };
+  const slot=(id,label,one,many) => { const n=state.flyers.filter(f => f.bucket === id).length; return n ? `<button class="cw-slot" data-action="bucket-sheet" data-id="${id}"><em>${label}</em><b>${n}</b><span>${plural(n,one,many)}</span>${state.flyers.some(f => f.sample && f.bucket === id && f.bucket !== "keep") ? `<div class="cw-tray-thumbs">${state.flyers.filter(f => f.sample && f.bucket === id).map(f => stack(f,false)).join("")}</div>` : ""}</button>` : ''; };
   const slots=slot('home','Home','deal to use at home','deals to use at home')+slot('toss','Recycle','flyer to recycle','flyers to recycle')+slot('keep','Keep','letter, not an ad','letters, not ads');
-  return slots ? `<div class="cw-tray" aria-label="The rest of your mailbox">${slots}</div>` : '';
+  return slots ? `<p class="cw-print">The rest of your mailbox</p><div class="cw-tray" aria-label="The rest of your mailbox">${slots}</div>` : '';
 }
 function renderHome() {
   const list=candidates(), p=plan(), e=p ? estimates(p.meters,state.settings.weightKg) : null;
   const number=String(state.outings.filter(o => o.status === 'done').length+1).padStart(4,'0');
-  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h2 class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'Nothing worth a walk this time'}</h2>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${!list.length ? `<p class="cw-muted">${state.flyers.some(f => f.bucket === 'walk') ? 'The walk offers are expired, closed, or marked Not for me.' : 'These pages have no in-person deals to walk to.'}</p>` : ''}${routeHTML(p,list)}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}${collapsedRows()}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
-  // Phones get one column; wide screens show the stamp card and the why-open stub beside the ticket.
+  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h2 class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'Nothing worth a walk this time'}</h2>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${p?.stops.length ? '<p class="cw-muted cw-ticket-hint">Tap ✕ on any place you don\'t want. Start when you\'re ready.</p>' : ''}${!list.length ? `<p class="cw-muted">${state.flyers.some(f => f.bucket === 'walk') ? 'The walk offers are expired, closed, or marked Not for me.' : 'These pages have no in-person deals to walk to.'}</p>` : ''}${routeHTML(p,list)}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}${collapsedRows()}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
   const snapFirst=!(state.flyers.length && !photos.length && !reading);
-  const wide=`<div class="cw-wide-only">${stampPreview()}<section class="cw-side-why" aria-labelledby="side-why"><p class="cw-print" id="side-why">Why open models? · <span lang="ja">オープンだから、できること</span></p>${whyStub()}</section></div>`;
-  return `<div class="cw-home"><div class="cw-home-main">${snapFirst ? addPagesCard()+(state.flyers.length || photos.length || reading ? answer : firstRunHTML()) : answer}</div><aside class="cw-home-side" aria-label="Stamps and why open models">${snapFirst ? '' : addPagesCard()}${wide}</aside></div>`;
+  const stamps=stampPreview(), side=(snapFirst ? "" : addPagesCard())+(stamps ? `<div class="cw-wide-only">${stamps}</div>` : "");
+  const sample=state.flyers.some(f => f.sample) ? '<section class="cw-sample-banner" aria-label="Sample mailbox"><p class="cw-print">Sample mailbox</p><p class="cw-muted">Made-up shops placed near your start.</p><button class="cw-text" data-action="clear-sample">Clear sample</button></section>' : "";
+  return `${sample}<div class="cw-home${side ? "" : " cw-home-single"}"><div class="cw-home-main">${startChooser()}${snapFirst ? addPagesCard()+(state.flyers.length || photos.length || reading ? answer : firstRunHTML()) : answer}</div>${side ? `<aside class="cw-home-side" aria-label="Flyers and stamps">${side}</aside>` : ""}</div>`;
 }
 // Before the first photo: three steps and a sample ticket (example shops, no real station).
 function firstRunHTML() {
   const step=(n,title,text) => `<li><span class="n">${n}</span><div><strong>${title}</strong><p>${text}</p></div></li>`;
   const row=(n,band,print,kind,ja,label,price,was,meta) => `<li class="cw-route-stop"><span class="cw-dot" aria-hidden="true">${n}</span><div class="cw-ex-row"><span class="cw-mini" style="--band:${band}" aria-hidden="true" lang="ja">${print}</span><div class="cw-ex-text"><strong>${kind}<span class="cw-ja" lang="ja">${ja}</span></strong><span class="cw-sticker">${label} <b>${price}</b> <s><span class="cw-sr">was </span>${was}</s></span><span class="cw-meta">${meta}</span></div></div></li>`;
-  return `<section class="cw-first-run" aria-labelledby="how-heading"><h2 id="how-heading">How it works</h2><ol class="cw-reasons cw-steps">${step(1,'Photograph the pile','One photo per page. Gemma 4 reads each flyer and sorts it: worth a walk, use at home, keep, or recycle.')}${step(2,'Get a ticket for today','The places worth visiting become one short walk from your station, each with its best printed price.')}${step(3,'Walk and collect stamps',"Tap I'm here at each stop. One GPS reading, checked on your phone, gives you an ink stamp.")}</ol><figure class="cw-example"><figcaption class="cw-print">Example · sample shops</figcaption><div class="cw-ticket cw-example-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today</span><span>No. 0001</span></div><p class="cw-ticket-title">3 places worth the walk</p><div class="cw-ticket-meta">2.0 km · 25 min · ~2,850 steps</div></div><ol class="cw-route"><li class="cw-route-station"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">From your station</div></li>${row(1,'#1d6fb8','体験0円','Pilates studio','さくらピラティス','Trial','¥1,000','¥3,300','6 min · until 30 Oct')}${row(2,'#13824f','半額','Dry cleaner','ほしクリーニング','Shirts','¥98','¥297','9 min · until 31 Oct')}${row(3,'#d40b0b','特売','Supermarket','あおぞら市場','Eggs','¥158','¥198','4 min · today only')}<li class="cw-route-station cw-route-end"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">Home · your station</div></li></ol></div></figure></section>`;
+  return `<section class="cw-first-run" aria-labelledby="how-heading"><h2 id="how-heading">How it works</h2><ol class="cw-steps">${step(1,'Photograph the pile','One photo per page. Gemma 4 reads each flyer and sorts it: worth a walk, use at home, keep, or recycle.')}${step(2,'Get a ticket for today','The places worth visiting become one short walk from your start, each with its best printed price.')}${step(3,'Walk and collect stamps',"Tap I'm here at each stop. One GPS reading, checked on your phone, gives you an ink stamp.")}</ol><figure class="cw-example"><figcaption class="cw-print">Example · sample shops</figcaption><div class="cw-ticket cw-example-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today</span><span>No. 0001</span></div><p class="cw-ticket-title">3 places worth the walk</p><div class="cw-ticket-meta">2.0 km · 25 min · ~2,850 steps</div></div><ol class="cw-route"><li class="cw-route-station"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">From your station</div></li>${row(1,'#1d6fb8','体験0円','Pilates studio','さくらピラティス','Trial','¥1,000','¥3,300','6 min · until 30 Oct')}${row(2,'#13824f','半額','Dry cleaner','ほしクリーニング','Shirts','¥98','¥297','9 min · until 31 Oct')}${row(3,'#d40b0b','特売','Supermarket','あおぞら市場','Eggs','¥158','¥198','4 min · today only')}<li class="cw-route-station cw-route-end"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">Home · your station</div></li></ol></div></figure></section>`;
 }
 function stampPreview() {
   const stamps=state.outings.flatMap(o => o.stamps);
@@ -689,13 +747,13 @@ function entryHTML(f,{entry,index,kind}) {
 function flyerSheet(f) {
   if (!f || f.bucket === 'keep') return '<h2 id="sheet-heading">Letter to keep</h2><p>Nothing from these was saved.</p>';
   const items=priceItems(f), count=Math.max(f.flyer_count ?? 1,...f.pageIds.map(id => state.pages[id]?.tiles?.[0]?.flyer_count ?? 1));
-  return `<div class="cw-page-strip">${f.pageIds.map((id,i) => `<button class="cw-page-tile" data-action="page-sheet" data-id="${escape(id)}" aria-label="Open page ${i+1}">${thumbnail(id)}</button>`).join('')}</div><h2 id="sheet-heading">${flyerTitle(f)}</h2>${count>1 ? `<p class="cw-warning">This photo shows ${escape(count)} flyers. One photo per flyer gives a better reading.</p>` : ''}<section class="cw-how"><h3>How to use</h3>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>${currentOffers(f).slice(0,5).map(e => entryHTML(f,e)).join('')}${(allItems.has(f.id) ? items : items.slice(0,5)).map(e => entryHTML(f,e)).join('')}${items.length>5 ? `<button data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}">${allItems.has(f.id) ? 'Show top 5' : 'Show all'}</button>` : ''}<button class="cw-wide" data-action="not-for-me" data-id="${escape(f.id)}">Not for me</button>`;
+  return `<div class="cw-page-strip">${f.pageIds.map((id,i) => `<${f.sample ? "span" : "button"} class="cw-page-tile"${f.sample ? "" : ` data-action="page-sheet" data-id="${escape(id)}" aria-label="Open page ${i+1}"`}>${thumbnail(id)}</${f.sample ? "span" : "button"}>`).join('')}</div><h2 id="sheet-heading">${flyerTitle(f)}</h2>${count>1 ? `<p class="cw-warning">This photo shows ${escape(count)} flyers. One photo per flyer gives a better reading.</p>` : ''}<section class="cw-how"><h3>How to use</h3>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>${currentOffers(f).slice(0,5).map(e => entryHTML(f,e)).join('')}${(allItems.has(f.id) ? items : items.slice(0,5)).map(e => entryHTML(f,e)).join('')}${items.length>5 ? `<button data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}">${allItems.has(f.id) ? 'Show top 5' : 'Show all'}</button>` : ''}<button class="cw-wide" data-action="not-for-me" data-id="${escape(f.id)}">Not for me</button>`;
 }
 function pageSheet(id) {
   const owner=state.flyers.find(f => f.bucket !== 'keep' && f.pageIds.includes(id)), page=state.pages[id], readingText=page?.tiles?.find(Boolean)?.summary_en;
   if (!owner || !page) return '<h2 id="sheet-heading">Page unavailable</h2>';
   const option=(value,f,label,checked) => `<label class="cw-group-option"><input type="radio" name="belongs" value="${escape(value)}" ${checked ? 'checked' : ''}>${f ? stack(f,false) : '<span class="cw-placeholder cw-own-page" aria-hidden="true">No preview</span>'}<span>${f && value !== owner.id ? flyerTitle(f) : modelText(label)}</span></label>`;
-  return `<h2 id="sheet-heading">This page</h2>${thumbnail(id,true)}<p class="cw-page-reading cw-meta">${modelText(shortText(readingText || 'No one-line reading available',150))}</p><form data-page-move="${escape(id)}"><fieldset><legend>This page belongs to:</legend>${option(owner.id,owner,'This flyer',true)}${state.flyers.filter(f => f.id !== owner.id && f.bucket !== 'keep').map(f => option(f.id,f,f.business?.name ?? 'Other flyer',false)).join('')}${option('split',null,'A flyer of its own',false)}</fieldset><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Apply</button></form>`;
+  return `<h2 id="sheet-heading">This page</h2>${thumbnail(id,true)}<p class="cw-page-reading cw-meta">${modelText(shortText(readingText || 'No one-line reading available',150))}</p><form data-page-move="${escape(id)}"><fieldset><legend>This page belongs to:</legend>${option(owner.id,owner,'This flyer',true)}${state.flyers.filter(f => !f.sample && f.id !== owner.id && f.bucket !== 'keep').map(f => option(f.id,f,f.business?.name ?? 'Other flyer',false)).join('')}${option('split',null,'A flyer of its own',false)}</fieldset><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Apply</button></form>`;
 }
 function bucketSheet(bucket) {
   const list=state.flyers.filter(f => f.bucket === bucket);
@@ -707,15 +765,6 @@ function stampsContent() {
   const month=new Intl.DateTimeFormat('en-GB',{month:'long',timeZone:'Asia/Tokyo'}).format(new Date());
   const stats=[done.length ? `<div><b>${done.length}</b><span>${plural(done.length,'walk','walks')}</span></div>` : '',meters ? `<div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>~${e.steps.toLocaleString('en-US')} steps</span></div>` : '',yen ? `<div><b class="cw-money">${money(yen)}</b><span>saved, printed on flyers</span></div>` : ''].join('');
   return `<h2 id="sheet-heading">Your stamps</h2><p class="cw-print">Stamp rally · ${month}</p><div class="cw-rally-head"><h3>${stamps.length} ${plural(stamps.length,'place','places')} stamped</h3><p>Each kind of place has its own ink</p></div><div class="cw-rally">${stamps.map(stampCard).join('')}${emptyStamp('Next stamp')+emptyStamp('',true)+emptyStamp('',true)}</div>${stats ? `<div class="cw-tally">${stats}</div>` : ''}${stamps.some(s => s.kind === 'self') || meters ? '<p class="cw-small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>' : ''}${!stamps.length ? '<p class="cw-muted">Your first walk starts with a flyer.</p>' : ''}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
-}
-function whySheet() { return `<h2 id="sheet-heading">Why open models?</h2><p class="cw-print" lang="ja">オープンだから、できること</p>${whyStub()}`; }
-function whyStub() {
-  return `<div class="cw-stub"><h3>Your mail is read by models anyone can run</h3><ol class="cw-reasons">
-    <li><span class="n">1</span><div><strong>You choose where your mail is read.</strong> <p>Here, photos go to Gemma 4 on DigitalOcean for a few seconds. With <em>LOCAL_LLM=1</em> the same open model family reads them on your own laptop, and they never leave it. A closed API has no run-it-at-home option.</p></div></li>
-    <li><span class="n">2</span><div><strong>We could check it on real flyers.</strong> <p>With open weights we tested both sizes on the same flyers: the small model got <em>0/8</em> prices from a whole page, the large one <em>4/4</em> from a tile. That is why price lists are read tile by tile.</p></div></li>
-    <li><span class="n">3</span><div><strong>It costs about half a yen a page.</strong> <p>Reading one page costs roughly <em>¥0.4</em> on serverless inference. A whole mailbox is a few yen, with no account and no subscription.</p></div></li>
-    <li><span class="n">4</span><div><strong>Nothing closed is load-bearing.</strong> <p>Prior Labs runs the TabPFN ranking, SerpApi finds places with no printed address, and Sentry traces model calls. Take any key away and the app still works: simple ranking rules, Japan's free GSI geocoder, no tracing.</p></div></li>
-  </ol><p class="cw-small-note">Open at the core: Gemma 4 and Mastra, both Apache 2.0. Photos are read and deleted; nothing is stored on a server.</p></div>`;
 }
 function historyResults() {
   const query=historyQuery.toLowerCase(), list=[...state.flyers].reverse().filter(f => f.bucket !== 'keep' && [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
@@ -731,27 +780,28 @@ function walkScreen(o) {
   const meters=p ? distanceMeters(previous,p) : 0, minutes=walkMinutes(meters);
   const remaining=o.stopIds.slice(cursor).map(stop).filter(Boolean);
   const kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : p?.name ?? 'Stop unavailable')), name=f?.business?.name ?? p?.name;
-  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board" role="status"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div></div><div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}<a class="cw-link" href="${escape(mapsLink(previous,remaining,o.end))}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a></div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-arrival">${stampCard(stamped)}</div>${f ? usedChips(f,o) : ''}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? `<p class="cw-warning" role="status">${escape(message.text)}</p><button class="cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
+  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board" role="status"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div></div>${!stamped ? `<p class="cw-muted">${f?.sample ? "This place is made up. Tap I'm here, then Stamp anyway to try a stamp." : "Walk there, then tap I'm here."}</p>` : ""}<div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}<a class="cw-link" href="${escape(mapsLink(previous,remaining,o.end))}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a></div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-arrival">${stampCard(stamped)}</div>${f ? usedChips(f,o) : ''}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? `<p class="cw-warning" role="status">${escape(message.text)}</p><button class="cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
 }
 function usedChips(f,o) {
   // Printed savings first; otherwise let people still mark the offer they used (it counts as used, no printed value).
   const printed=[...currentOffers(f),...priceItems(f)].filter(({entry}) => printedValue(entry) !== null), entries=(printed.length ? printed : currentOffers(f)).slice(0,6);
   if (!entries.length) return '';
-  return `<section class="cw-used"><h2>Did you use it?</h2><div class="cw-chips">${entries.map(({entry,index,kind}) => { const used=o.used.some(u => u.flyerId === f.id && u.kind === kind && u.index === index); return `<button data-action="used" data-id="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(o.id)}" aria-pressed="${used}">${used ? '✓ ' : ''}${modelText(entry.text_en ?? entry.name_en ?? 'Printed offer')}${printedValue(entry) !== null ? ' · '+money(printedValue(entry)) : ''}</button>`; }).join('') || '<p class="cw-meta">No printed saving to count.</p>'}</div></section>`;
+  return `<section class="cw-used"><h2>Did you use it?</h2><p class="cw-muted">Tap what you used. Only printed prices count as savings.</p><div class="cw-chips">${entries.map(({entry,index,kind}) => { const used=o.used.some(u => u.flyerId === f.id && u.kind === kind && u.index === index); return `<button data-action="used" data-id="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(o.id)}" aria-pressed="${used}">${used ? '✓ ' : ''}${modelText(entry.text_en ?? entry.name_en ?? 'Printed offer')}${printedValue(entry) !== null ? ' · '+money(printedValue(entry)) : ''}</button>`; }).join('') || '<p class="cw-meta">No printed saving to count.</p>'}</div></section>`;
 }
 function doneScreen(o=state.outings.at(-1)) {
   if (!o) return renderHome();
   return `<section class="cw-done"><h1>Walk done</h1><p class="cw-done-summary">${routeSummary(o)}<strong>${money(savings(usedEntries([o])).yen)} saved <small>printed on the flyers</small></strong></p><div class="cw-rally">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">Your stamps</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button></section>`;
 }
-function focusKey(el) { if (el?.dataset.action === 'why-open') return {action:'why-open',footer:Boolean(el.closest('.cw-footer'))}; return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
+function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
 function restoreFocus(key) {
   const root=$('setup').open ? $('setup') : $('sheet').open ? $('sheet') : document;
-  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.index === key?.index && (key?.action !== 'why-open' || Boolean(el.closest('.cw-footer')) === key.footer));
+  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.index === key?.index);
   if (target && !target.disabled) target.focus({preventScroll:true}); else focusHeading();
 }
 function render() {
   const focus=focusKey(document.activeElement), focusedInSheet=$('sheet').contains(document.activeElement), locate=document.activeElement?.closest('[data-locate]');
   const address=locate ? {id:locate.dataset.locate,value:locate.querySelector('input').value} : null;
+  if ($('start-line')) { startLine=$('start-line').value; startStation=$('start-station').value; }
   revokeThumbs();
   $('panel').setAttribute('aria-label',view === 'home' ? 'Mailbox' : view === 'walk' ? 'Walk' : 'Walk done');
   $('panel').innerHTML=view === 'walk' ? walkScreen(activeOuting()) : view === 'done' ? doneScreen() : renderHome();
@@ -769,7 +819,7 @@ function openSheet(type,id,opener=document.activeElement) {
   sheet={type,id}; render(); if (!$('sheet').open) $('sheet').showModal(); $('sheet').scrollTop=0; focusHeading();
 }
 function renderSheet() {
-  const body=sheet.type === 'flyer' ? flyerSheet(flyer(sheet.id)) : sheet.type === 'page' ? pageSheet(sheet.id) : sheet.type === 'bucket' ? bucketSheet(sheet.id) : sheet.type === 'past' ? pastWalkSheet(sheet.id) : sheet.type === 'why' ? whySheet() : stampsContent();
+  const body=sheet.type === 'flyer' ? flyerSheet(flyer(sheet.id)) : sheet.type === 'page' ? pageSheet(sheet.id) : sheet.type === 'bucket' ? bucketSheet(sheet.id) : sheet.type === 'past' ? pastWalkSheet(sheet.id) : stampsContent();
   $('sheet').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-sheet" aria-label="Close sheet">✕</button></div>${body}`;
 }
 function pastWalkSheet(id) { const o=state.outings.find(o => o.id === id); return o ? `<h2 id="sheet-heading">Walk · ${formatDate(o.createdAt)}</h2><p class="cw-print">${totals(o)} · ${money(savings(usedEntries([o])).yen)} saved, printed</p><div class="cw-rally">${o.stamps.map(stampCard).join('')}</div>` : '<h2 id="sheet-heading">Walk unavailable</h2>'; }
@@ -782,20 +832,84 @@ $('sheet').addEventListener('cancel',event => { if (sheetTrail.length) { event.p
 $('sheet').addEventListener('close',() => { sheet=null; sheetTrail.length=0; render(); restoreFocus(sheetOpener); sheetOpener=null; });
 function renderSetup() {
   if (!setupOpen) { if ($('setup').open) $('setup').close(); return; }
-  $('setup').innerHTML=`<div class="cw-sheet-top">${state.settings.home ? '<button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button>' : ''}</div><h2 id="setup-heading">Your walk starts here.</h2><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option value="${escape(l.id)}">${escape(l.name)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
-  $('setup-line').value=state.settings.lineId ?? ''; stationOptions(state.settings.home);
-  $('setup-line').addEventListener('change',() => stationOptions(null));
+  $('setup').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button></div><h2 id="setup-heading">Your walk starts here.</h2><p class="cw-muted">${state.settings.home ? 'Starting from '+stationHTML(home() ?? {stationId:state.settings.home}) : state.settings.place ? 'Starting from your location' : 'Choose where you start walking.'}</p><button class="cw-secondary cw-wide" data-action="use-location" ${locatingStart || busy ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><form id="setup-form">${stationSelects('setup',state.settings.lineId,state.settings.home)}<fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
   $('setup-form').addEventListener('submit',event => {
-    event.preventDefault(); const stationId=$('setup-station').value, point=coordinates.find(s => s.id === stationId);
-    if (!pointValid(point)) { notify('Station coordinates are unavailable. Reload to try again.'); return; }
-    state.settings={lineId:$('setup-line').value,home:stationId,maxMinutes:Number(new FormData(event.target).get('minutes')),weightKg:Number($('setup-weight').value)};
-    save(); groceryChoice=null; setupOpen=false; renderSetup(); notify(); render(); void rank();
+    event.preventDefault();
+    if ($('setup-station').value) { if (!useStation($('setup-line').value,$('setup-station').value)) return; }
+    else if ($('setup-line').value) { notify('Choose a station on this line.'); return; }
+    state.settings.maxMinutes=Number(new FormData(event.target).get('minutes'));
+    state.settings.weightKg=Number($('setup-weight').value);
+    save(); groceryChoice=null; setupOpen=false; renderSetup(); notify(); render();
+    safely(async () => { await continueStart(); await rank(); });
   });
   if (!$('setup').open) { setupOpener=focusKey(document.activeElement); $('setup').showModal(); }
 }
-function stationOptions(selected) { $('setup-station').innerHTML='<option value="">Choose a station</option>'+stationsOnLine(stations,$('setup-line').value).map(s => `<option value="${escape(s.id)}">${escape(s.name)}</option>`).join(''); $('setup-station').value=selected ?? ''; }
-$('setup').addEventListener('cancel',event => { if (!state.settings.home) event.preventDefault(); });
 $('setup').addEventListener('close',() => { setupOpen=false; restoreFocus(setupOpener); setupOpener=null; });
+async function retryMerge() {
+  if (busy) return;
+  busy=true; render(); try { await mergeGroups(); } finally { busy=false; render(); }
+}
+function sampleOffset(h,east,north) {
+  const rad=Math.PI/180, arc=Math.hypot(east,north)/6371000, bearing=Math.atan2(east,north), lat=h.lat*rad;
+  const next=Math.asin(Math.max(-1,Math.min(1,Math.sin(lat)*Math.cos(arc)+Math.cos(lat)*Math.sin(arc)*Math.cos(bearing))));
+  const lon=h.lon*rad+Math.atan2(Math.sin(bearing)*Math.sin(arc)*Math.cos(lat),Math.cos(arc)-Math.sin(lat)*Math.sin(next));
+  return {lat:next/rad,lon:((lon/rad+540)%360)-180,source:'sample'};
+}
+function sampleFlyers(h) {
+  const today=japanToday(), date=days => { const d=new Date(today+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()+days); return d.toISOString().slice(0,10); };
+  const offer=(text,regular,price,days,kind='discount') => ({kind,text_en:text,regular_yen:regular,offer_yen:price,deadline_text:date(days)});
+  const rows=[
+    ['walk','fitness','Pilates studio','さくらピラティス',[offer('Trial',3300,1000,18)],18,-120,240,['0120-000-101']],
+    ['walk','cleaning','Dry cleaner','ほしクリーニング',[offer('Shirts',297,98,19)],19,-190,320,[]],
+    ['walk','supermarket','Supermarket','あおぞら市場',[offer('Eggs',198,158,0,'sale')],0,-250,410,[]],
+    ['walk','lesson','Aikido dojo','わかば合気道場',[offer('Free trial',3300,0,49,'free_trial')],49,-320,530,[]],
+    ['home','food_delivery','Sushi delivery','ほし寿司',[{kind:'coupon',text_en:'¥500 off orders over ¥3,000',discount_yen:500,deadline_text:date(19)}],19,-120,240,['0120-000-105']],
+    ['toss','buying_service','Gold buyer','きらり買取',[],null,-190,320,[]],
+    ['toss','junk_removal','Junk removal','まるごと回収',[],null,-250,410,[]]
+  ];
+  const flyers=rows.map(([bucket,category,kind,name,offers,days,east,north,phones],i) => ({id:'sample-f'+(i+1),pageIds:['sample-p'+(i+1)],sample:true,bucket,category,business:{name,kind},offers,items:[],phones,websites:[],comes_to_you:bucket === 'toss',delivery:bucket === 'home',deadline:days === null ? null : date(days),location:sampleOffset(h,east,north)}));
+  flyers[2].items=[['Eggs','卵 Lサイズ 10個',158,198],['Chicken thigh','国産若鶏もも肉 100g',98,128],['Komatsuna','小松菜 1束',88,128]].map(([name_en,name_ja,price_yen,regular_yen]) => ({name_en,name_ja,price_yen,regular_yen,conditions:[]}));
+  return [...flyers,{id:'sample-f8',pageIds:['sample-p8'],sample:true,bucket:'keep',category:'official_or_personal'}];
+}
+async function drawSampleThumb(f,index) {
+  const canvas=document.createElement('canvas'); canvas.width=336; canvas.height=480;
+  const ctx=canvas.getContext('2d'), band=['#1d6fb8','#13824f','#d40b0b','#3d3a92','#0e6f82','#725b37','#455c50'][index];
+  ctx.fillStyle='#fffdf7'; ctx.fillRect(0,0,336,480);
+  ctx.fillStyle=band; ctx.fillRect(0,0,336,88);
+  ctx.fillStyle='#fffdf7'; ctx.font='22px "Dela Gothic One", sans-serif'; ctx.fillText(f.business.name,16,54,304);
+  ctx.fillStyle=band; ctx.font='48px "Dela Gothic One", sans-serif';
+  const price=f.offers[0]?.offer_yen ?? f.offers[0]?.discount_yen;
+  ctx.fillText(price === undefined ? 'ご案内' : money(price),22,198,292);
+  ctx.fillStyle='#c9c2b2'; for (let y=258;y<=398;y+=28) ctx.fillRect(24,y,y === 398 ? 190 : 288,3);
+  ctx.fillStyle='#18222c'; ctx.font='16px sans-serif'; ctx.fillText('Sample · made-up shop',24,450);
+  const blob=await new Promise(resolve => canvas.toBlob(resolve,'image/jpeg',.7));
+  canvas.width=canvas.height=0;
+  if (!blob) throw new Error('Could not draw the sample flyer.');
+  thumbBlobs.set(f.pageIds[0],blob); await photoDB('put',{pageId:f.pageIds[0],blob},'thumbs');
+}
+async function sampleMailbox() {
+  if (busy || preparing || recovering || state.flyers.some(f => f.sample)) return;
+  const h=home(); if (!h) { askStart('sample'); return; }
+  busy=true; render();
+  try {
+    await document.fonts.ready;
+    const flyers=sampleFlyers(h);
+    state.flyers.push(...flyers); save();
+    for (const [index,f] of flyers.entries()) if (f.bucket !== 'keep') await drawSampleThumb(f,index);
+    chosenStops=null; groceryChoice=null; view='home'; notify();
+  } finally { busy=false; render(); focusHeading(); }
+}
+async function clearSample() {
+  const samples=state.flyers.filter(f => f.sample); if (!samples.length) return false;
+  const ids=new Set(samples.map(f => f.id));
+  state.outings=state.outings.filter(o => !o.stopIds.length || !o.stopIds.every(id => ids.has(id)));
+  state.flyers=state.flyers.filter(f => !f.sample);
+  for (const f of samples) {
+    delete state.labels[f.id]; scores.delete(f.id); allItems.delete(f.id); addressOpen.delete(f.id);
+    for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; thumbBlobs.delete(id); await photoDB('delete',id,'thumbs'); }
+  }
+  chosenStops=null; groceryChoice=null; save(); return true;
+}
 function newOuting(p) {
   state.outings=state.outings.filter(o => o.status !== 'planned');
   state.outings.push({id:uid('o-'),createdAt:now(),start:p.start,end:p.end,stopIds:p.stops.map(s => s.id),meters:p.meters,minutes:p.minutes,mode:p.mode,status:'active',cursor:0,skipped:[],stamps:[],used:[]});
@@ -815,19 +929,23 @@ async function action(button) {
     case 'rotate': if (!busy && !preparing) { const p=photos.find(p => p.id === id); if (!p) break; preparing++; p.rotation=(p.rotation+90)%360; render(); try { await preparePhoto(p); } finally { preparing--; render(); } } break;
     case 'remove-photo': if (!busy && !preparing) { const p=photos.find(p => p.id === id); if (!p) break; URL.revokeObjectURL(p.url); photos=photos.filter(p => p.id !== id); thumbBlobs.delete(id); render(); await Promise.all([photoDB('delete',id),photoDB('delete',id,'thumbs')]); } break;
     case 'read': case 'resume': await readPhotos(); break;
+    case 'sample': if (!home()) askStart('sample'); else await sampleMailbox(); break;
+    case 'clear-sample': if (!busy) { await clearSample(); view='home'; notify(); render(); focusHeading(); } break;
+    case 'use-location': await useLocation(); break;
+    case 'pick-station': startPicker=true; render(); $('start-line')?.focus(); break;
+    case 'use-station': if (useStation($('start-line').value,$('start-station').value)) { notify(); await continueStart(); } break;
     case 'stop-reading': stopReading(); break;
     case 'retry-page': { const p=photos.find(p => p.id === id); if (!p || p.status !== 'failed') break; if (reading?.active && !reading.controller.signal.aborted) { p.status='waiting'; p.error=''; p.parts.clear(); reading.queue.push(p); updateReading(); } else await readPhotos([id]); break; }
     case 'discard': if (!busy && !preparing) { for (const p of photos) { await photoDB('delete',p.id); if (!state.pages[p.id]) { thumbBlobs.delete(p.id); await photoDB('delete',p.id,'thumbs'); } URL.revokeObjectURL(p.url); } photos=[]; recovered=false; reading=null; render(); } break;
     case 'flyer-sheet': openSheet('flyer',id,button); break;
     case 'page-sheet': openSheet('page',id,button); break;
-    case 'why-open': openSheet('why',undefined,button); break;
     case 'bucket-sheet': openSheet('bucket',id,button); break;
     case 'close-sheet': closeSheet(); break;
     case 'close-setup': setupOpen=false; renderSetup(); break;
     case 'not-for-me': if (flyer(id) && flyer(id).bucket !== 'keep') { state.labels[id]=0; save(); if ($('sheet').open) closeSheet(); render(); await rank(); } break;
     case 'all-items': if (allItems.has(id)) allItems.delete(id); else allItems.add(id); render(); break;
     case 'add-address': addressOpen.add(id); render(); [...document.querySelectorAll('[data-locate]')].find(f => f.dataset.locate === id)?.querySelector('input').focus(); break;
-    case 'merge-retry': if (!busy) { busy=true; render(); try { await mergeGroups(); } finally { busy=false; render(); } } break;
+    case 'merge-retry': if (!home()) askStart('merge'); else await retryMerge(); break;
     case 'extend-walk': { const minutes=Number(button.dataset.minutes); if (![60,90].includes(minutes)) break; state.settings.maxMinutes=minutes; save(); render(); break; }
     case 'grocery': groceryChoice=groceryChoice ? null : id; render(); break;
     case 'start': { if (activeOuting()) { view='walk'; render(); break; } const p=plan(); if (p?.stops.length) { newOuting(p); notify(); } break; }
@@ -845,14 +963,14 @@ function safely(task) { Promise.resolve().then(task).catch(error => { notify(err
 document.addEventListener('click',event => { const button=event.target.closest('button'); if (button && !button.disabled && button.dataset.action) safely(() => action(button)); });
 $('settings-button').addEventListener('click',() => { setupOpen=true; renderSetup(); });
 $('stamps-button').addEventListener('click',() => openSheet('stamps',undefined,$('stamps-button')));
-document.addEventListener('change',event => { const input=event.target; if (['photos-input','camera-input'].includes(input.id)) { const files=[...input.files].filter(f => f.type.startsWith('image/')); input.value=''; photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork); } });
+document.addEventListener('change',event => { const input=event.target; if (input.id === 'start-line') { startLine=input.value; startStation=''; stationOptions('start'); } else if (input.id === 'start-station') startStation=input.value; else if (input.id === 'setup-line') stationOptions('setup'); if (['photos-input','camera-input'].includes(input.id)) { const files=[...input.files].filter(f => f.type.startsWith('image/')); input.value=''; photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork); } });
 document.addEventListener('input',event => { if (event.target.id === 'history-search') { const start=event.target.selectionStart, end=event.target.selectionEnd; historyQuery=event.target.value; render(); $('history-search').focus({preventScroll:true}); $('history-search').setSelectionRange(start,end); } });
 document.addEventListener('submit',event => {
   const form=event.target;
   if (form.dataset.locate) {
     event.preventDefault(); safely(async () => {
-      const f=flyer(form.dataset.locate); if (!f || f.bucket === 'keep') return;
-      const data=new FormData(form), h=home(), query=new URLSearchParams({q:data.get('address'),name:f.business?.name ?? ''});
+      const f=flyer(form.dataset.locate); if (!f || f.sample || f.bucket === 'keep') return;
+      const data=new FormData(form), h=serverHome(), query=new URLSearchParams({q:data.get('address'),name:f.business?.name ?? ''});
       for (const phone of f.phones ?? []) query.append('phone',phone); if (h) { query.set('lat',h.lat); query.set('lon',h.lon); }
       const b=form.querySelector('button'); b.disabled=true;
       try { const result=await api('/api/locate?'+query); if (pointValid(result.location)) { f.location=result.location; f.needsLookup=false; addressOpen.delete(f.id); save(); notify('Location found. Your walk has been updated.'); render(); await rank(); } else notify('No location found. Try the printed address or full business name.'); } finally { b.disabled=false; }

@@ -1,6 +1,6 @@
 # Design System of Worth the Walk?
 
-> Format: the Stitch DESIGN.md structure with extended sections, as collected in [awesome-design-md](https://github.com/VoltAgent/awesome-design-md). The approved visual reference is [`docs/design/mockup.html`](docs/design/mockup.html) with screenshots in `docs/design/`. When this file and the mockup disagree, the mockup wins; update this file.
+> Format: the Stitch DESIGN.md structure with extended sections, as collected in [awesome-design-md](https://github.com/VoltAgent/awesome-design-md). The approved visual reference is [`docs/design/mockup.html`](docs/design/mockup.html) with screenshots in `docs/design/`. The mockup governs the ticket and ink styling; this file describes the current onboarding and sample flow.
 
 ## 1. Visual Theme & Atmosphere
 
@@ -89,8 +89,9 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### Route strip
 - Vertical Ticket-gate Blue line (3px) with 22px station dots (Ticket Paper fill, 3px blue ring, stop number in print face)
-- First and last rows are stations in print face: "FROM <STATION> <駅名>", "HOME · <STATION> <駅名>"
+- First and last rows are start points in print face: "FROM <STATION> <駅名>", "HOME · <STATION> <駅名>"
 - Stop rows between them: thumbnail stack (46×60px) · text (stop name + Japanese reference, price sticker, print meta) · ✕ "Not for me"
+- GPS routes begin “From where you are” and end “Back to where you started”. A route ending at another station still says “Train home from <Station>”.
 - "Take the train to …" plans replace the FROM row with "TRAIN TO <STATION>, THEN WALK"
 
 ### Price sticker (the one loud element)
@@ -100,13 +101,13 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### Flyer thumbnails
 - The user's own photo, 480px source, `object-fit: cover`, 2px radius, light border, small shadow
-- Stacks: up to 3 pages, rotated −5° / +3°, offset; tap opens the page sheet
+- Stacks: up to 3 pages, rotated −5° / +3°, offset; tap opens the page sheet; fictional sample previews are non-interactive
 - No thumbnail (old pages, personal mail): a paper-coloured tile with "No preview" in print face — never a hatched icon
 
 ### Buttons
 - **Gate (primary)**: Ticket-gate Blue, white 16px 700 text, radius 12px, padding 16px, full width; optional print-face suffix ("→ 改札", "· stamp"). One per screen.
 - **Ghost**: transparent, blue 14px 700 text, underlined, centred ("Skip this stop")
-- **Icon button**: 36–44px, 1px Rule border, radius 10px (header: stamps ◎, settings ⚙, close ✕)
+- **Icon button**: 44px, 1px Rule border, radius 10px (header: stamps ◎, settings ⚙, close ✕)
 - Focus: 3px blue outline, 3px offset
 
 ### Mailbox tray
@@ -128,13 +129,13 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Card with 1.5px Rule border and a 10px dot grid; 3 columns of stamps; heading "6 places stamped" + print "EACH KIND OF PLACE HAS ITS OWN INK"
 - Tallies: three columns with a 2px ink top rule: walks · km + steps · ¥ saved (Sale Red, "saved, printed on flyers"); hide zeros
 
-### "Why open models?" stub
-- Opens from the first screen and from the footer line; a ticket stub with a "✂ - - -" tear line on top
-- Heading "Your mail is read by models anyone can run"; four numbered reasons (print-face numbers in circles), each a bold line plus one or two sentences with the real figures (see section 9)
-
 ### First visit
-- Before the first photo: the snap hero, then "How it works" (three numbered steps: photograph the pile → get a ticket for today → walk and collect stamps) and an example ticket captioned "Example · sample shops", with "your station" instead of a real station and tiny printed flyers as thumbnails
-- Desktop: the hero stays 520px wide; steps and the example ticket sit side by side; the "Why open models?" stub fills the side column, so the snap card's own link is hidden there
+- Before the first photo: a welcome with “Photograph my flyers”, “Choose from photos” and “Try a sample mailbox”, then "How it works" (three numbered steps: photograph the pile → get a ticket for today → walk and collect stamps) and an example ticket captioned "Example · sample shops", with "your station" instead of a real station and tiny printed flyers as thumbnails
+- Desktop: use one full-width column when the side has no content; steps and the example ticket sit side by side. Keep a side column for stamps and, once flyers exist, “Add more flyers”.
+- Ask for the walking start inline only before reading or loading the sample. Offer one location reading or line/station selects; default to 40 minutes. Settings opens only from its header button.
+- Store the GPS start on the phone to four decimal places; round all start coordinates to two decimal places for merge and locate requests. Stations from older saved states remain valid.
+- The sample mailbox has eight fictional flyers, seven drawn non-interactive previews and a clear-sample banner. It uses the real route and stamp flow, with no model calls.
+- Each stage has one muted sentence naming the next action: photo selection, reading, ticket, walk and printed savings.
 
 ### Sheets
 - Bottom sheet on phones (top radius 18px), centred 560px dialog on desktop; Ticket Paper; backdrop `rgba(15,20,24,.45)`; focus returns to the opener
@@ -146,7 +147,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Screen padding 16px × 14px; ticket padding 14px; gaps 10–14px
 
 ### Grid & Container
-- Phone: one column. Tablet (720–959px): a 480px column centred on the Desk. Desktop (≥960px): a 1120px page with two columns: the ticket, gate and tray on the left; a 380px side column with "Add more flyers", the stamp card and the "Why open models?" stub. Walk mode puts the walk's stamp slots in the side column. Sheets are 560px dialogs
+- Phone: one column. Tablet (720–959px): a 480px column centred on the Desk. Desktop (≥960px): a 1120px page with two columns: the ticket, gate and tray on the left; a 380px side column with "Add more flyers" and the stamp card; use one column when that side has no content. Walk mode puts the walk's stamp slots in the side column. Sheets are 560px dialogs
 
 ### Whitespace Philosophy
 - **The ticket is the page.** The answer screen is one ticket, one gate, one tray. Nothing else competes.
@@ -163,7 +164,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 | Paper (1) | Ticket Paper + 1px Rule | Tray slots, how-to box, stamp card |
 | Ticket (2) | Ticket Paper + Rule + soft shadow + guilloché | The answer ticket |
 | Object (3) | Hard 1–2px shadow | Price stickers, flyer thumbnails (things stuck or laid on paper) |
-| Sheet (4) | Ticket Paper + backdrop | Flyer, page, settings, why-open sheets |
+| Sheet (4) | Ticket Paper + backdrop | Flyer, page and settings sheets |
 
 **Shadow Philosophy**: paper on a desk. Soft shadow for the ticket, tiny hard shadows for things stuck on it. Stamps are ink, never shadowed.
 
@@ -195,7 +196,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 |---|---|---|
 | Phone (primary) | < 720px | Single column, bottom sheets, gate full width, 16px gutters |
 | Tablet | 720–959px | 480px app column centred on the Desk; sheets as centred 560px dialogs |
-| Desktop | ≥ 960px | 1120px page, ticket column + 380px side column (add flyers, stamp card, why-open stub); walk stamps beside the board |
+| Desktop | ≥ 960px | 1120px page; one column for the welcome, ticket + 380px side when it has content; walk stamps beside the board |
 
 ### Touch Targets
 - 44px minimum hit area (✕ keeps 44px even if the glyph is small); gate buttons 52px+; "I'm here" 56px
@@ -216,12 +217,8 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Walk board black "#0f1418" with amber "#f3c623"
 - Stamp inks: indigo "#3d3a92", green "#17784c", vermilion "#c2411c", teal "#0e6f82"
 
-### Why open models (in-app copy, keep the figures true)
-1. **You choose where your mail is read.** Here, photos go to Gemma 4 on DigitalOcean for a few seconds. With `LOCAL_LLM=1` the same open model family reads them on your own laptop, and they never leave it. A closed API has no run-it-at-home option.
-2. **We could check it on real flyers.** With open weights we tested both sizes on the same flyers: the small model got 0/8 prices from a whole page, the large one 4/4 from a tile. That is why price lists are read tile by tile.
-3. **It costs about half a yen a page.** Reading one page costs roughly ¥0.4 on serverless inference. A whole mailbox is a few yen, with no account and no subscription.
-4. **Nothing closed is load-bearing.** Prior Labs runs the TabPFN ranking, SerpApi finds places with no printed address, and Sentry traces model calls. Take any key away and the app still works: simple ranking rules, Japan's free GSI geocoder, no tracing.
-Footer note: Open at the core: Gemma 4 and Mastra, both Apache 2.0. Photos are read and deleted; nothing is stored on a server.
+### Open model rationale
+The reasons for open models live in the README and the DEV post. They do not appear in the app.
 
 ### Example Component Prompts
 - "Create the answer ticket on Ticket Paper (#f6f8f2) with a 1px Rule (#cdd7cb) border, 12px radius, faint diagonal guilloché, perforation notches at the tear line, a DotGothic16 kicker 'TODAY · 12 OCT', a Dela Gothic One title '3 places worth the walk', print meta '2.0 KM · 25 MIN · ~2,850 STEPS', a dashed tear line, then a vertical gate-blue (#1846b8) route strip from 'FROM HIKIFUNE 曳舟' to 'HOME · HIGASHI-MUKOJIMA 東向島' with three stop rows."

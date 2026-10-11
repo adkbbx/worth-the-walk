@@ -13,7 +13,8 @@ const fixture=JSON.parse(await readFile(new URL('./fixtures/tiles.json',import.m
 const coordinates=JSON.parse(await readFile(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
 const station=stationsOnLine(stations,'skytree')[0]; // Tobu Skytree only, never the user's home.
 const homePoint=coordinates.find(s => s.id === station.id);
-const errors=[], reads=[], merges=[], ranks=[], releases=[];
+const errors=[], reads=[], merges=[], locates=[], ranks=[], releases=[];
+const coarse = value => Number.isFinite(Number(value)) && Math.abs(Number(value)*100-Math.round(Number(value)*100))<1e-8;
 const capturedScreens=new Set();
 let server,browser,serverError,logs='';
 const readState=page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
@@ -51,6 +52,7 @@ async function copyThumbs(source,target) {
 async function overflow(page,label) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth),label+': document overflow');
   for (const dialog of await page.locator('dialog[open]').all()) assert.ok(await dialog.evaluate(el => el.scrollWidth<=el.clientWidth),label+': sheet overflow');
+  assert.deepEqual(await page.locator('.cw-main button, .cw-main a, dialog[open] button, dialog[open] a, select').evaluateAll(els => els.filter(el => el.getClientRects().length).filter(el => { const r=el.getBoundingClientRect(); return r.width<43.9 || r.height<43.9; }).map(el => el.textContent.trim())),[],label+': controls have 44px targets');
 }
 async function bothWidths(page,label,screenshot=false) {
   await page.evaluate(() => document.fonts.ready);
@@ -65,6 +67,7 @@ async function ticketChecks(page) {
   const ticket=page.locator('.cw-ticket');
   assert.equal(await ticket.count(),1,'answer is a ticket');
   const route=ticket.locator('.cw-route');
+  assert.ok(await ticket.getByText("Tap ✕ on any place you don't want. Start when you're ready.",{exact:true}).isVisible(),'ticket explains the remove button');
   const rows=route.locator(':scope > .cw-route-station, :scope > .cw-route-stop');
   assert.ok(await rows.count()>=3,'route includes endpoints and stops');
   assert.ok(await rows.first().evaluate(el => el.classList.contains('cw-route-station')),'route starts at a station');
@@ -80,23 +83,38 @@ async function sealChecks(page) {
   assert.equal(new Set(ids).size,ids.length,'all textPath IDs and referenced arc IDs are unique, including repeated stamps');
   assert.ok(await page.locator('textPath').evaluateAll(paths => paths.every(path => document.getElementById(path.getAttribute('href').slice(1)))),'every textPath has an arc');
 }
-async function whyChecks(page) {
-  const opener=page.locator('.cw-footer [data-action=why-open]');
-  await opener.click(); await page.getByRole('heading',{name:'Why open models?',exact:true}).waitFor();
-  for (const figure of ['0/8','4/4','¥0.4']) assert.ok((await page.locator('#sheet').textContent()).includes(figure));
-  await bothWidths(page,'why-open',true);
-  await page.keyboard.press('Escape'); await page.locator('#sheet[open]').waitFor({state:'detached'});
-  await page.waitForFunction(() => document.activeElement?.matches('.cw-footer [data-action=why-open]'));
-}
 async function newPhone(options={}) {
   const context=await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation'],reducedMotion:'reduce',...options});
   const page=await context.newPage(); page.on('pageerror',e => errors.push(e.message)); await page.clock.setFixedTime(clock); page.on('dialog',async d => { if (d.type()!=='beforeunload') errors.push('Unexpected dialog: '+d.message()); await d.accept(); });
-  page.on('request',r => { if (r.url().endsWith('/api/merge')) merges.push(r.postDataJSON()); if (r.url().endsWith('/api/rank')) ranks.push(r.postDataJSON()); });
+  page.on('request',r => { if (r.url().endsWith('/api/merge')) merges.push(r.postDataJSON()); if (new URL(r.url()).pathname==='/api/locate') locates.push(Object.fromEntries(new URL(r.url()).searchParams)); if (r.url().endsWith('/api/rank')) ranks.push(r.postDataJSON()); });
   return {context,page};
 }
 async function open(page) { await page.goto(base); await page.getByText('Demo mode',{exact:true}).waitFor(); }
 async function setup(page) {
-  await open(page); await page.locator('#setup[open]').waitFor();
+  await open(page); await welcome(page);
+}
+async function welcome(page) {
+  assert.equal(await page.locator('#setup[open]').count(),0,'first visit has no setup gate');
+  await page.locator('.cw-snap').getByRole('heading',{name:'One good reason to go outside.',exact:true}).waitFor();
+  assert.ok(await page.getByRole('button',{name:'Photograph my flyers',exact:true}).isVisible());
+  assert.ok(await page.getByRole('button',{name:'Try a sample mailbox',exact:true}).isVisible());
+  await bothWidths(page,'welcome',true);
+  await page.setViewportSize({width:1280,height:900});
+  assert.ok(await page.locator('.cw-home').evaluate(el => el.classList.contains('cw-home-single')),'empty side does not reserve a desktop column');
+  await page.setViewportSize({width:390,height:844});
+}
+async function chooseStart(page) {
+  await page.getByRole('heading',{name:'Where do you start walking?',exact:true}).waitFor();
+  assert.equal(await page.locator('dialog[open]').count(),0,'start choice is inline');
+  await bothWidths(page,'start-chooser',true);
+  await page.getByRole('button',{name:'Pick a station',exact:true}).click();
+  await page.locator('#start-line').selectOption('skytree'); await page.locator('#start-station').selectOption(station.id);
+  await page.getByRole('button',{name:'Use this station',exact:true}).click();
+  await page.locator('.cw-start').waitFor({state:'detached'});
+  assert.equal((await readState(page)).settings.home,station.id);
+}
+async function settingsStation(page) {
+  await page.locator('#settings-button').click(); await page.locator('#setup[open]').waitFor();
   await bothWidths(page,'settings',true);
   assert.equal(await page.locator('#setup-weight').isVisible(),false,'weight stays under More');
   await page.locator('#setup-line').selectOption('skytree'); await page.locator('#setup-station').selectOption(station.id);
@@ -161,6 +179,7 @@ try {
   await select(page,[images[0]]); await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
   assert.equal(await page.locator('.cw-photo').count(),0); assert.deepEqual(await rows(page),[]); assert.deepEqual(await rows(page,'thumbs'),[]);
   await select(page,images);
+  assert.ok(await page.getByText('Add every page of every flyer, then tap Read.',{exact:true}).isVisible());
   await page.getByRole('button',{name:'Rotate page 2',exact:true}).click();
   await page.waitForFunction(() => document.querySelectorAll('.cw-photo')[1]?.dataset.rotation==='90' && !document.querySelector('[data-action=read]').disabled);
   assert.ok(await page.locator('.cw-photo img').nth(1).evaluate(i => i.naturalWidth>i.naturalHeight));
@@ -169,7 +188,9 @@ try {
   assert.ok(await page.getByRole('button',{name:'Read 7 flyers',exact:true}).evaluate(el => { const r=el.getBoundingClientRect(); return r.bottom<=innerHeight && r.top>=0; }),'read action sits above the bottom edge');
   await bothWidths(page,'snap',true);
   await page.getByRole('button',{name:'Read 7 flyers',exact:true}).click();
+  await chooseStart(page);
   await page.locator('#reading-progress').waitFor(); await page.locator('.cw-stop-row').first().waitFor();
+  assert.ok(await page.getByText('Keep this screen open. Cards appear as each flyer is read.',{exact:true}).isVisible());
   assert.match(await page.locator('#reading-count').textContent(),/Reading \d of 7 · about \d min left/);
   assert.equal(await page.locator('progress').count(),1); assert.ok(Object.keys((await readState(page)).pages).length<7,'first stop appears before last page finishes');
   await page.locator('[data-reading-prices]').waitFor(); assert.equal(detailFinished,false);
@@ -262,11 +283,11 @@ try {
   await page.keyboard.press('Escape'); await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
   assert.equal((await readState(page)).outings.at(-1).stamps.length,2); await page.locator('#stamps-button').click(); assert.equal(await page.locator('#sheet [data-stamp]').count(),2); await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Back to my mailbox',exact:true}).click(); await page.locator('.cw-snap').waitFor(); await bothWidths(page,'returned-mailbox');
-  await whyChecks(page);
   // Use the same saved mailbox to inspect both dark screens without additional reads.
   const dark=await newPhone({colorScheme:'dark'});
   await dark.page.addInitScript(({key,state}) => localStorage.setItem(key,JSON.stringify(state)),{key,state:{...await readState(page),outings:[]}});
   await open(dark.page); await copyThumbs(page,dark.page); await dark.page.reload(); await dark.page.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal(await dark.page.locator('.cw-start, #setup[open]').count(),0,'saved station state needs no chooser');
   await dark.page.locator('.cw-ticket').waitFor(); await ticketChecks(dark.page);
   assert.ok(await dark.page.locator('.cw-ticket .cw-thumb[src^="blob:"]').count()>0,'dark screenshots retain the photographed flyers');
   assert.notEqual(await dark.page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
@@ -279,6 +300,7 @@ try {
   const recovery=await newPhone(), waitWhole=gate(), seenRecovery=new Map(); let holdWhole=true;
   await interceptRead(recovery.page,async request => { seenRecovery.set(request.pageId,(seenRecovery.get(request.pageId) ?? 0)+1); if (holdWhole) await waitWhole.promise; return structuredClone(fixture[0]); });
   await setup(recovery.page); await select(recovery.page,await files(recovery.page,3)); await recovery.page.getByRole('button',{name:'Read 3 flyers',exact:true}).click();
+  await chooseStart(recovery.page);
   await recovery.page.locator('#reading-progress').waitFor(); assert.equal((await rows(recovery.page)).length,3);
   await recovery.page.reload(); await recovery.page.getByText('Demo mode',{exact:true}).waitFor(); await recovery.page.getByText(/3 pages waiting from/).waitFor();
   await bothWidths(recovery.page,'resume'); holdWhole=false; waitWhole.release();
@@ -296,6 +318,7 @@ try {
   });
   await adaptive.page.route('**/api/merge',async route => { if (failMerge) await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic merge outage'})}); else await route.continue(); });
   await setup(adaptive.page); await select(adaptive.page,await files(adaptive.page,1)); await adaptive.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click();
+  await chooseStart(adaptive.page);
   await adaptive.page.getByRole('button',{name:'Retry page 1',exact:true}).waitFor(); const beforeDetail=await readState(adaptive.page);
   assert.equal(beforeDetail.pages[adaptiveId].detailPending,true); assert.equal(beforeDetail.flyers.length,1); assert.equal(beforeDetail.flyers[0].items[0].price_yen,999); assert.equal((await rows(adaptive.page)).length,1);
   await bothWidths(adaptive.page,'detail-error'); await adaptive.page.reload(); await adaptive.page.getByText('Demo mode',{exact:true}).waitFor(); await adaptive.page.getByText(/1 pages waiting from/).waitFor();
@@ -307,7 +330,7 @@ try {
   assert.equal((await readState(adaptive.page)).flyers[0].id,beforeDetail.flyers[0].id); assert.deepEqual(await rows(adaptive.page),[]); await adaptive.context.close();
 
   // Address lookup, distant/train starts, long budgets, top-five entries, safe links and implicit TabPFN attribution.
-  const extra=await newPhone(); await setup(extra.page);
+  const extra=await newPhone(); await setup(extra.page); await settingsStation(extra.page);
   const hikifune=stationsOnLine(stations,'skytree').find(s => s.name==='Hikifune'); assert.ok(hikifune);
   const hikifunePoint=coordinates.find(p => p.id===hikifune.id);
   await extra.page.evaluate(({key,tile,market,homePoint,hikifunePoint}) => {
@@ -321,6 +344,7 @@ try {
     s.flyers=[distant,missing,near]; s.labels={}; s.outings=[]; localStorage.setItem(key,JSON.stringify(s));
   },{key,tile:fixture[0],market:fixture[2],homePoint,hikifunePoint});
   await extra.page.reload(); await extra.page.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal(await extra.page.locator('.cw-start, #setup[open]').count(),0);
   const noLocation=extra.page.locator('[data-flyer=unlocated]'); await noLocation.getByRole('button',{name:'Add address',exact:true}).click();
   await extra.page.route('**/api/locate?*',async route => { assert.equal(new URL(route.request().url()).searchParams.get('q'),'Fictional printed address'); await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({location:{lat:homePoint.lat+0.002,lon:homePoint.lon,source:'mock'}})}); });
   await noLocation.getByLabel('Printed address',{exact:true}).fill('Fictional printed address'); await noLocation.getByRole('button',{name:'Find address',exact:true}).click();
@@ -360,14 +384,112 @@ try {
   });
   await upgrade.page.reload(); await upgrade.page.getByText('Demo mode',{exact:true}).waitFor(); assert.equal((await rows(upgrade.page)).length,1); assert.deepEqual(await rows(upgrade.page,'thumbs'),[]); await upgrade.context.close();
   const unavailable=await newPhone(); await unavailable.page.addInitScript(() => Object.defineProperty(window,'indexedDB',{get() { throw new Error('Synthetic unavailable storage'); }}));
-  await setup(unavailable.page); await interceptRead(unavailable.page,async () => structuredClone(fixture[0])); await select(unavailable.page,await files(unavailable.page,1)); await unavailable.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click(); await finished(unavailable.page);
+  await setup(unavailable.page); await interceptRead(unavailable.page,async () => structuredClone(fixture[0])); await select(unavailable.page,await files(unavailable.page,1)); await unavailable.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click(); await chooseStart(unavailable.page); await finished(unavailable.page);
   assert.equal(await unavailable.page.locator('.cw-stop-row img').count(),0); assert.equal(await unavailable.page.locator('.cw-stop-row .cw-placeholder').count(),1); await bothWidths(unavailable.page,'placeholder-answer'); await unavailable.context.close();
 
-  const empty=await newPhone(); await open(empty.page); assert.equal((await readState(empty.page)).flyers.length,0); assert.equal((await readState(empty.page)).settings.home,null); assert.equal(await empty.page.locator('#setup-station').inputValue(),''); await bothWidths(empty.page,'empty-app');
+  // A new visitor can try the complete loop locally, then read real mail with a GPS start.
+  const sample=await newPhone({colorScheme:'light',geolocation:{latitude:homePoint.lat,longitude:homePoint.lon,accuracy:1}}), sampleCalls=[];
+  sample.page.on('request',request => { if (/\/api\/(read-page|merge|locate|rank)(?:\?|$)/.test(request.url())) sampleCalls.push(request.url()); });
+  await sample.page.addInitScript(() => {
+    window.startLocations=[];
+    const get=navigator.geolocation.getCurrentPosition.bind(navigator.geolocation);
+    navigator.geolocation.getCurrentPosition=(success,error,options) => { window.startLocations.push(options); get(success,error,options); };
+  });
+  await setup(sample.page);
+  await sample.page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
+  await sample.page.getByRole('heading',{name:'Where do you start walking?',exact:true}).waitFor();
+  await bothWidths(sample.page,'start-chooser');
+  await sample.page.getByRole('button',{name:'Use my location',exact:true}).click();
+  await sample.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor();
+  assert.deepEqual(await sample.page.evaluate(() => window.startLocations),[{enableHighAccuracy:false,timeout:15000,maximumAge:600000}],'start uses one coarse, cached GPS reading');
+  const sampleState=await readState(sample.page);
+  assert.deepEqual(sampleState.settings.place,{lat:Number(homePoint.lat.toFixed(4)),lon:Number(homePoint.lon.toFixed(4))});
+  assert.equal(sampleState.settings.home,null); assert.equal(sampleState.settings.lineId,null); assert.equal(sampleState.settings.maxMinutes,40);
+  assert.equal(sampleState.flyers.length,8); assert.ok(sampleState.flyers.every(f => f.sample)); assert.deepEqual(sampleState.pages,{});
+  assert.deepEqual(Object.keys(sampleState.flyers.find(f => f.bucket==='keep')).sort(),['bucket','category','id','pageIds','sample']);
+  assert.ok(await sample.page.getByText('Made-up shops placed near your start.',{exact:true}).isVisible());
+  await sample.page.waitForFunction(() => [...document.querySelectorAll('.cw-home img')].every(i => i.complete && i.naturalWidth>0));
+  assert.equal(await sample.page.locator('.cw-home img[src^="blob:"]').count(),7);
+  assert.ok(await sample.page.locator('.cw-home img').evaluateAll(imgs => imgs.every(i => Math.max(i.naturalWidth,i.naturalHeight)===480)));
+  assert.equal(await sample.page.locator('[data-action=page-sheet], [data-action=merge-retry]').count(),0,'drawn previews cannot open pages or become saved readings');
+  for (const [bucket,count] of [['home',1],['toss',2],['keep',1]]) assert.equal(await sample.page.locator(`.cw-tray [data-id=${bucket}] > b`).textContent(),String(count));
+  assert.equal(await sample.page.locator('.cw-route-station .cw-station').first().textContent(),'From where you are');
+  assert.equal(await sample.page.locator('.cw-route-end .cw-station').textContent(),'Back to where you started');
+  assert.deepEqual(sampleCalls,[],'sample creation makes no model, merge, locate or ranking requests');
+  assert.equal((await rows(sample.page,'thumbs')).filter(t => t.pageId.startsWith('sample-')).length,7); assert.deepEqual(await rows(sample.page),[]);
+  await ticketChecks(sample.page); await bothWidths(sample.page,'sample',true);
+  await sample.page.reload(); await sample.page.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal((await readState(sample.page)).flyers.filter(f => f.sample).length,8,'sample marker survives reload, including the letter');
+  assert.equal(await sample.page.locator('.cw-home img[src^="blob:"]').count(),7);
+  await sample.page.locator('#settings-button').click();
+  assert.ok(await sample.page.getByText('Starting from your location',{exact:true}).isVisible());
+  assert.equal(await sample.page.locator('#setup-weight').isVisible(),false);
+  await sample.page.getByRole('button',{name:'Save',exact:true}).click();
+  assert.deepEqual((await readState(sample.page)).settings.place,sampleState.settings.place,'Save preserves the active GPS start');
+  await sample.page.getByRole('button',{name:'Start the walk →',exact:true}).click();
+  await sample.page.getByText("This place is made up. Tap I'm here, then Stamp anyway to try a stamp.",{exact:true}).waitFor();
+  await sample.page.getByRole('button',{name:"I'm here",exact:true}).click();
+  await sample.page.getByText(/You're \d+ m away — keep walking/).waitFor();
+  await sample.page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await sample.page.locator('.cw-stamp.self').waitFor();
+  await sealChecks(sample.page);
+  assert.ok(await sample.page.getByText('Tap what you used. Only printed prices count as savings.',{exact:true}).isVisible());
+  await sample.page.getByRole('button',{name:'Next stop →',exact:true}).click();
+  while (await sample.page.locator('.cw-walk-mode').count()) await sample.page.getByRole('button',{name:'Skip this stop',exact:true}).click();
+  await sample.page.getByRole('button',{name:'Back to my mailbox',exact:true}).click();
+  await sample.page.getByRole('button',{name:'Clear sample',exact:true}).click(); await welcome(sample.page);
+  assert.equal((await readState(sample.page)).outings.length,0); assert.deepEqual((await readState(sample.page)).labels,{});
+  assert.equal((await rows(sample.page,'thumbs')).filter(t => t.pageId.startsWith('sample-')).length,0);
+  assert.deepEqual(sampleCalls,[],'the whole sample stamp loop stays local');
+  await sample.page.emulateMedia({colorScheme:'dark'}); await bothWidths(sample.page,'welcome-dark',true);
+  await sample.page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
+  await sample.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor();
+  await bothWidths(sample.page,'sample-dark',true);
+  // Real photos replace samples before their first request; server coordinates lose local precision.
+  await interceptRead(sample.page,async () => structuredClone(fixture[1]));
+  const mergeBefore=merges.length, locateBefore=locates.length;
+  await select(sample.page,await files(sample.page,1)); await sample.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click();
+  await sample.page.getByText('Sample mailbox cleared.',{exact:true}).waitFor(); await finished(sample.page);
+  assert.equal((await readState(sample.page)).flyers.some(f => f.sample),false);
+  assert.equal((await rows(sample.page,'thumbs')).some(t => t.pageId.startsWith('sample-')),false);
+  assert.ok(merges.length>mergeBefore); assert.ok(merges.slice(mergeBefore).every(m => m.home.stationId==='here' && coarse(m.home.lat) && coarse(m.home.lon)));
+  await sample.page.evaluate(key => { const s=JSON.parse(localStorage.getItem(key)); s.flyers[0].location=null; localStorage.setItem(key,JSON.stringify(s)); },key);
+  await sample.page.reload(); await sample.page.getByText('Demo mode',{exact:true}).waitFor();
+  await sample.page.route('**/api/locate?*',route => route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({location:{lat:homePoint.lat+0.001,lon:homePoint.lon,source:'mock'}})}));
+  await sample.page.getByRole('button',{name:'Add address',exact:true}).click(); await sample.page.getByLabel('Printed address',{exact:true}).fill('Fictional printed address');
+  await sample.page.getByRole('button',{name:'Find address',exact:true}).click(); await sample.page.getByText('Location found. Your walk has been updated.',{exact:true}).waitFor();
+  assert.ok(locates.length>locateBefore); assert.ok(locates.slice(locateBefore).every(l => coarse(l.lat) && coarse(l.lon)));
+  // Switching to a station discards GPS, and a v1 station save still prints its start.
+  await settingsStation(sample.page); assert.equal(Object.hasOwn((await readState(sample.page)).settings,'place'),false);
+  await sample.page.reload(); await sample.page.getByText('Demo mode',{exact:true}).waitFor();
+  assert.match(await sample.page.locator('.cw-route-station .cw-station').first().textContent(),new RegExp('^From '+station.name));
+  assert.equal(await sample.page.locator('.cw-start, #setup[open]').count(),0); await sample.context.close();
+
+  // Denied location reveals the station picker without losing the pending sample action.
+  const denied=await newPhone();
+  await denied.page.addInitScript(() => { navigator.geolocation.getCurrentPosition=(_success,error) => error({code:1}); });
+  await setup(denied.page); await denied.page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
+  await denied.page.getByRole('button',{name:'Use my location',exact:true}).click();
+  await denied.page.getByText('Location unavailable. Pick a station instead.',{exact:true}).waitFor();
+  assert.ok(await denied.page.locator('#start-line').isVisible());
+  await denied.page.locator('#start-line').selectOption('skytree'); await denied.page.locator('#start-station').selectOption(station.id);
+  await denied.page.getByRole('button',{name:'Use this station',exact:true}).click();
+  await denied.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor(); await denied.context.close();
+
+  const empty=await newPhone(); await setup(empty.page); assert.equal((await readState(empty.page)).flyers.length,0); assert.equal((await readState(empty.page)).settings.home,null); assert.equal(await empty.page.locator('#setup-station').count(),0); await bothWidths(empty.page,'empty-app');
+  await empty.page.locator('#settings-button').click(); assert.equal(await empty.page.locator('#setup-weight').isVisible(),false);
+  await empty.page.keyboard.press('Escape'); await empty.page.locator('#setup[open]').waitFor({state:'detached'});
+  await empty.page.waitForFunction(() => document.activeElement?.id==='settings-button');
+  for (const place of [{lat:91,lon:139},{lat:35,lon:-181},{lat:'35',lon:139},{lat:null,lon:139}]) {
+    await empty.page.evaluate(({key,place}) => { const s=JSON.parse(localStorage.getItem(key)); s.settings.place=place; localStorage.setItem(key,JSON.stringify(s)); },{key,place});
+    await empty.page.reload(); await empty.page.getByText('Demo mode',{exact:true}).waitFor();
+    assert.equal(Object.hasOwn((await readState(empty.page)).settings,'place'),false,'invalid saved GPS coordinates are dropped');
+  }
   await empty.page.evaluate(key => localStorage.setItem(key,'{corrupt'),key); await empty.page.reload(); await empty.page.getByText('Demo mode',{exact:true}).waitFor(); assert.equal((await readState(empty.page)).flyers.length,0); await empty.context.close();
   assert.deepEqual(errors,[],'no page errors across all screens and reload paths');
-  console.log('Chirashi browser: PASS · snap → answer → walk · visual grouping · implicit labels · GPS/self stamps · printed savings · thumbnails/privacy · separate contexts · adaptive reading/merge recovery · train starts · 60/90 min · focus/escaping · 390/1280px.');
-  console.log('Screenshots: .impeccable/review/chirashi-{snap,answer,flyer-sheet,page-sheet,walk,done,stamps}.png');
+  assert.ok(merges.every(m => !m.home || typeof m.home.stationId==='string' && coarse(m.home.lat) && coarse(m.home.lon)),'stations and GPS both use coarse merge coordinates');
+  assert.ok(locates.every(l => coarse(l.lat) && coarse(l.lon)),'all locate start coordinates are coarse');
+  console.log('Chirashi browser: PASS · welcome → inline start → sample/photo → answer → walk · visual grouping · implicit labels · GPS/self stamps · printed savings · thumbnails/privacy · separate contexts · adaptive reading/merge recovery · train starts · 60/90 min · focus/escaping · 390/1280px · GPS request privacy · sample cleanup · station compatibility.');
+  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,answer,flyer-sheet,page-sheet,walk,done,stamps}.png');
 } finally {
   for (const release of releases) release();
   await browser?.close();
