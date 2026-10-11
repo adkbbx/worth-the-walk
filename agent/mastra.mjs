@@ -51,11 +51,65 @@ function normalizeMerged(raw, pages) {
   return tile;
 }
 
-export function createApp({ fetch, env = process.env } = {}) {
+// Mastra stores model and usage fields before converting them to gen_ai.*.
+// Preserve those safe native fields as well as already-semantic attributes.
+export const privacyProcessor = { name: 'omit-flyer-payloads', process(span) {
+  if (!span) return span;
+  const safeValue = value => {
+    if (typeof value === 'number') return Number.isFinite(value);
+    if (typeof value === 'boolean') return true;
+    if (typeof value === 'string') return value.length <= 200 && !/data:|[a-z][a-z0-9+.-]*:\/\/\S*\?/i.test(value);
+    if (Array.isArray(value)) return value.every(safeValue);
+    return false;
+  };
+  const native = new Set(['model', 'provider', 'responseModel', 'finishReason', 'toolName', 'agentName', 'status', 'duration']);
+  const semantic = /^(gen_ai\.(system|provider.name|operation.name|request.model|response.model|usage\.[\w.]+|tool.name|agent.name|response.finish_reasons)|status|duration)$/;
+  const chirashi = {
+    'chirashi.tile_count': value => Number.isInteger(value) && value >= 0,
+    'chirashi.page_count': value => Number.isInteger(value) && value >= 0,
+    'chirashi.bucket': value => ['walk', 'home', 'keep', 'toss'].includes(value),
+    'chirashi.location_source': value => ['gsi', 'serpapi', 'mock', 'none'].includes(value),
+    'chirashi.rank_model': value => ['rules', 'tabpfn'].includes(value),
+  };
+  function numericTree(value) {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+    return Object.fromEntries(Object.entries(value).flatMap(([key, item]) => {
+      if (typeof item === 'number' && Number.isFinite(item)) return [[key, item]];
+      const nested = numericTree(item);
+      return nested && Object.keys(nested).length ? [[key, nested]] : [];
+    }));
+  }
+  span.attributes = Object.fromEntries(Object.entries(span.attributes ?? {}).flatMap(([key, value]) => {
+    if (key === 'usage') return [[key, numericTree(value) ?? {}]];
+    if (key.startsWith('gen_ai.usage.') && (typeof value !== 'number' || !Number.isFinite(value))) return [];
+    if (chirashi[key]?.(value) || ((native.has(key) || semantic.test(key)) && safeValue(value))) return [[key, value]];
+    return [];
+  }));
+  span.input = undefined; span.output = undefined; span.metadata = {};
+  span.errorInfo = undefined; span.requestContext = undefined;
+  return span;
+}, async shutdown() {} };
+
+// This exporter version converts only its known native attributes. Forward our
+// sanitized semantic/custom attributes explicitly so they reach Sentry too.
+class PrivateSentryExporter extends SentryExporter {
+  buildSpanAttributes(span) {
+    return { ...super.buildSpanAttributes(span), ...Object.fromEntries(Object.entries(span.attributes ?? {})
+      .filter(([key]) => key.startsWith('chirashi.') || key.startsWith('gen_ai.'))) };
+  }
+}
+
+function annotate(tracingContext, attributes) {
+  const span = tracingContext?.currentSpan;
+  span?.update({ attributes });
+  span?.parent?.update({ attributes });
+}
+
+export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
   const mock = env.MOCK_GEMMA === '1';
   const allowLocate = !mock || fetch !== undefined;
   const fixtures = mock ? JSON.parse(readFileSync(new URL('../tests/fixtures/tiles.json', import.meta.url), 'utf8')) : null;
-  const { gsiGeocode, serpapiPlace, rankFlyers } = createTools({ fetch, env });
+  const { gsiGeocode, serpapiPlace, rankFlyers, serpapi: budget } = createTools({ fetch, env, serpapi, tabpfn });
   const flyerReader = new Agent({ id: 'flyer-reader', name: 'flyer-reader', instructions: TILE_PROMPT, model: visionModel(env) });
   const flyerMerger = new Agent({ id: 'flyer-merger', name: 'flyer-merger', instructions: MERGE_PROMPT, model: textModel(env) });
 
@@ -70,6 +124,7 @@ export function createApp({ fetch, env = process.env } = {}) {
     id: 'read-tiles', inputSchema: readPageSchema, outputSchema: z.unknown(),
     execute: async ({ inputData, requestContext, tracingContext }) => {
       const { pageId, tiles } = inputData;
+      annotate(tracingContext, { 'chirashi.tile_count': tiles.length, 'chirashi.page_count': 1 });
       const onEvent = requestContext.get('onEvent') ?? (() => {});
       const results = Array(tiles.length).fill(null);
       let next = 0;
@@ -111,6 +166,7 @@ export function createApp({ fetch, env = process.env } = {}) {
     id: 'merge-and-locate', inputSchema: mergeSchema, outputSchema: z.unknown(),
     execute: async ({ inputData, tracingContext, requestContext }) => {
       const { flyerId, pages, scanDate, home } = inputData;
+      annotate(tracingContext, { 'chirashi.page_count': pages.length, 'chirashi.tile_count': pages.reduce((sum, page) => sum + page.tiles.length, 0) });
       let merged;
       if (!mock) {
         try {
@@ -122,30 +178,36 @@ export function createApp({ fetch, env = process.env } = {}) {
         } catch { /* Invalid or failed model merges use the existing deterministic rules. */ }
       }
       const flyer = finalizeFlyer({ ...(merged ?? mergeFallback(pages)), id: flyerId, pageIds: pages.map(page => page.id) }, scanDate, matchChain);
+      annotate(tracingContext, { 'chirashi.bucket': flyer.bucket, 'chirashi.location_source': 'none' });
       if (flyer.bucket === 'keep') return storable(flyer);
       // Only places worth walking to need coordinates; this also keeps paid lookups for real stops.
       if (flyer.bucket !== 'walk') return { ...flyer, location: null };
-      if (mock && fetch === undefined) return { ...flyer, location: home ? mockLocation(flyerId, home) : null };
+      if (mock && fetch === undefined) {
+        annotate(tracingContext, { 'chirashi.location_source': home ? 'mock' : 'none' });
+        return { ...flyer, location: home ? mockLocation(flyerId, home) : null };
+      }
       const location = await locate({ q: flyer.address ?? undefined, name: flyer.business.name ?? undefined,
         phones: flyer.phones, lat: home?.lat, lon: home?.lon });
+      annotate(tracingContext, { 'chirashi.location_source': location?.source ?? 'none' });
       return { ...flyer, location };
     },
   });
   const mergeWorkflow = createWorkflow({ id: 'mergeFlyer', inputSchema: mergeSchema, outputSchema: z.unknown() }).then(mergeStep).commit();
+  const rankStep = createStep({ id: 'rank-flyers', inputSchema: rankSchema, outputSchema: z.unknown(),
+    execute: async ({ inputData, tracingContext }) => {
+      const result = mock && fetch === undefined ? rulesRank(inputData) : await rankFlyers(inputData);
+      annotate(tracingContext, { 'chirashi.rank_model': result.model });
+      return result;
+    } });
+  const rankWorkflow = createWorkflow({ id: 'rankFlyers', inputSchema: rankSchema, outputSchema: z.unknown() }).then(rankStep).commit();
 
   const observability = env.SENTRY_DSN ? new Observability({ configs: { default: {
     serviceName: 'chirashi-walk',
-    exporters: [new SentryExporter({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV || 'development', tracesSampleRate: 1, logger: noopLogger,
+    exporters: [new PrivateSentryExporter({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV || 'development', tracesSampleRate: 1, logger: noopLogger,
       options: { defaultIntegrations: false, sendDefaultPii: false } })],
-    // Export trace structure/timing only. No images, readings, credentials, or provider errors.
-    spanOutputProcessors: [{ name: 'omit-flyer-payloads', process(span) {
-      if (!span) return span;
-      span.input = undefined; span.output = undefined; span.attributes = {}; span.metadata = {};
-      span.errorInfo = undefined; span.requestContext = undefined;
-      return span;
-    }, async shutdown() {} }],
+    spanOutputProcessors: [privacyProcessor],
   } } }) : undefined;
-  const mastra = new Mastra({ agents: { flyerReader, flyerMerger }, workflows: { readPage: readWorkflow, mergeFlyer: mergeWorkflow },
+  const mastra = new Mastra({ agents: { flyerReader, flyerMerger }, workflows: { readPage: readWorkflow, mergeFlyer: mergeWorkflow, rankFlyers: rankWorkflow },
     logger: noopLogger, ...(observability ? { observability } : {}) });
 
   async function run(name, inputData, onEvent) {
@@ -158,13 +220,11 @@ export function createApp({ fetch, env = process.env } = {}) {
   }
   return {
     mastra,
+    serpapi: budget,
     readPage: (input, onEvent) => run('readPage', readPageSchema.parse(input), onEvent),
     mergeFlyer: input => run('mergeFlyer', mergeSchema.parse(input)),
     locate,
-    rank: body => {
-      const input = rankSchema.parse(body);
-      return mock && fetch === undefined ? Promise.resolve(rulesRank(input)) : rankFlyers(input);
-    },
+    rank: body => run('rankFlyers', rankSchema.parse(body)),
     config: () => ({ mode: mock ? 'mock' : env.LOCAL_LLM === '1' ? 'local' : 'cloud', model: modelInfo(env).model,
       features: { serpapi: Boolean(env.SERPAPI_API_KEY), tabpfn: Boolean(env.PRIOR_LABS_MCP_TOKEN), sentry: Boolean(env.SENTRY_DSN) } }),
   };

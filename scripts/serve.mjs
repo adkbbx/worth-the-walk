@@ -66,16 +66,17 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
   app ??= createApp({ fetch, env });
   const reads = new Map();
   const hour = 60 * 60 * 1000;
-  function reserve(req, count) {
+  function reserve(req, count, kind = 'tiles', limit = 80) {
     const forwarded = req.headers['x-forwarded-for'];
-    const ip = (Array.isArray(forwarded) ? forwarded[0] : forwarded)?.split(',')[0].trim() || req.socket.remoteAddress;
+    const ip = (env.TRUST_PROXY === '1' ? (Array.isArray(forwarded) ? forwarded.join(',') : forwarded)?.split(',').at(-1).trim() : null) || req.socket.remoteAddress;
+    const key = `${kind}:${ip}`;
     const time = now();
-    const recent = (reads.get(ip) ?? []).filter(at => at > time - hour);
-    if (recent.length + count > 80) {
-      const retryAfter = Math.max(1, Math.ceil((recent[recent.length + count - 81] + hour - time) / 1000));
-      throw Object.assign(httpError(429, 'Tile read limit reached'), { retryAfter });
+    const recent = (reads.get(key) ?? []).filter(at => at > time - hour);
+    if (recent.length + count > limit) {
+      const retryAfter = Math.max(1, Math.ceil((recent[recent.length + count - limit - 1] + hour - time) / 1000));
+      throw Object.assign(httpError(429, `${kind} limit reached`), { retryAfter });
     }
-    reads.set(ip, [...recent, ...Array(count).fill(time)]);
+    reads.set(key, [...recent, ...Array(count).fill(time)]);
   }
   const cleanup = setInterval(() => {
     const cutoff = now() - hour;
@@ -90,7 +91,11 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
       const url = new URL(req.url, 'http://localhost');
       pathname = url.pathname;
       if (pathname.startsWith('/api/')) {
-        if (req.method === 'GET' && pathname === '/api/config') { json(res, 200, app.config()); return; }
+        if (req.method === 'GET' && pathname === '/api/config') {
+          const config = app.config();
+          config.features.serpapi = await app.serpapi.status();
+          json(res, 200, config); return;
+        }
         if (req.method === 'POST' && pathname === '/api/read-page') {
           const body = parse(readPageSchema, await readBody(req, limits[pathname]));
           reserve(req, body.tiles.length);
@@ -104,6 +109,7 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
         }
         if (req.method === 'POST' && pathname === '/api/merge') {
           const body = parse(mergeSchema, await readBody(req, limits[pathname]));
+          reserve(req, 1, 'merge', 60);
           json(res, 200, { flyer: await app.mergeFlyer(body) }); return;
         }
         if (req.method === 'GET' && pathname === '/api/locate') {
@@ -111,10 +117,12 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
           const body = parse(locateSchema, { q: params.get('q') ?? undefined, name: params.get('name') ?? undefined,
             phones: params.getAll('phone'), lat: params.has('lat') ? Number(params.get('lat')) : undefined,
             lon: params.has('lon') ? Number(params.get('lon')) : undefined });
+          reserve(req, 1, 'locate', 30);
           json(res, 200, { location: await app.locate(body) }); return;
         }
         if (req.method === 'POST' && pathname === '/api/rank') {
           const body = parse(rankSchema, await readBody(req, limits[pathname]));
+          reserve(req, 1, 'rank', 30);
           json(res, 200, await app.rank(body)); return;
         }
         if (['/api/config', '/api/read-page', '/api/merge', '/api/locate', '/api/rank'].includes(pathname)) {
@@ -149,6 +157,8 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--mock')) process.env.MOCK_GEMMA = '1';
   const app = createApp();
+  const budgetStatus = await app.serpapi.status();
+  if (budgetStatus.enabled && budgetStatus.live) await app.serpapi.reconcile();
   const host = process.env.HOST || '127.0.0.1';
   const port = Number(process.env.PORT ?? 4175);
   const server = createServer({ app });

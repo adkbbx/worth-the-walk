@@ -3,7 +3,11 @@ import assert from 'node:assert/strict';
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
 import { once } from 'node:events';
-import { createApp } from '../agent/mastra.mjs';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { createSerpApi } from '../agent/serpapi.mjs';
+import { privacyProcessor, createApp } from '../agent/mastra.mjs';
 import { createTools, rulesRank } from '../agent/tools.mjs';
 import { createCallQueue, modelCall } from '../agent/queue.mjs';
 import { FEATURES, normalizeTile } from '../src/mailbox.mjs';
@@ -15,8 +19,9 @@ const image = 'data:image/png;base64,AAAA';
 const fixtures = JSON.parse(readFileSync(new URL('./fixtures/tiles.json', import.meta.url), 'utf8'));
 const noFetch = async () => { throw new Error('External network is forbidden in tests'); };
 const originalFetch = globalThis.fetch;
-before(() => { globalThis.fetch = noFetch; });
-after(() => { globalThis.fetch = originalFetch; });
+let realNetworkAttempts = 0;
+before(() => { globalThis.fetch = async () => { realNetworkAttempts++; throw new Error('REAL NETWORK FORBIDDEN'); }; });
+after(() => { assert.equal(realNetworkAttempts, 0, 'A test reached the default network fetch'); globalThis.fetch = originalFetch; });
 const response = body => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
 const predict = [
   { id: 'trial', row: [0, 1, 0, 1, 2, 1, 0, 0, 1] },
@@ -110,11 +115,15 @@ test('lookup failures and invalid coordinates return null', async () => {
   }
 });
 
-test('SerpApi maps place_results and local_results, operating hours, and normalized phone matches', async () => {
+test('SerpApi maps place_results and local_results, operating hours, and normalized phone matches', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'chirashi-agent-serp-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
+  let serial = 0;
+  const withBudget = options => createTools({ ...options, serpapi: createSerpApi({ ...options, dir: join(dir, String(serial++)) }) });
   for (const direct of [true, false]) {
     const place = { title: '架空店', address: 'テスト区', gps_coordinates: { latitude: 35.7, longitude: 139.7 },
       rating: 4.5, reviews: 20, phone: '０１２０ ０００ １１１', operating_hours: { monday: '10–18' } };
-    const tools = createTools({ env: { ...env, SERPAPI_API_KEY: 'synthetic' }, fetch: async (url, init) => {
+    const tools = withBudget({ env: { ...env, SERPAPI_API_KEY: 'synthetic', SERPAPI_LIVE: '1' }, fetch: async (url, init) => {
       assert.equal(url.searchParams.get('engine'), 'google_maps'); assert.equal(url.searchParams.get('type'), 'search');
       assert.equal(url.searchParams.get('q'), '架空店'); assert.equal(url.searchParams.get('ll'), '@35.5,139.5,14z');
       assert.equal(url.searchParams.get('hl'), 'ja'); assert.ok(init.signal instanceof AbortSignal);
@@ -126,29 +135,33 @@ test('SerpApi maps place_results and local_results, operating hours, and normali
         hours: place.operating_hours, phoneMatches: true } });
     assert.equal((await tools.serpapiPlace({ name: '架空店', lat: 35.5, lon: 139.5, phones: ['0120-000-222'] })).place.phoneMatches, false);
   }
-  const missingPhone = createTools({ env: { SERPAPI_API_KEY: 'synthetic' }, fetch: async () => response({
+  const missingPhone = withBudget({ env: { SERPAPI_API_KEY: 'synthetic', SERPAPI_LIVE: '1' }, fetch: async () => response({
     place_results: { gps_coordinates: { latitude: 35, longitude: 139 }, hours: '10–18' },
   }) });
   assert.equal((await missingPhone.serpapiPlace({ name: 'test', lat: 35, lon: 139, phones: ['bad'] })).place.phoneMatches, false);
 });
 
 test('missing SerpApi key or invalid coordinates skip fetch; no result returns null', async () => {
+  const withBudget = options => createTools({ ...options, serpapi: { search: async () => { await options.fetch(); return { result: null }; } } });
   let calls = 0;
   const fetch = async () => { calls++; return response({}); };
   assert.equal(await createTools({ env, fetch }).serpapiPlace({ name: 'test', lat: 35, lon: 139 }), null);
-  const tools = createTools({ env: { SERPAPI_API_KEY: 'synthetic' }, fetch });
+  const tools = withBudget({ env: { SERPAPI_API_KEY: 'synthetic', SERPAPI_LIVE: '1' }, fetch });
   assert.equal(await tools.serpapiPlace({ name: 'test', lat: undefined, lon: 139 }), null); assert.equal(calls, 0);
   assert.equal(await tools.serpapiPlace({ name: 'test', lat: 35, lon: 139 }), null); assert.equal(calls, 1);
 });
 
-test('locate falls back from a failed address to a nearby business only when home is available', async () => {
+test('locate falls back from a failed address to a nearby business only when home is available', async t => {
+  const dir = await mkdtemp(join(tmpdir(), 'chirashi-agent-locate-'));
+  t.after(() => rm(dir, { recursive: true, force: true }));
   const calls = [];
-  const app = createApp({ env: { ...env, SERPAPI_API_KEY: 'synthetic' }, fetch: async url => {
+  const options = { env: { ...env, SERPAPI_API_KEY: 'synthetic', SERPAPI_LIVE: '1' }, fetch: async url => {
     calls.push(url.hostname);
     return response(url.hostname === 'msearch.gsi.go.jp' ? [] : { local_results: [{
       gps_coordinates: { latitude: 35, longitude: 139 }, phone: '0120-000-111',
     }] });
-  } });
+  } };
+  const app = createApp({ ...options, serpapi: createSerpApi({ ...options, dir }) });
   assert.equal((await app.mergeFlyer(mergeInput())).location.place.phoneMatches, true);
   assert.deepEqual(calls, ['msearch.gsi.go.jp', 'serpapi.com']);
   const withoutHome = await app.mergeFlyer({ ...mergeInput(), home: null });
@@ -175,33 +188,13 @@ test('MCP discovery failure falls back to rules without leaking its error', asyn
   assert.deepEqual(await tools.rankFlyers({ train, predict }), rulesRank({ predict }));
 });
 
-test('MCP uses the discovered inline classification tool and maps probabilities of label one', async () => {
-  const train = Array.from({ length: 6 }, (_, index) => ({ row: predict[index % 2].row, label: index % 2 }));
-  let argumentsSent;
-  const tools = createTools({ env: { ...env, PRIOR_LABS_MCP_TOKEN: 'synthetic' }, fetch: async (url, init) => {
-    assert.equal(String(url), 'https://api.priorlabs.ai/mcp/server');
-    if (init.method === 'GET') return new Response(null, { status: 405 });
-    if (init.method === 'DELETE') return new Response(null, { status: 204 });
-    const message = JSON.parse(init.body);
-    if (message.id === undefined) return new Response(null, { status: 202 });
-    if (message.method === 'server/discover') return response({ jsonrpc: '2.0', id: message.id,
-      error: { code: -32601, message: 'Synthetic server uses legacy initialization' } });
-    let result;
-    if (message.method === 'initialize') result = { protocolVersion: '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'synthetic', version: '1' } };
-    else if (message.method === 'tools/list') result = { tools: [{ name: 'fit_and_predict_inline', description: 'Synthetic classification',
-      inputSchema: { type: 'object', properties: { X_train: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
-        y_train: { type: 'array', items: { type: 'number' } }, X_test: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
-        task_type: { type: 'string' }, output_type: { type: 'string' } }, required: ['X_train', 'y_train', 'X_test', 'task_type', 'output_type'] } }] };
-    else if (message.method === 'tools/call') {
-      assert.equal(message.params.name, 'fit_and_predict_inline');
-      argumentsSent = message.params.arguments;
-      result = { content: [{ type: 'text', text: JSON.stringify({ predictions: [[0.1, 0.9], [0.8, 0.2]] }) }] };
-    } else throw new Error('Unexpected synthetic MCP request');
-    return response({ jsonrpc: '2.0', id: message.id, result });
-  } });
-  assert.deepEqual(await tools.rankFlyers({ train, predict }), { model: 'tabpfn', scores: [{ id: 'trial', p: 0.9 }, { id: 'expired', p: 0.2 }] });
-  assert.deepEqual(argumentsSent, { X_train: train.map(value => value.row), y_train: train.map(value => value.label),
-    X_test: predict.map(value => value.row), task_type: 'classification', output_type: 'probas' });
+test('rankFlyers delegates to injected TabPFN adapter', async () => {
+  const train = Array.from({ length: 6 }, (_, i) => ({ row: predict[i % 2].row, label: i % 2 }));
+  const expected = { model: 'tabpfn', scores: [{ id: 'trial', p: 0.9 }, { id: 'expired', p: 0.2 }] };
+  const tools = createTools({ env, fetch: noFetch, tabpfn: { rank: async input => {
+    assert.deepEqual(input, { train, predict }); return expected;
+  } } });
+  assert.deepEqual(await tools.rankFlyers({ train, predict }), expected);
 });
 
 test('the shared upstream queue caps concurrent calls at six and releases slots on failures', async () => {
@@ -236,9 +229,45 @@ test('Sentry is conditional and registered workflow traces omit payloads before 
   for (const { exportedSpan: span } of events) {
     assert.equal(span.input, undefined); assert.equal(span.output, undefined);
     assert.equal(span.errorInfo, undefined); assert.equal(span.requestContext, undefined);
-    assert.deepEqual(span.attributes, {}); assert.deepEqual(span.metadata, {});
+    assert.deepEqual(span.metadata, {});
+    assert.ok(Object.keys(span.attributes).every(key => key.startsWith('chirashi.') || key === 'status'));
   }
   assert.doesNotMatch(JSON.stringify(events), /data:image|無料体験|0120-000-111/);
+  assert.ok(events.some(event => event.exportedSpan.attributes['chirashi.tile_count'] === 1));
+  const readSpan = events.find(event => event.exportedSpan.attributes['chirashi.tile_count'] === 1).exportedSpan;
+  assert.equal(exporters[0].buildSpanAttributes(readSpan)['chirashi.tile_count'], 1);
+});
+
+test('privacy processor keeps models and numeric usage while dropping content, secrets and queried URLs', () => {
+  const span = privacyProcessor.process({ input: 'prompt', output: 'output', errorInfo: { message: 'secret' },
+    attributes: { 'gen_ai.system': 'digitalocean', 'gen_ai.operation.name': 'chat',
+      'gen_ai.request.model': 'gemma', 'gen_ai.response.model': 'gemma', 'gen_ai.usage.input_tokens': 20,
+      'gen_ai.usage.output_tokens': 10, model: 'gemma', usage: { inputTokens: 20, outputTokens: 10, text: 'private' },
+      'gen_ai.usage.content': 'private',
+      'gen_ai.input.messages': 'flyer content', 'gen_ai.output.messages': 'private', 'gen_ai.prompt': 'secret',
+      'gen_ai.tool.call.arguments': '{}', 'gen_ai.tool.call.result': '{}',
+      'gen_ai.tool.name': 'data:image/png;base64,AAAA', 'gen_ai.agent.name': 'x'.repeat(201),
+      'gen_ai.response.finish_reasons': ['stop'], provider: 'https://example.test/?token=secret',
+      'chirashi.tile_count': 1, 'chirashi.bucket': 'walk', 'chirashi.rank_model': 'rules', 'chirashi.content': 'secret' } });
+  assert.equal(span.attributes['gen_ai.request.model'], 'gemma');
+  assert.equal(span.attributes['gen_ai.usage.input_tokens'], 20);
+  assert.equal(span.attributes['gen_ai.usage.output_tokens'], 10);
+  assert.deepEqual(span.attributes.usage, { inputTokens: 20, outputTokens: 10 });
+  assert.deepEqual(span.attributes['gen_ai.response.finish_reasons'], ['stop']);
+  assert.equal(span.attributes['chirashi.bucket'], 'walk');
+  assert.doesNotMatch(JSON.stringify(span), /prompt|output.messages|private|secret|data:|token=|call.arguments/);
+});
+
+test('walk-only SerpApi gate skips home, keep, toss and usable GSI results', async () => {
+  let searches = 0;
+  const app = createApp({ env: { ...env, SERPAPI_API_KEY: 'synthetic' },
+    fetch: async () => response([{ geometry: { coordinates: [139.6, 35.6] } }]),
+    serpapi: { search: async () => { searches++; return { result: null }; } } });
+  for (const index of [3, 4, 5]) await app.mergeFlyer(mergeInput([fixtures[index]]));
+  await app.mergeFlyer(mergeInput());
+  assert.equal(searches, 0);
+  await app.locate({ name: 'Explicit business', lat: 35, lon: 139 });
+  assert.equal(searches, 1);
 });
 
 function request(server, path, { method = 'GET', body, headers = {}, chunks } = {}) {
@@ -315,7 +344,7 @@ test('HTTP enforces all three body limits including chunked requests', async t =
   assert.equal(chunked.status, 413);
 });
 
-test('HTTP rejects tile 81 per IP, uses first forwarded IP, and allows reads after one hour', async t => {
+test('HTTP rejects tile 81 and spoofed forwarding headers, and resets after one hour', async t => {
   let time = 1_000_000;
   const server = await startServer(t, { now: () => time });
   const send = (tiles, ip = '192.0.2.1, 192.0.2.2') => request(server, '/api/read-page', {
@@ -325,8 +354,31 @@ test('HTTP rejects tile 81 per IP, uses first forwarded IP, and allows reads aft
   assert.equal((await send(8)).status, 200);
   const limited = await send(1, '192.0.2.1, 192.0.2.9'); assert.equal(limited.status, 429);
   assert.equal(JSON.parse(limited.text).retryAfter, 3600); assert.equal(limited.headers['retry-after'], '3600');
-  assert.equal((await send(1, '192.0.2.2')).status, 200);
+  assert.equal((await send(1, '192.0.2.2')).status, 429);
   time += 3_600_000; assert.equal((await send(1)).status, 200);
+});
+
+test('TRUST_PROXY uses the last forwarded entry, ignoring spoofed earlier entries', async t => {
+  const server = await startServer(t, { env: { ...env, TRUST_PROXY: '1' } });
+  const send = ip => request(server, '/api/locate?name=test', { headers: { 'x-forwarded-for': ip } });
+  for (let i = 0; i < 30; i++) assert.equal((await send(`192.0.2.${i}, 198.51.100.1`)).status, 200);
+  assert.equal((await send('203.0.113.1, 198.51.100.1')).status, 429);
+  assert.equal((await send('198.51.100.1, 198.51.100.2')).status, 200);
+});
+
+test('merge, locate and rank have separate per-IP hourly budgets with retryAfter', async t => {
+  let time = 1_000_000;
+  const base = createApp({ env });
+  const app = { ...base, mergeFlyer: async () => ({}), rank: async () => ({ model: 'rules', scores: [] }), locate: async () => null };
+  const server = await startServer(t, { app, now: () => time });
+  for (const [path, limit, body] of [['/api/merge', 60, mergeInput()], ['/api/locate?name=test', 30, undefined], ['/api/rank', 30, { train: [], predict: [] }]]) {
+    const send = i => request(server, path, { method: body ? 'POST' : 'GET', body, headers: { 'x-forwarded-for': `192.0.2.${i}` } });
+    for (let i = 0; i < limit; i++) assert.equal((await send(i)).status, 200);
+    const blocked = await send(200);
+    assert.equal(blocked.status, 429); assert.equal(JSON.parse(blocked.text).retryAfter, 3600);
+    assert.equal(blocked.headers['retry-after'], '3600');
+    time += 3600000; assert.equal((await send(0)).status, 200);
+  }
 });
 
 test('NDJSON delivers a completed tile before the final result exists', async t => {
