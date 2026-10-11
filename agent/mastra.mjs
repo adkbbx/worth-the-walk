@@ -22,6 +22,16 @@ function compact(value) {
     .map(([key, item]) => [key, compact(item)]));
 }
 
+// Demo mode places each walkable flyer 300–900 m from the home station so walks can be planned offline.
+function mockLocation(flyerId, home) {
+  let hash = 0;
+  for (const char of String(flyerId)) hash = (hash * 31 + char.codePointAt(0)) >>> 0;
+  const meters = 300 + hash % 600, angle = (hash % 360) * Math.PI / 180;
+  return { lat: home.lat + meters * Math.cos(angle) / 111320,
+    lon: home.lon + meters * Math.sin(angle) / (111320 * Math.cos(home.lat * Math.PI / 180)),
+    source: 'mock', precision: 'demo' };
+}
+
 function usable(tile) {
   return tile.business.name || tile.category !== 'other' || tile.address ||
     tile.offers.length || tile.items.length || tile.phones.length || tile.websites.length;
@@ -113,6 +123,9 @@ export function createApp({ fetch, env = process.env } = {}) {
       }
       const flyer = finalizeFlyer({ ...(merged ?? mergeFallback(pages)), id: flyerId, pageIds: pages.map(page => page.id) }, scanDate, matchChain);
       if (flyer.bucket === 'keep') return storable(flyer);
+      // Only places worth walking to need coordinates; this also keeps paid lookups for real stops.
+      if (flyer.bucket !== 'walk') return { ...flyer, location: null };
+      if (mock && fetch === undefined) return { ...flyer, location: home ? mockLocation(flyerId, home) : null };
       const location = await locate({ q: flyer.address ?? undefined, name: flyer.business.name ?? undefined,
         phones: flyer.phones, lat: home?.lat, lon: home?.lon });
       return { ...flyer, location };

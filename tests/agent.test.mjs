@@ -56,7 +56,10 @@ test('mock merge combines two dojo pages, finalizes deadlines and chain fields, 
 
 test('mock mode with no injected fetch skips all lookup, while personal mail returns storable only', async () => {
   const app = createApp({ env });
-  assert.equal((await app.mergeFlyer(mergeInput())).location, null);
+  const demo = (await app.mergeFlyer(mergeInput())).location;
+  assert.equal(demo.source, 'mock');
+  const meters = Math.hypot((demo.lat - 35.5) * 111320, (demo.lon - 139.5) * 111320 * Math.cos(35.5 * Math.PI / 180));
+  assert.ok(meters >= 299 && meters <= 901, String(meters));
   assert.equal(await app.locate({ q: 'test', name: 'test', lat: 35, lon: 139 }), null);
   let calls = 0;
   const personalApp = createApp({ env, fetch: async () => { calls++; throw new Error('Unexpected lookup'); } });
