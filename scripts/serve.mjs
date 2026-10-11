@@ -66,7 +66,7 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
   app ??= createApp({ fetch, env });
   const reads = new Map();
   const hour = 60 * 60 * 1000;
-  function reserve(req, count, kind = 'tiles', limit = 80) {
+  function reserve(req, count, kind = 'tiles', limit = 240) {
     const forwarded = req.headers['x-forwarded-for'];
     const ip = (env.TRUST_PROXY === '1' ? (Array.isArray(forwarded) ? forwarded.join(',') : forwarded)?.split(',').at(-1).trim() : null) || req.socket.remoteAddress;
     const key = `${kind}:${ip}`;

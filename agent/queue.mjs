@@ -16,4 +16,5 @@ export function createCallQueue(limit) {
   };
 }
 
-export const modelCall = createCallQueue(6);
+// DigitalOcean serverless inference handled 10 parallel tile reads comfortably; a page is 6 tiles.
+export const modelCall = createCallQueue(10);

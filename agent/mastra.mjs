@@ -128,7 +128,7 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
       const onEvent = requestContext.get('onEvent') ?? (() => {});
       const results = Array(tiles.length).fill(null);
       let next = 0;
-      await Promise.all(Array.from({ length: Math.min(4, tiles.length) }, async () => {
+      await Promise.all(Array.from({ length: Math.min(6, tiles.length) }, async () => {
         while (next < tiles.length) {
           const index = next++;
           let tile = null;

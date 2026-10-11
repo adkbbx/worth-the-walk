@@ -197,13 +197,13 @@ test('rankFlyers delegates to injected TabPFN adapter', async () => {
   assert.deepEqual(await tools.rankFlyers({ train, predict }), expected);
 });
 
-test('the shared upstream queue caps concurrent calls at six and releases slots on failures', async () => {
+test('the shared upstream queue caps concurrent calls at ten and releases slots on failures', async () => {
   let active = 0, peak = 0;
   await Promise.all(Array.from({ length: 20 }, () => modelCall(async () => {
     active++; peak = Math.max(peak, active);
     await new Promise(resolve => setImmediate(resolve)); active--;
   })));
-  assert.equal(peak, 6); assert.equal(active, 0);
+  assert.equal(peak, 10); assert.equal(active, 0);
   const queue = createCallQueue(1);
   const settled = await Promise.allSettled([queue(async () => { throw new Error('synthetic'); }), queue(async () => 42)]);
   assert.equal(settled[0].status, 'rejected'); assert.equal(settled[1].value, 42);
@@ -344,14 +344,14 @@ test('HTTP enforces all three body limits including chunked requests', async t =
   assert.equal(chunked.status, 413);
 });
 
-test('HTTP rejects tile 81 and spoofed forwarding headers, and resets after one hour', async t => {
+test('HTTP rejects tile 241 and spoofed forwarding headers, and resets after one hour', async t => {
   let time = 1_000_000;
   const server = await startServer(t, { now: () => time });
   const send = (tiles, ip = '192.0.2.1, 192.0.2.2') => request(server, '/api/read-page', {
     method: 'POST', headers: { 'x-forwarded-for': ip }, body: { pageId: 'rate', tiles: Array(tiles).fill(image) },
   });
-  for (let index = 0; index < 8; index++) assert.equal((await send(9)).status, 200);
-  assert.equal((await send(8)).status, 200);
+  for (let index = 0; index < 26; index++) assert.equal((await send(9)).status, 200);
+  assert.equal((await send(6)).status, 200);
   const limited = await send(1, '192.0.2.1, 192.0.2.9'); assert.equal(limited.status, 429);
   assert.equal(JSON.parse(limited.text).retryAfter, 3600); assert.equal(limited.headers['retry-after'], '3600');
   assert.equal((await send(1, '192.0.2.2')).status, 429);
