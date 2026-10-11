@@ -36,6 +36,9 @@ let chosenStops = null, groceryChoice = null, shoppingList = new Set(state.shopp
 let reading = null, preparing = 0, recovering = true, recovered = false, photoStorage = true, wakeLock = null;
 let photoWork = Promise.resolve();
 const stampMessages = new Map();
+// Disclosure state belongs to this visit, never to phone storage.
+const openFlyers = new Set(), allItems = new Set(), expiredOffers = new Set();
+let tossOpen = false;
 function notify(message = '') { $('notice').textContent = message; }
 function save() {
   state.shoppingList = [...shoppingList];
@@ -66,7 +69,7 @@ const scanDate = f => state.pages[f.pageIds?.[0]]?.scannedAt?.slice(0,10) ?? jap
 const sortedWalks = () => state.flyers.filter(f => f.bucket === 'walk').sort((a,b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
 function mailboxStat() {
   const count = bucket => state.flyers.filter(f => f.bucket === bucket).length;
-  return `${state.flyers.length} ${plural(state.flyers.length,'flyer','flyers')} sorted → ${count('walk')} ${plural(count('walk'),'outing','outings')}, ${count('home')} ${plural(count('home'),'deal','deals')}, ${count('toss')} safe to throw away`;
+  return `${state.flyers.length} ${plural(state.flyers.length,'flyer','flyers')} → ${count('walk')} worth a walk · ${count('home')} ${plural(count('home'),'deal','deals')} for home · ${count('toss')} to throw away`;
 }
 function row(f) { const h = home(); return featureRow(f,{today:japanToday(),distanceMeters:h && f.location ? distanceMeters(h,f.location) : null}); }
 function requestError(response,data) {
@@ -116,18 +119,47 @@ function stationOptions(selected) {
 }
 function rating(f) {
   if (f.bucket === 'keep') return '';
-  return `<div class="cw-actions"><span class="cw-muted">Interested?</span>${[1,0].map(v => `<button type="button" data-action="rate" data-id="${escape(f.id)}" data-label="${v}" aria-label="${v ? 'Interested' : 'Not interested'} in this flyer" aria-pressed="${state.labels[f.id] === v}">${v ? '👍' : '👎'}</button>`).join('')}</div>`;
+  return `<div class="cw-ratings">${[1,0].map(v => `<button type="button" data-action="rate" data-id="${escape(f.id)}" data-label="${v}" aria-label="${v ? 'Interested' : 'Not interested'} in this flyer" aria-pressed="${state.labels[f.id] === v}">${v ? '👍' : '👎'}</button>`).join('')}</div>`;
 }
 function valueLine(entry) { const value = printedValue(entry); return value === null ? '' : `<p class="cw-value">worth ${money(value)} as printed</p>`; }
 function entryList(f,outing = null) {
   const selected = (kind,index) => outing?.used?.some(u => u.flyerId === f.id && u.kind === kind && u.index === index);
-  const control = (kind,index) => outing ? `<label class="cw-check"><input type="checkbox" data-used="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(outing.id)}" ${selected(kind,index) ? 'checked' : ''}>${kind === 'offer' ? 'Used it' : 'Bought it'}</label>` : kind === 'item' ? `<label class="cw-check"><input type="checkbox" data-shopping="${escape(f.id)}" data-index="${index}" ${shoppingList.has(f.id + ':' + index) ? 'checked' : ''}>add to my walk list</label>` : '';
-  const offers = (f.offers ?? []).map((o,i) => {
-    const deadline = parseDeadline(o.deadline_text,scanDate(f));
-    return `<div class="cw-entry"><p>${escape(o.text_en ?? 'Printed offer')}</p>${o.text_ja ? `<p lang="ja" class="cw-muted">${escape(o.text_ja)}</p>` : ''}${o.offer_yen != null ? `<p>${money(o.offer_yen)}</p>` : ''}${valueLine(o)}${deadline ? `<p class="cw-meta">${formatDate(deadline)}${deadline < japanToday() ? ' · expired' : ''}</p>` : o.deadline_text ? `<p lang="ja" class="cw-meta">${escape(o.deadline_text)}</p>` : ''}${control('offer',i)}</div>`;
-  }).join('');
-  const items = (f.items ?? []).map((item,i) => `<div class="cw-entry"><p><strong>${escape(item.name_en ?? 'Item')}</strong> <span lang="ja">${escape(item.name_ja)}</span></p><p>${money(item.price_yen)}${item.price_tax_incl_yen != null ? ` · ${money(item.price_tax_incl_yen)} incl. tax` : ''}${item.unit ? ` <span lang="ja">/ ${escape(item.unit)}</span>` : ''}</p>${item.regular_yen != null ? `<p class="cw-muted">Printed comparison: ${money(item.regular_yen)} <span lang="ja">${escape(item.regular_label)}</span></p>` : ''}${valueLine(item)}${item.conditions?.length ? `<p class="cw-muted">${escape(item.conditions.join(' · '))}</p>` : ''}${control('item',i)}</div>`).join('');
-  return offers + items;
+  const control = (kind,index) => outing ? `<label class="cw-check"><input type="checkbox" data-used="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(outing.id)}" ${selected(kind,index) ? 'checked' : ''}>${kind === 'offer' ? 'Used it' : 'Bought it'}</label>` : f.bucket === 'walk' && kind === 'item' ? `<label class="cw-check"><input type="checkbox" data-shopping="${escape(f.id)}" data-index="${index}" ${shoppingList.has(f.id + ':' + index) ? 'checked' : ''}>add to my walk list</label>` : '';
+  const offers = (f.offers ?? []).map((o,i) => ({o,i,deadline:offerDeadline(f,o)}));
+  const old = offers.filter(({deadline}) => deadline && deadline < japanToday());
+  const offerHtml = ({o,i,deadline}) => `<div class="cw-entry" data-offer-index="${i}"><p>${escape(o.text_en ?? 'Printed offer')}</p>${o.text_ja ? `<p lang="ja" class="cw-muted">${escape(o.text_ja)}</p>` : ''}${o.offer_yen != null ? `<p>${money(o.offer_yen)}</p>` : ''}${valueLine(o)}${deadline ? `<p class="cw-meta">${formatDate(deadline)}${deadline < japanToday() ? ' · expired' : ''}</p>` : o.deadline_text ? `<p lang="ja" class="cw-meta">${escape(o.deadline_text)}</p>` : ''}${control('offer',i)}</div>`;
+  const offerRows = offers.filter(entry => !old.includes(entry)).map(offerHtml).join('') + (old.length ? `<button type="button" data-action="expired-offers" data-id="${escape(f.id)}" aria-expanded="${expiredOffers.has(f.id)}" aria-controls="expired-${escape(f.id)}">${old.length} expired ${plural(old.length,'offer','offers')}</button><div id="expired-${escape(f.id)}" ${expiredOffers.has(f.id) ? '' : 'hidden'}>${expiredOffers.has(f.id) ? old.map(offerHtml).join('') : ''}</div>` : '');
+  // Keep source indexes even after sorting: walk lists and used entries store them.
+  const items = f.bucket === 'toss' ? [] : (f.items ?? []).map((item,i) => ({item,i})).sort((a,b) => (printedValue(b.item) ?? -1) - (printedValue(a.item) ?? -1));
+  const visible = outing || allItems.has(f.id) ? items : items.slice(0,5);
+  const itemRows = visible.map(({item,i}) => `<div class="cw-entry" data-item-index="${i}"><p><strong>${escape(item.name_en ?? 'Item')}</strong> <span lang="ja">${escape(item.name_ja)}</span></p><p>${money(item.price_yen)}${item.price_tax_incl_yen != null ? ` · ${money(item.price_tax_incl_yen)} incl. tax` : ''}${item.unit ? ` <span lang="ja">/ ${escape(item.unit)}</span>` : ''}</p>${item.regular_yen != null ? `<p class="cw-muted">Printed comparison: ${money(item.regular_yen)} <span lang="ja">${escape(item.regular_label)}</span></p>` : ''}${valueLine(item)}${item.conditions?.length ? `<p class="cw-muted">${escape(item.conditions.join(' · '))}</p>` : ''}${control('item',i)}</div>`).join('');
+  return offerRows + `<div id="items-${escape(f.id)}">${itemRows}</div>` + (!outing && items.length > 5 ? `<button type="button" data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}" aria-controls="items-${escape(f.id)}">${allItems.has(f.id) ? 'Show top 5' : 'Show all ' + items.length}</button>` : '');
+}
+const shortText = (value,limit = 90) => {
+  const text = String(value ?? '').replace(/\s+/g,' ').trim();
+  return text.length > limit ? text.slice(0,limit - 1).trimEnd() + '…' : text;
+};
+const offerDeadline = (f,o) => parseDeadline(o.deadline_text,scanDate(f)) ?? parseDeadline(f.valid_to_text,scanDate(f)) ?? parseDeadline(f.deadline,scanDate(f));
+function bestDeal(f) {
+  const offers = (f.offers ?? []).filter(o => !offerDeadline(f,o) || offerDeadline(f,o) >= japanToday());
+  const entries = [...offers,...(f.items ?? [])].filter(e => printedValue(e) !== null).sort((a,b) => printedValue(b) - printedValue(a));
+  const best = entries[0];
+  if (!best) return shortText(offers[0]?.text_en ?? 'No printed deal',90);
+  const price = best.offer_yen ?? best.price_yen ?? (best.kind === 'free_trial' ? 0 : null);
+  // Extract a short offer label before its prices, then show the numeric fields once.
+  const text = best.name_en ?? best.name_ja ?? (best.text_en ?? best.text_ja ?? '').split(/(?:normally|regular(?: price)?|now|only|for|at)?\s*[¥￥]|\d[\d,]*\s*円/i)[0].replace(/[\s→(,:;]+$/,'');
+  const label = shortText(text || 'Printed deal',45);
+  if (best.regular_yen != null && price != null && best.regular_yen > price) return `${label} ${money(best.regular_yen)} → ${money(price)}`;
+  return `${label} · ${money(printedValue(best))} off`;
+}
+function locationChip(f) {
+  if (f.location?.place?.rating != null) return '📍 ★' + f.location.place.rating;
+  if (f.address || f.location?.source === 'gsi') return '📍 printed address';
+  return f.location ? '📍 location found' : '📍 no location';
+}
+function photoWarning(f) {
+  const count = Math.max(f.flyer_count ?? 1,...f.pageIds.map(id => state.pages[id]?.tiles?.[0]?.flyer_count ?? 1));
+  return count > 1 ? `<p class="cw-photo-warning">This photo shows ${escape(count)} flyers — take one photo per flyer for better results <span class="cw-retake">Retake</span></p>` : '';
 }
 function locationLine(f) {
   const l = f.location;
@@ -145,17 +177,24 @@ function pendingGroups() {
 }
 function flyerCard(f) {
   const readingPrices = reading?.active && reading.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing');
-  const reason = f.category === 'buying_service' ? 'Buying service — they come to you; only if you need it' : f.category === 'junk_removal' ? 'Removal service — keep only if you need it' : f.category === 'real_estate' ? 'Property advert — keep only if you need it' : 'No in-person deal to walk to';
-  return `<article class="cw-card" data-flyer="${escape(f.id)}"><h3${f.business?.name ? ' lang="ja"' : ''}>${escape(f.business?.name ?? (f.bucket === 'keep' ? 'Personal or official mail' : 'Flyer'))}${f.business?.branch ? ` <span class="cw-branch">${escape(f.business.branch)}</span>` : ''}</h3><p class="cw-kind">${escape(f.business?.kind ?? f.category?.replaceAll('_',' '))}${expired(f) ? ' · expired' : ''}</p>${scores.has(f.id) ? `<p class="cw-meta">Likely for you · ${Math.round(scores.get(f.id)*100)}%</p>` : ''}${readingPrices ? '<p class="cw-meta" data-reading-prices role="status">Reading prices…</p>' : ''}${f.summary_en ? `<p>${escape(f.summary_en)}</p>` : ''}${f.bucket === 'toss' ? `<p class="cw-muted">${reason}</p>` : ''}${f.deadline ? `<p class="cw-meta">Until ${formatDate(f.deadline)}${expired(f) ? ' · expired' : ''}</p>` : ''}${fixControl(f)}${f.bucket === 'keep' ? '<p class="cw-muted">Keep the original. Personal details are not saved.</p>' : entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '')}${rating(f)}</article>`;
+  if (f.bucket === 'keep') return `<article class="cw-card" data-flyer="${escape(f.id)}"><h3>Personal or official mail · keep it</h3>${fixControl(f)}<p class="cw-muted">Keep the original. Personal details are not saved.</p></article>`;
+  const name = `${escape(f.business?.name ?? 'Flyer')}${f.business?.branch ? ` <span class="cw-branch">${escape(f.business.branch)}</span>` : ''}`;
+  const reason = f.category === 'buying_service' ? 'buying service — they come to you' : f.category === 'junk_removal' ? 'removal service — only if needed' : f.category === 'real_estate' ? 'property advert' : f.comes_to_you ? 'they come to you' : 'no in-person deal';
+  const deal = `${escape(bestDeal(f))}${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}${expired(f) ? ' · expired' : ''}`;
+  const open = openFlyers.has(f.id), count = f.offers.length + f.items.length;
+  const toggle = `data-action="flyer-details" data-id="${escape(f.id)}" aria-expanded="${open}" aria-controls="details-${escape(f.id)}"`;
+  const head = f.bucket === 'walk' ? `<div class="cw-card-head"><h3><span lang="ja">${name}</span> <span class="cw-kind">· ${escape(f.business?.kind ?? f.category.replaceAll('_',' '))}</span></h3>${rating(f)}</div><p class="cw-verdict">${escape(shortText(f.summary_en))}</p><p class="cw-deal-line"><span class="cw-best-deal">${deal}</span> <span class="cw-location-chip">· ${escape(locationChip(f))}</span></p><button type="button" class="cw-disclosure" ${toggle}>${open ? 'Hide' : 'Show'} ${count === 1 ? '1 detail' : count+' prices &amp; offers'}</button>` : `<div class="cw-card-head"><button type="button" class="cw-mail-row" ${toggle}><strong lang="ja">${name}</strong> · ${f.bucket === 'toss' ? escape(reason) : `<span class="cw-deal-line">${deal}</span>`}</button>${rating(f)}</div>`;
+  const details = open ? entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '') + (f.bucket !== 'toss' ? fixControl(f) : '') : '';
+  return `<article class="cw-card${f.bucket === 'walk' ? '' : ' cw-compact'}" data-flyer="${escape(f.id)}">${head}${readingPrices ? '<p class="cw-meta" data-reading-prices role="status">Reading prices…</p>' : ''}${photoWarning(f)}<div class="cw-flyer-details" id="details-${escape(f.id)}" ${open ? '' : 'hidden'}>${details}</div></article>`;
 }
 function renderMailbox() {
   const bucket = key => {
     const list = key === 'walk' ? sortedWalks() : state.flyers.filter(f => f.bucket === key);
     const heading = `${titles[key]} <span class="cw-count">${list.length}</span>`;
     const content = list.length ? list.map(flyerCard).join('') : '<p class="cw-muted">No flyers here yet.</p>';
-    return key === 'toss' ? `<details class="cw-bucket" data-bucket="toss"><summary>${heading}</summary>${content}</details>` : `<section class="cw-bucket" data-bucket="${key}"><h2>${heading}</h2>${content}</section>`;
+    return key === 'toss' ? `<details class="cw-bucket" data-bucket="toss" ${tossOpen ? 'open' : ''}><summary>${heading}</summary>${content}</details>` : `<section class="cw-bucket" data-bucket="${key}"><h2>${heading}</h2>${content}</section>`;
   };
-  return `${reading ? readingCard() : ''}<h1>Your mailbox, sorted.</h1><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p>${recovered && photos.length && !reading ? resumeCard() : ''}${!reading ? addPagesCard() : ''}<p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}`;
+  return `${reading ? readingCard() : ''}<h1>Your mailbox, sorted.</h1><p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p>${recovered && photos.length && !reading ? resumeCard() : ''}${!reading ? addPagesCard() : ''}<p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}`;
 }
 function addPagesCard() {
   const disabled = busy || preparing || recovering;
@@ -711,16 +750,15 @@ function renderHistory() {
 }
 function render() {
   const focused = document.activeElement;
-  const focusKey = focused?.dataset.action === 'rate' ? {id:focused.dataset.id,label:focused.dataset.label} : null;
-  const tossOpen = $('panel').querySelector('[data-bucket=toss]')?.open;
+  const focusKey = ['rate','flyer-details','all-items','expired-offers'].includes(focused?.dataset.action) ? {action:focused.dataset.action,id:focused.dataset.id,label:focused.dataset.label} : null;
+  tossOpen = $('panel').querySelector('[data-bucket=toss]')?.open ?? tossOpen;
   // Async results (ranking, merges) re-render the panel; keep focus on its heading instead of dropping it to <body>.
   const headingFocused = $('panel').contains(document.activeElement) && /^H[1-3]$/.test(document.activeElement.tagName);
   $('panel').hidden = setupOpen; $('panel').setAttribute('aria-label',tab[0].toUpperCase()+tab.slice(1));
   $('panel').innerHTML = tab === 'mailbox' ? renderMailbox() : tab === 'walk' ? renderWalk() : tab === 'stamps' ? renderStamps() : renderHistory();
   document.body.classList.toggle('cw-has-photos',tab === 'mailbox' && !setupOpen && photos.length > 0 && !reading);
   updateReading();
-  if (tossOpen) { const toss = $('panel').querySelector('[data-bucket=toss]'); if (toss) toss.open = true; }
-  if (focusKey) [...$('panel').querySelectorAll('[data-action=rate]')].find(b => b.dataset.id === focusKey.id && b.dataset.label === focusKey.label)?.focus({preventScroll:true});
+  if (focusKey) [...$('panel').querySelectorAll('[data-action]')].find(b => b.dataset.action === focusKey.action && b.dataset.id === focusKey.id && b.dataset.label === focusKey.label)?.focus({preventScroll:true});
   for (const b of document.querySelectorAll('[data-tab]')) { if (b.dataset.tab === tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
   if (headingFocused) focusHeading();
 }
@@ -736,6 +774,13 @@ function newOuting(p,status) {
 async function action(button) {
   const id = button.dataset.id;
   switch (button.dataset.action) {
+    case 'flyer-details':
+    case 'all-items':
+    case 'expired-offers': {
+      const set = button.dataset.action === 'flyer-details' ? openFlyers : button.dataset.action === 'all-items' ? allItems : expiredOffers;
+      if (set.has(id)) set.delete(id); else set.add(id);
+      render(); break;
+    }
     case 'settings': setupOpen = true; renderSetup(); render(); break;
     case 'close-setup': setupOpen = false; renderSetup(); render(); break;
     case 'take-photo': $('camera-input').click(); break;

@@ -87,6 +87,7 @@ try {
     const events = (await response.text()).trim().split('\n').map(line => JSON.parse(line));
     assert.equal(events.find(e => e.type === 'done').tiles.length,request.tiles.length);
     const tile = structuredClone(fixtures[fixtureOrder[index]]);
+    if (index === 0) tile.flyer_count = 3;
     if (index === 1 && request.mode === 'page') {
       marketId=request.pageId;
       tile.items[0].price_yen=999;
@@ -154,6 +155,8 @@ try {
   assert.ok(Object.values((await readState(page)).pages).length < 3,'a flyer card appears before the delayed last page finishes');
   assert.ok(await page.locator('[data-flyer]').first().isVisible());
   await page.getByRole('heading',{name:/架空若葉合気道場/}).waitFor();
+  await page.getByText(/This photo shows 3 flyers — take one photo per flyer for better results/).waitFor();
+  assert.equal(await page.locator('.cw-retake').first().textContent(),'Retake');
   await page.locator('[data-reading-prices]').waitFor();
   assert.equal(detailFinished,false,'the service card appears before supermarket details finish');
   const serviceId=reads.find(r => pageIndices.get(r.pageId) === 0).pageId;
@@ -167,7 +170,7 @@ try {
   await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 3,key);
   await page.locator('#reading-card').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-bucket]').count(),4);
-  assert.match(await page.locator('#mailbox-stat').textContent(),/3 flyers sorted → 2 outings, 1 deal, 0 safe to throw away/);
+  assert.match(await page.locator('#mailbox-stat').textContent(),/3 flyers → 2 worth a walk · 1 deal for home · 0 to throw away/);
   assert.equal(await page.locator('#progress').textContent(),'');
   assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#panel h1')),true);
   assert.equal(await page.locator('[data-bucket=toss]').getAttribute('open'),null);
@@ -298,6 +301,69 @@ try {
   assert.equal(await page.locator('[data-metric="walks done"] strong').textContent(),'1');
   assert.ok(Number(await page.locator('[data-metric="km"] strong').textContent()) > 0);
   assert.equal(savings([{entry:saved.flyers.find(f => f.id === usedId).offers[usedIndex]}]).yen,expectedYen);
+
+  // A dense menu stays one deal at a glance; details are an explicit choice.
+  const mailboxContext=await browser.newContext({viewport:{width:390,height:844}});
+  const mailboxPage=await mailboxContext.newPage();mailboxPage.on('pageerror',error => errors.push(error.message));
+  await mailboxPage.clock.setFixedTime(new Date('2026-10-11T02:00:00Z'));
+  await mailboxPage.goto(base);await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
+  await mailboxPage.evaluate(key => {
+    const state=JSON.parse(localStorage.getItem(key));
+    state.settings={lineId:'skytree',home:'asakusa',maxMinutes:40,weightKg:60};
+    const items=Array.from({length:37},(_,i) => ({name_ja:`架空商品${i}`,name_en:`Item ${i}`,price_yen:100+i,regular_yen:1000+10*i,conditions:[]}));
+    const offers=[{text_en:'Mat trial',text_ja:'架空体験',regular_yen:3300,offer_yen:1000,deadline_text:'2026-10-31'},
+      {text_en:'Second coupon',discount_yen:100,deadline_text:'2026-10-25'},
+      {text_en:'Old giant coupon',discount_yen:5000,deadline_text:'2026-10-01'},
+      {text_en:'Another old coupon',discount_yen:200,deadline_text:'2026-10-02'}];
+    const advert=(id,bucket) => ({id,pageIds:[],business:{name:id,branch:'Test branch',kind:'test shop'},category:bucket === 'walk' ? 'shop' : bucket === 'home' ? 'food_delivery' : 'buying_service',bucket,summary_en:'A printed deal. '+ 'Long summary text '.repeat(12),offers:structuredClone(offers),items:structuredClone(items),deadline:'2026-10-31',location:null});
+    state.flyers=[advert('many-prices','walk'),advert('walk-two','walk'),advert('walk-three','walk'),advert('walk-four','walk'),advert('Sushi delivery','home'),advert('Buying service','toss')];
+    state.pages={};state.labels={};state.outings=[];
+    localStorage.setItem(key,JSON.stringify(state));
+  },key);
+  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal(await mailboxPage.locator('#mailbox-stat').textContent(),'6 flyers → 4 worth a walk · 1 deal for home · 1 to throw away');
+  const many=mailboxPage.locator('[data-flyer=many-prices]');
+  const disclose=many.getByRole('button',{name:'Show 41 prices & offers',exact:true});
+  assert.equal(await disclose.getAttribute('aria-expanded'),'false');
+  assert.equal(await many.locator('.cw-deal-line').count(),1);
+  assert.match(await many.locator('.cw-deal-line').textContent(),/Mat trial ¥3,300 → ¥1,000 · until 31 Oct/);
+  assert.match(await many.locator('.cw-deal-line').textContent(),/📍 no location/);
+  assert.ok((await many.locator('.cw-verdict').textContent()).length <= 90);
+  assert.equal(await many.locator('.cw-entry').count(),0);
+  await disclose.click();
+  assert.equal(await many.locator('[data-action=flyer-details]').evaluate(button => document.activeElement === button),true,'disclosure keeps keyboard focus after rendering');
+  assert.equal(await many.locator('[data-item-index]').count(),5);
+  assert.equal(await many.locator('[data-item-index]').first().getAttribute('data-item-index'),'36','items sort by savings and retain their storage index');
+  assert.equal(await many.locator('[data-offer-index]').count(),2,'expired offers start hidden');
+  assert.ok(await many.getByRole('button',{name:'Show all 37',exact:true}).isVisible());
+  await many.locator('[data-shopping][data-index="36"]').check();
+  assert.ok((await readState(mailboxPage)).shoppingList.includes('many-prices:36'));
+  await many.locator('[data-action=rate][data-label="1"]').click();
+  assert.equal(await many.locator('[data-action=flyer-details]').getAttribute('aria-expanded'),'true','rating rerenders keep details open');
+  await many.getByRole('button',{name:'Show all 37',exact:true}).click();
+  assert.equal(await many.locator('[data-item-index]').count(),37);
+  await many.getByRole('button',{name:'2 expired offers',exact:true}).click();
+  assert.equal(await many.locator('[data-offer-index]').count(),4);
+  await many.getByRole('button',{name:'2 expired offers',exact:true}).click();
+  assert.equal(await many.locator('[data-offer-index]').count(),2);
+  const homeCard=mailboxPage.locator('[data-bucket=home] [data-flyer]');
+  assert.equal(await homeCard.locator('.cw-entry').count(),0);
+  await homeCard.locator('[data-action=flyer-details]').click();
+  assert.equal(await homeCard.locator('[data-item-index]').count(),5);
+  assert.equal(await homeCard.getByRole('checkbox',{name:'add to my walk list',exact:true}).count(),0);
+  await homeCard.getByRole('button',{name:'Show all 37',exact:true}).click();
+  assert.equal(await homeCard.locator('[data-item-index]').count(),37);
+  assert.equal(await homeCard.locator('[data-shopping]').count(),0);
+  await mailboxPage.locator('[data-bucket=toss]>summary').click();
+  const tossCard=mailboxPage.locator('[data-bucket=toss] [data-flyer]');
+  assert.match(await tossCard.locator('.cw-mail-row').textContent(),/buying service — they come to you/);
+  await tossCard.locator('[data-action=flyer-details]').click();
+  assert.equal(await tossCard.locator('[data-offer-index]').count(),2);
+  assert.equal(await tossCard.locator('[data-item-index], [data-shopping]').count(),0);
+  await overflow(mailboxPage,'dense mailbox');
+  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal(await many.locator('[data-action=flyer-details]').getAttribute('aria-expanded'),'false','disclosures are in memory only');
+  await mailboxContext.close();
   // Desktop uses the same phone-first content, without stretched text or overflow.
   await page.setViewportSize({width:1280,height:900});
   for (const name of ['mailbox','walk','stamps','history']) { await page.locator(`[data-tab=${name}]`).click(); await overflow(page,`desktop ${name}`); }
@@ -440,12 +506,13 @@ try {
     const state=JSON.parse(localStorage.getItem(key));
     state.settings={lineId:'skytree',home:'asakusa',maxMinutes:40,weightKg:60};
     const advert=(id,name,extra={}) => ({id,pageIds:[],category:'cleaning',bucket:'walk',business:{name},summary_en:'Printed cleaning offer',offers:[{text_en:'Printed offer',discount_yen:100}],items:[],location:null,deadline:null,hours:null,...extra});
-    state.flyers=[advert('unlocated','Fictional walk shop'),advert('cleaner','Cleaner <img src=x onerror=alert(1)>',{bucket:'home',offers:[],items:[{name_en:'Suit jacket',price_yen:596,conditions:[]},{name_en:'Jacket',price_yen:596,regular_yen:1193,conditions:[]}]}),
+    state.flyers=[advert('unlocated','Fictional walk shop'),advert('cleaner','Cleaner <img src=x onerror=alert(1)>',{offers:[],items:[{name_en:'Suit jacket',price_yen:596,conditions:[]},{name_en:'Jacket',price_yen:596,regular_yen:1193,conditions:[]}]}),
       advert('expired','Expired shop',{location,deadline:'2026-10-12'}),advert('closed','Closed shop',{location,hours:'00:00-00:01'}),advert('disliked','Disliked shop',{location})];
     state.labels={disliked:0}; state.outings=[];
     localStorage.setItem(key,JSON.stringify(state));
   },{key,location:remoteLocation});
   await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
+  await walkPage.locator('[data-flyer=cleaner] [data-action=flyer-details]').click();
   await walkPage.locator('[data-shopping=cleaner][data-index="0"]').check();
   await walkPage.locator('[data-shopping=cleaner][data-index="1"]').check();
   await walkPage.locator('[data-tab=walk]').click();

@@ -13,7 +13,7 @@ function list(value,limit) {
   return Array.isArray(value) ? value.slice(0,limit) : [];
 }
 function emptyTile() {
-  return {business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false};
+  return {business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false,flyer_count:1};
 }
 // Vision models sometimes drop a quote before a key (`,unit":`), leave keys unquoted or add trailing commas.
 function repairJson(s) {
@@ -49,6 +49,7 @@ export function normalizeTile(raw) {
     const r=object(raw),b=object(r.business),tile=emptyTile();
     for(const key of ['name','branch','kind'])tile.business[key]=text(b[key]);
     tile.category=CATEGORIES.includes(r.category) ? r.category : 'other';
+    tile.flyer_count=Number.isInteger(r.flyer_count) ? Math.max(1,Math.min(20,r.flyer_count)) : 1;
     for(const key of ['summary_en','address','hours','valid_from_text','valid_to_text'])tile[key]=text(r[key]);
     tile.offers=list(r.offers,20).map(value=>{
       const o=object(value);
@@ -121,18 +122,33 @@ export function groupPages(pages,overrides={}) {
   const info=pages.map(page=>{
     if(Object.prototype.hasOwnProperty.call(overrides ?? {},page.id))return null;
     const tiles=list(page.tiles,Infinity);
+    // Printed prices of ¥1,000+ fingerprint a flyer even when its name is read differently each time (a stylised logo).
+    const amounts=new Set(tiles.flatMap(t=>[...list(t?.offers,Infinity).flatMap(o=>[o?.regular_yen,o?.offer_yen]),...list(t?.items,Infinity).flatMap(i=>[i?.price_yen,i?.regular_yen])])
+      .map(yen).filter(v=>v!==null && v>=1000));
     return {name:tiles.map(t=>normText(t?.business?.name)).find(n=>n.length>=3) ?? '',address:tiles.map(t=>normText(t?.address)).find(Boolean) ?? '',
-      phones:new Set(tiles.flatMap(t=>list(t?.phones,Infinity).map(phoneKey)).filter(Boolean))};
+      phones:new Set(tiles.flatMap(t=>list(t?.phones,Infinity).map(phoneKey)).filter(Boolean)),amounts};
   });
+  // Conflicts are checked between whole groups, so two shops with different phones can't join through a page without one.
+  const agg=new Map();
+  pages.forEach((_,i)=>{
+    if(!info[i])return;
+    const r=root(i),g=agg.get(r) ?? {phones:new Set(),addresses:new Set()};
+    info[i].phones.forEach(p=>g.phones.add(p)); if(info[i].address)g.addresses.add(info[i].address); agg.set(r,g);
+  });
+  const disjoint=(s,t)=>s.size>0 && t.size>0 && ![...s].some(v=>t.has(v));
+  const conflict=(a,b)=>{ const g=agg.get(root(a)),h=agg.get(root(b)); return Boolean(g && h && (disjoint(g.addresses,h.addresses) || disjoint(g.phones,h.phones))); };
+  const merge=(a,b)=>{
+    const g=agg.get(root(a)),h=agg.get(root(b)); agg.delete(root(a)); agg.delete(root(b)); join(a,b);
+    agg.set(root(a),{phones:new Set([...(g?.phones ?? []),...(h?.phones ?? [])]),addresses:new Set([...(g?.addresses ?? []),...(h?.addresses ?? [])])});
+  };
   for(let a=0;a<pages.length;a++)for(let b=a+1;b<pages.length;b++) {
     const x=info[a],y=info[b];
-    if(!x?.name || !y?.name)continue;
+    if(!x || !y || root(a)===root(b) || conflict(a,b))continue;
     const [short,long]=x.name.length<=y.name.length ? [x.name,y.name] : [y.name,x.name];
     // A shorter name of 4+ characters may sit inside the longer one ("Good!" vs "クリーニング Good!").
-    if(!short || !(long.startsWith(short) || (short.length>=4 && long.includes(short))))continue;
-    if(x.address && y.address && x.address!==y.address)continue;
-    if(x.phones.size && y.phones.size && ![...x.phones].some(p=>y.phones.has(p)))continue;
-    join(a,b);
+    const named=Boolean(short) && (long.startsWith(short) || (short.length>=4 && long.includes(short)));
+    const sharedPrices=[...x.amounts].filter(v=>y.amounts.has(v)).length;
+    if(named || sharedPrices>=3)merge(a,b);
   }
   const groups=new Map();
   pages.forEach((page,i)=>{
@@ -161,6 +177,7 @@ export function mergeFallback(pages) {
   pages.forEach((p,page)=>{
     for(const raw of readingsForMerge(p)) {
       const tile=normalizeTile(raw);
+      flyer.flyer_count=Math.max(flyer.flyer_count,tile.flyer_count);
       for(const key of ['name','branch','kind'])flyer.business[key] ??= tile.business[key];
       for(const key of ['summary_en','address','hours','valid_from_text','valid_to_text'])flyer[key] ??= tile[key];
       if(tile.category!=='other')categories.set(tile.category,(categories.get(tile.category) || 0)+1);

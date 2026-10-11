@@ -13,7 +13,7 @@ function list(value,limit) {
   return Array.isArray(value) ? value.slice(0,limit) : [];
 }
 function emptyTile() {
-  return {business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false};
+  return {business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false,flyer_count:1};
 }
 // Vision models sometimes drop a quote before a key (`,unit":`), leave keys unquoted or add trailing commas.
 function repairJson(s) {
@@ -49,6 +49,7 @@ export function normalizeTile(raw) {
     const r=object(raw),b=object(r.business),tile=emptyTile();
     for(const key of ['name','branch','kind'])tile.business[key]=text(b[key]);
     tile.category=CATEGORIES.includes(r.category) ? r.category : 'other';
+    tile.flyer_count=Number.isInteger(r.flyer_count) ? Math.max(1,Math.min(20,r.flyer_count)) : 1;
     for(const key of ['summary_en','address','hours','valid_from_text','valid_to_text'])tile[key]=text(r[key]);
     tile.offers=list(r.offers,20).map(value=>{
       const o=object(value);
@@ -121,18 +122,33 @@ export function groupPages(pages,overrides={}) {
   const info=pages.map(page=>{
     if(Object.prototype.hasOwnProperty.call(overrides ?? {},page.id))return null;
     const tiles=list(page.tiles,Infinity);
+    // Printed prices of ¥1,000+ fingerprint a flyer even when its name is read differently each time (a stylised logo).
+    const amounts=new Set(tiles.flatMap(t=>[...list(t?.offers,Infinity).flatMap(o=>[o?.regular_yen,o?.offer_yen]),...list(t?.items,Infinity).flatMap(i=>[i?.price_yen,i?.regular_yen])])
+      .map(yen).filter(v=>v!==null && v>=1000));
     return {name:tiles.map(t=>normText(t?.business?.name)).find(n=>n.length>=3) ?? '',address:tiles.map(t=>normText(t?.address)).find(Boolean) ?? '',
-      phones:new Set(tiles.flatMap(t=>list(t?.phones,Infinity).map(phoneKey)).filter(Boolean))};
+      phones:new Set(tiles.flatMap(t=>list(t?.phones,Infinity).map(phoneKey)).filter(Boolean)),amounts};
   });
+  // Conflicts are checked between whole groups, so two shops with different phones can't join through a page without one.
+  const agg=new Map();
+  pages.forEach((_,i)=>{
+    if(!info[i])return;
+    const r=root(i),g=agg.get(r) ?? {phones:new Set(),addresses:new Set()};
+    info[i].phones.forEach(p=>g.phones.add(p)); if(info[i].address)g.addresses.add(info[i].address); agg.set(r,g);
+  });
+  const disjoint=(s,t)=>s.size>0 && t.size>0 && ![...s].some(v=>t.has(v));
+  const conflict=(a,b)=>{ const g=agg.get(root(a)),h=agg.get(root(b)); return Boolean(g && h && (disjoint(g.addresses,h.addresses) || disjoint(g.phones,h.phones))); };
+  const merge=(a,b)=>{
+    const g=agg.get(root(a)),h=agg.get(root(b)); agg.delete(root(a)); agg.delete(root(b)); join(a,b);
+    agg.set(root(a),{phones:new Set([...(g?.phones ?? []),...(h?.phones ?? [])]),addresses:new Set([...(g?.addresses ?? []),...(h?.addresses ?? [])])});
+  };
   for(let a=0;a<pages.length;a++)for(let b=a+1;b<pages.length;b++) {
     const x=info[a],y=info[b];
-    if(!x?.name || !y?.name)continue;
+    if(!x || !y || root(a)===root(b) || conflict(a,b))continue;
     const [short,long]=x.name.length<=y.name.length ? [x.name,y.name] : [y.name,x.name];
     // A shorter name of 4+ characters may sit inside the longer one ("Good!" vs "クリーニング Good!").
-    if(!short || !(long.startsWith(short) || (short.length>=4 && long.includes(short))))continue;
-    if(x.address && y.address && x.address!==y.address)continue;
-    if(x.phones.size && y.phones.size && ![...x.phones].some(p=>y.phones.has(p)))continue;
-    join(a,b);
+    const named=Boolean(short) && (long.startsWith(short) || (short.length>=4 && long.includes(short)));
+    const sharedPrices=[...x.amounts].filter(v=>y.amounts.has(v)).length;
+    if(named || sharedPrices>=3)merge(a,b);
   }
   const groups=new Map();
   pages.forEach((page,i)=>{
@@ -150,12 +166,18 @@ export function dedupeItems(items) {
     seen.add(key);return true;
   });
 }
+// Whole-page readings retain identity; successful detail reads own the item prices.
+export function readingsForMerge(page) {
+  return list(page.tiles,Infinity).map((tile,index)=>
+    page.detailed && index===0 && tile ? {...tile,items:[]} : tile).filter(Boolean);
+}
 export function mergeFallback(pages) {
   const flyer={...emptyTile(),id:'f-'+pages[0]?.id,pageIds:pages.map(p=>p.id)},categories=new Map();
   const phones=new Set(),websites=new Set(),offers=new Set();
   pages.forEach((p,page)=>{
-    for(const raw of list(p.tiles,Infinity)) {
+    for(const raw of readingsForMerge(p)) {
       const tile=normalizeTile(raw);
+      flyer.flyer_count=Math.max(flyer.flyer_count,tile.flyer_count);
       for(const key of ['name','branch','kind'])flyer.business[key] ??= tile.business[key];
       for(const key of ['summary_en','address','hours','valid_from_text','valid_to_text'])flyer[key] ??= tile[key];
       if(tile.category!=='other')categories.set(tile.category,(categories.get(tile.category) || 0)+1);
@@ -181,6 +203,18 @@ export function bucketOf(flyer) {
   if(flyer.category==='food_delivery' || flyer.delivery)return 'home';
   if(['buying_service','junk_removal','real_estate'].includes(flyer.category) || flyer.comes_to_you)return 'toss';
   return IN_PERSON.includes(flyer.category) ? 'walk' : 'toss';
+}
+export function needsDetail(tile) {
+  if(!tile || bucketOf(tile)!=='walk' || !['supermarket','drugstore','cleaning','restaurant','shop'].includes(tile.category))return false;
+  if((tile.items?.length ?? 0)>=2)return true;
+  const printed=[tile.summary_en,...(tile.offers ?? []).flatMap(o=>[o.text_ja,o.text_en]),
+    ...(tile.items ?? []).flatMap(i=>[i.name_ja,i.name_en,i.unit])].filter(s=>typeof s==='string').join(' ').normalize('NFKC');
+  // A translation or summary can repeat the same printed amounts.
+  const offerText=(tile.offers ?? []).map(o=>o.text_ja || o.text_en || '').join(' ');
+  const amounts=value=>[...String(value ?? '').normalize('NFKC').matchAll(/[¥￥]\s*\d[\d,]*(?:\.\d+)?|\d[\d,]*(?:\.\d+)?\s*円/g)].length;
+  return /price\s*(?:list|table)|menu|料金表|価格表|お品書き|メニュー/i.test(printed) ||
+    Math.max(amounts(tile.summary_en),amounts(offerText))>=3 ||
+    (tile.offers ?? []).flatMap(o=>[o.regular_yen,o.offer_yen,o.discount_yen]).filter(value=>yen(value)!==null).length>=3;
 }
 export function needsLookup(flyer) {
   return bucketOf(flyer)==='walk' && !text(flyer.address);
@@ -215,7 +249,8 @@ export function finalizeFlyer(flyer,scanDate,chainOf=()=>null) {
   const dates=[flyer.valid_to_text,...list(flyer.offers,Infinity).map(o=>o.deadline_text)].map(s=>parseDeadline(s,scanDate)).filter(Boolean).sort();
   // Chain names like トップ or OK also appear inside unrelated business names, so only grocery flyers are matched.
   const grocery=['supermarket','drugstore'].includes(flyer.category);
-  return {...flyer,bucket:bucketOf(flyer),needsLookup:needsLookup(flyer),deadline:dates[0] ?? null,chain:grocery?chainOf(flyer.business?.name ?? null):null};
+  // A flyer stays worth a visit until its LAST printed date; one early "sale vol. 1" must not expire the whole flyer.
+  return {...flyer,bucket:bucketOf(flyer),needsLookup:needsLookup(flyer),deadline:dates.at(-1) ?? null,chain:grocery?chainOf(flyer.business?.name ?? null):null};
 }
 export function storable(flyer) {
   return flyer.bucket==='keep' ? {id:flyer.id,pageIds:flyer.pageIds,bucket:'keep',category:flyer.category} : flyer;

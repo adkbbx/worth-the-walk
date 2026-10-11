@@ -13,8 +13,10 @@ Rules:
 // Keep both passes on the same schema and printed-text rules.
 export const PAGE_PROMPT = TILE_PROMPT
   .replace('ONE part (tile) of ONE page', 'ONE whole page')
+  .replace('"business":', '"flyer_count":1,"business":')
   .replaceAll('this tile', 'this page')
   .replaceAll('the tile', 'the page') + `
+- flyer_count: integer, default 1. How many separate flyers or leaflets are visible in this photo? Count separate leaflets, not panels or coupons on one flyer.
 - Read the whole page for its business, category, main offer, headline phone numbers and address. Only report what is printed. If a dense price list is unreadable, omit those items and describe the printed price list in summary_en; never invent items or prices.`;
 
 export const MERGE_PROMPT = `The JSON objects below are whole-page and optional close-up readings of every page of ONE Japanese flyer ("page" is the 0-based page number). Combine them into ONE JSON object with the same keys as a tile reading, except "items" (price-list items are merged separately; do not output them), and add "page" (number) to every offer. Rules: use only information present in the readings; the first reading of each page supplies business identity, headline phones and address; prefer the most complete printed value; keep every distinct phone number; remove duplicate offers that come from overlapping tiles; choose one category from the same list; write summary_en as one sentence of at most 120 characters saying what the business is and what it offers; never invent prices, dates, phone numbers or addresses. Return only JSON.`;

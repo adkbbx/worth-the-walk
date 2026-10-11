@@ -5,7 +5,7 @@ import {CATEGORIES,OFFER_KINDS,BUCKETS,IN_PERSON,parseJsonLoose,yen,normalizeTil
 
 const tile=raw=>normalizeTile(raw);
 const page=(id,raw)=>({id,tiles:[tile(raw)]});
-const empty={business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false};
+const empty={business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false,flyer_count:1};
 
 test('needsDetail gates every category by walkable price-list evidence',()=>{
   const items=[{name_ja:'架空りんご',price_yen:100},{name_ja:'架空たまご',price_yen:200}];
@@ -103,6 +103,48 @@ test('browser resumes saved whole-page readings with only a detail request',asyn
   assert.equal(h.state.pages.p.detailPending,false);assert.equal(h.state.flyers[0].business.name,'架空市場');
 });
 
+// Run the actual card renderer as well as the reading path in this browser-free suite.
+function cardHarness(f) {
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const date=value=>new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Tokyo'}).format(new Date(value+'T12:00:00+09:00'));
+  const sandbox={state:{pages:{p:{scannedAt:'2026-10-11',tiles:[{flyer_count:3}]}},flyers:[f],labels:{}},
+    reading:null,busy:false,scores:new Map(),shoppingList:new Set(),openFlyers:new Set(),allItems:new Set(),expiredOffers:new Set(),
+    printedValue,parseDeadline,groupPages,japanToday:()=> '2026-10-11',scanDate:()=> '2026-10-11',
+    expired:f=>Boolean(f.deadline && f.deadline<'2026-10-11'),formatDate:date,shortDate:value=>date(value).replace(/ \d{4}$/,'')};
+  const declarations=['escape','plural','money'].map(name=>source.match(new RegExp('const '+name+' = [^\\r\\n]+'))[0]).join('\n');
+  const code=source.slice(source.indexOf('function rating('),source.indexOf('function renderMailbox('));
+  const renderer=runInNewContext(declarations+'\n'+code+'\n({flyerCard,entryList,bestDeal})',sandbox);
+  return {...sandbox,...renderer};
+}
+test('mailbox cards disclose five sorted prices, preserve indexes and escape model text',()=>{
+  const f={...tile({category:'shop',business:{name:'Shop <img src=x>',kind:'test shop'},summary_en:'Summary '.repeat(20),
+    offers:[{text_ja:'体験',text_en:'Mat trial for ¥1,000',regular_yen:3300,offer_yen:1000,deadline_text:'2026-10-31'},
+      {text_ja:'旧割引',text_en:'Old offer',discount_yen:5000,deadline_text:'2026-10-01'}],
+    items:Array.from({length:37},(_,i)=>({name_ja:'商品'+i,name_en:'Item '+i,price_yen:100,regular_yen:100+i}))}),id:'f-p',pageIds:['p'],bucket:'walk',deadline:'2026-10-31'};
+  const before=JSON.stringify(f),h=cardHarness(f),collapsed=h.flyerCard(f);
+  assert.equal((collapsed.match(/class="cw-deal-line"/g) ?? []).length,1);
+  assert.match(collapsed,/Mat trial ¥3,300 → ¥1,000 · until 31 Oct/);
+  assert.match(collapsed,/Show 39 prices &amp; offers/);assert.doesNotMatch(collapsed,/data-item-index|data-offer-index/);
+  assert.match(collapsed,/This photo shows 3 flyers/);assert.match(collapsed,/cw-retake/);
+  assert.match(collapsed,/Shop &lt;img src=x&gt;/);assert.doesNotMatch(collapsed,/<img/);
+  assert.ok(collapsed.match(/class="cw-verdict">([^<]*)/)[1].length<=90);
+  h.openFlyers.add(f.id);
+  const expanded=h.flyerCard(f);
+  assert.deepEqual([...expanded.matchAll(/data-item-index="(\d+)"/g)].map(m=>Number(m[1])),[36,35,34,33,32]);
+  assert.match(expanded,/Show all 37/);assert.match(expanded,/1 expired offer/);assert.doesNotMatch(expanded,/Old offer/);
+  assert.match(expanded,/data-shopping="f-p" data-index="36"/);
+  assert.ok(expanded.indexOf('data-offer-index')<expanded.indexOf('data-item-index'));
+  h.allItems.add(f.id);h.expiredOffers.add(f.id);
+  const all=h.flyerCard(f);
+  assert.equal((all.match(/data-item-index=/g) ?? []).length,37);assert.match(all,/Old offer/);
+  assert.equal(JSON.stringify(f),before,'rendering never reorders stored data');
+  for(const bucket of ['home','toss']) {
+    const other={...f,bucket},html=h.flyerCard(other);
+    assert.doesNotMatch(html,/data-shopping/);
+    if(bucket==='toss')assert.doesNotMatch(html,/data-item-index/);
+  }
+});
+
 test('exported vocabularies match the contract',()=>{
   assert.deepEqual(CATEGORIES,['lesson','fitness','cleaning','shop','supermarket','drugstore','restaurant','clinic','event','food_delivery','buying_service','junk_removal','real_estate','official_or_personal','other']);
   assert.deepEqual(OFFER_KINDS,['free_trial','discount','coupon','sale','campaign','other']);
@@ -131,6 +173,19 @@ test('groupPages joins back pages by business name, including an added branch, u
   assert.deepEqual(groups,[['a1','a2'],['b1','b2'],['c1'],['c2'],['d1'],['d2'],['e1','e2'],['f1'],['f2']]);
   assert.deepEqual(groupPages([page('a1',{business:{name:'テスト買取'}}),page('a2',{business:{name:'テスト買取'}})],{a2:'own'}).map(g=>g.pageIds),[['a1'],['a2']]);
 });
+test('groupPages joins pages that print the same three ¥1,000+ prices, but not common small prices or conflicting phones',()=>{
+  const coupons=[{text_ja:'クーポン',regular_yen:10960,offer_yen:5480},{text_ja:'クーポン',regular_yen:13560,offer_yen:6780}];
+  const groups=groupPages([
+    page('s1',{business:{name:'テスト寿司'},offers:coupons}),
+    page('s2',{business:{name:'回転テスト'},offers:coupons,items:[{name_ja:'盛合せ',price_yen:4980}]}),
+    page('m1',{business:{name:'市場A'},items:[{name_ja:'卵',price_yen:98},{name_ja:'牛乳',price_yen:158},{name_ja:'豆腐',price_yen:198}]}),
+    page('m2',{business:{name:'市場B'},items:[{name_ja:'卵',price_yen:98},{name_ja:'牛乳',price_yen:158},{name_ja:'豆腐',price_yen:198}]}),
+    page('p1',{business:{name:'店X'},phones:['0120-000-444'],offers:coupons}),
+    page('p2',{business:{name:'店Y'},phones:['0120-000-555'],offers:coupons})
+  ]).map(g=>g.pageIds);
+  // Phone-less pages join the first matching shop; a second shop with a different phone can never join that group.
+  assert.deepEqual(groups,[['s1','s2','p1'],['m1'],['m2'],['p2']]);
+});
 test('parseJsonLoose repairs the key quoting and trailing commas a vision model produced',()=>{
   // Real Gemma output shape: a missing quote before "unit" made the whole tile unreadable.
   const raw='```json\n{"items":[{"name_ja":"テスト肉","price_yen":563,"regular_yen":579,"regular_label":"非会員・カード払価格",unit":"100g当たり"}],}\n```';
@@ -146,6 +201,11 @@ test('normalizeTile returns a complete empty tile for garbage',()=>{
   for(const raw of [null,undefined,42,'garbage',[],{}, {business:[],offers:'bad',items:[null],phones:42}])assert.deepEqual(tile(raw),empty);
   const raw={get business(){throw new Error('unreadable');}};
   assert.deepEqual(tile(raw),empty);
+});
+test('normalizeTile keeps and clamps the whole-photo flyer count',()=>{
+  for(const [value,expected] of [[undefined,1],[null,1],[3,3],[0,1],[-5,1],[20,20],[99,20],[2.5,1],['3',1],[NaN,1],[Infinity,1]])assert.equal(tile({flyer_count:value}).flyer_count,expected);
+  const pages=[page('first',{flyer_count:3}),page('second',{flyer_count:2})];
+  assert.equal(mergeFallback(pages).flyer_count,3,'separate pages do not add up to separate flyers');
 });
 test('normalizeTile sanitizes enums, text, money, booleans and items',()=>{
   const result=tile({business:{name:'  テスト教室  ',branch:' ',kind:'x'.repeat(400)},category:'unknown',summary_en:'x'.repeat(400),address:' 東京都テスト区1-2-3 ',offers:[{kind:'unknown',text_ja:' 体験 ',regular_yen:'3,300円',offer_yen:'0円',percent_off:'２０％'}],items:[{name_ja:'テストパン'},{price_yen:100},{name_ja:' テスト茶 ',name_en:' Tea ',price_yen:'158円',price_tax_incl_yen:'税込 171円',regular_yen:198,regular_label:' 通常 ',unit:' 個 ',conditions:[' 会員限定 ','',null,42]},{name_ja:'無料の品',price_yen:0}],comes_to_you:1,delivery:0});
