@@ -5,3 +5,7 @@
 *.zip
 __pycache__/
 .source-cache/
+node_modules/
+.env
+test-photos/
+.local-fixtures/
