@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
-import {mkdir} from 'node:fs/promises';
+import {mkdir,readFile} from 'node:fs/promises';
 import {chromium} from 'playwright';
 import {stations,stationsOnLine} from '../data/catalog.mjs';
 import {printedValue,savings} from '../src/mailbox.mjs';
@@ -337,6 +337,87 @@ try {
   assert.ok(!JSON.stringify(resumed).includes('data:image/'));
   await overflow(phone,'seven-page reading and recovery');
   await phoneContext.close();
+  // Walk recovery uses fictional flyers and Tobu Skytree coordinates only.
+  const walkContext=await browser.newContext({viewport:{width:390,height:844}});
+  const walkPage=await walkContext.newPage(); walkPage.on('pageerror',error => errors.push(error.message));
+  await walkPage.clock.setFixedTime(new Date('2026-10-13T10:30:00+09:00'));
+  const walkCoordinates=JSON.parse(await readFile(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
+  const remoteStation=walkCoordinates.find(s => s.id === 'kanegafuchi');
+  const remoteLocation={lat:remoteStation.lat,lon:remoteStation.lon,source:'gsi'};
+  await walkPage.goto(base); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
+  await walkPage.evaluate(({key,location}) => {
+    const state=JSON.parse(localStorage.getItem(key));
+    state.settings={lineId:'skytree',home:'asakusa',maxMinutes:40,weightKg:60};
+    const advert=(id,name,extra={}) => ({id,pageIds:[],category:'cleaning',bucket:'walk',business:{name},summary_en:'Printed cleaning offer',offers:[{text_en:'Printed offer',discount_yen:100}],items:[],location:null,deadline:null,hours:null,...extra});
+    state.flyers=[advert('unlocated','Fictional walk shop'),advert('cleaner','Cleaner <img src=x onerror=alert(1)>',{bucket:'home',offers:[],items:[{name_en:'Suit jacket',price_yen:596,conditions:[]},{name_en:'Jacket',price_yen:596,regular_yen:1193,conditions:[]}]}),
+      advert('expired','Expired shop',{location,deadline:'2026-10-12'}),advert('closed','Closed shop',{location,hours:'00:00-00:01'}),advert('disliked','Disliked shop',{location})];
+    state.labels={disliked:0}; state.outings=[];
+    localStorage.setItem(key,JSON.stringify(state));
+  },{key,location:remoteLocation});
+  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
+  await walkPage.locator('[data-shopping=cleaner][data-index="0"]').check();
+  await walkPage.locator('[data-shopping=cleaner][data-index="1"]').check();
+  await walkPage.locator('[data-tab=walk]').click();
+  const unlocated=walkPage.locator('[data-stop-choice=unlocated]');
+  await unlocated.getByText('No location yet',{exact:true}).waitFor();
+  assert.equal(await unlocated.getByLabel('Type the address').count(),1);
+  assert.equal(await unlocated.getByRole('link',{name:'Find on Google Maps'}).getAttribute('href'),'https://www.google.com/maps/search/?api=1&query=Fictional%20walk%20shop');
+  const cleaner=walkPage.locator('[data-stop-choice=cleaner]');
+  assert.match(await cleaner.textContent(),/Suit jacket ¥596 · Jacket ¥596/);
+  assert.equal(await cleaner.locator('img').count(),0,'model text is escaped');
+  for (const [id,label] of [['expired','Expired'],['closed',"Closed when you'd arrive"],['disliked','You said 👎']]) {
+    const row=walkPage.locator(`[data-stop-choice=${id}]`);
+    await row.getByText(label,{exact:true}).waitFor();
+    assert.equal(await row.locator('[data-stop]').isChecked(),false);
+    assert.equal(await row.locator('[data-stop]').isEnabled(),true);
+    assert.match(await row.getAttribute('class'),/cw-stop-warning/);
+  }
+  const locateQueries=[];
+  await walkPage.route('**/api/locate?*',async route => {
+    const query=new URL(route.request().url()).searchParams; locateQueries.push(Object.fromEntries(query));
+    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({location:remoteLocation})});
+  });
+  await unlocated.getByLabel('Type the address').fill('Fictional address 1');
+  await unlocated.getByRole('button',{name:'Find address',exact:true}).click();
+  await walkPage.locator('.cw-plan h2').filter({hasText:'Take the train to Kanegafuchi, then walk'}).waitFor();
+  assert.equal(locateQueries[0].q,'Fictional address 1');
+  assert.equal(locateQueries[0].name,'Fictional walk shop');
+  assert.ok(Number.isFinite(Number(locateQueries[0].lat)) && Number.isFinite(Number(locateQueries[0].lon)));
+  assert.deepEqual((await readState(walkPage)).flyers.find(f => f.id === 'unlocated').location,remoteLocation);
+  assert.match(await unlocated.textContent(),/km · ~\d+ min each way/);
+  await cleaner.getByLabel('Type the address').fill('Fictional address 2');
+  await cleaner.getByRole('button',{name:'Find address',exact:true}).click();
+  await walkPage.locator('.cw-route').getByText('Suit jacket ¥596 · Jacket ¥596',{exact:true}).waitFor();
+  await walkPage.getByRole('button',{name:'Plan walk',exact:true}).click();
+  assert.ok((await readState(walkPage)).outings.find(o => o.status === 'planned').stopIds.includes('cleaner'),'item-only flyer is a stop');
+  // Move the cleaner far enough off the rail corridor that the 40-minute route
+  // drops it, but extending to 60 minutes includes both selected stops.
+  await walkPage.evaluate(key => {
+    const state=JSON.parse(localStorage.getItem(key)); state.flyers.find(f => f.id === 'cleaner').location.lat+=0.024;
+    localStorage.setItem(key,JSON.stringify(state));
+  },key);
+  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
+  await walkPage.locator('[data-tab=walk]').click();
+  await walkPage.getByRole('heading',{name:"Didn't fit in 40 min",exact:true}).waitFor();
+  assert.match(await walkPage.locator('.cw-dropped').textContent(),/Cleaner <img/);
+  await walkPage.getByRole('button',{name:'Make it 60 min',exact:true}).click();
+  await walkPage.getByText('Walk re-planned for up to 60 min.',{exact:true}).waitFor();
+  assert.equal((await readState(walkPage)).settings.maxMinutes,60);
+  const expanded=(await readState(walkPage)).outings.find(o => o.status === 'planned');
+  assert.ok(expanded.stopIds.includes('unlocated') && expanded.stopIds.includes('cleaner'));
+  assert.ok(expanded.minutes<=60);
+  assert.equal(await walkPage.locator('.cw-dropped').count(),0);
+  await walkPage.getByRole('button',{name:'Start walk',exact:true}).click();
+  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
+  await walkPage.locator('[data-tab=walk]').click();
+  await walkPage.locator('[data-active-stop=cleaner]').getByText('Suit jacket ¥596 · Jacket ¥596',{exact:true}).waitFor();
+  await walkPage.locator('#settings-button').click();
+  await walkPage.getByLabel('90 min',{exact:true}).check();
+  await walkPage.getByRole('button',{name:'Save',exact:true}).click();
+  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal((await readState(walkPage)).settings.maxMinutes,90,'90-minute option survives reload');
+  await overflow(walkPage,'walk location and train recovery');
+  await walkContext.close();
   const empty = await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation']});
   const freshPage = await empty.newPage(); freshPage.on('pageerror',error => errors.push(error.message));
   await freshPage.goto(base); await freshPage.getByText('Demo mode',{exact:true}).waitFor();
@@ -350,7 +431,7 @@ try {
   assert.equal(await freshPage.title(),'Station Points — shops by station');
   assert.equal(await freshPage.getByRole('link',{name:'← Worth the Walk?',exact:true}).getAttribute('href'),'/');
   assert.deepEqual(errors,[],'no browser page errors');
-  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · persistence, privacy, 4 tabs, 1280px, sticky seven-page reading, incremental merge and reload recovery verified.`);
+  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · persistence, privacy, 4 tabs, 1280px, sticky seven-page reading, incremental merge, reload recovery, walk address lookup, train starts and longer walks verified.`);
   console.log('Screenshots: .impeccable/review/chirashi-{mailbox,walk,stamps,history}.png');
 } finally {
   await browser?.close();

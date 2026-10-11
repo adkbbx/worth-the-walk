@@ -115,3 +115,11 @@
 .cw-pill-keep { background: #eceef1; color: var(--muted); }
 .cw-pill-toss { background: #eee8e2; color: #665447; }
 .cw-stop-reason { font-size: 14px; }
+.cw-stop-choice { padding: 12px 0; border-bottom: 1px solid var(--line); overflow-wrap: anywhere; }
+.cw-stop-choice .cw-check { align-items: flex-start; }
+.cw-stop-choice input[type=checkbox] { flex-shrink: 0; margin-top: 5px; }
+.cw-stop-choice .cw-stop-reason { margin: 4px 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cw-stop-choice .cw-check > span { flex: 1; }
+.cw-stop-choice .cw-field input { font-size: 16px; }
+.cw-stop-warning .cw-check { color: var(--muted); }
+.cw-dropped { margin: 20px 0; }

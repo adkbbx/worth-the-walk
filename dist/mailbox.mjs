@@ -116,6 +116,24 @@ export function groupPages(pages,overrides={}) {
       if(automatic.has(key))join(i,automatic.get(key));else automatic.set(key,i);
     }
   });
+  // Back pages often repeat only the business name (sometimes with the branch added), so names join pages too,
+  // unless both pages print different addresses or phone numbers, which means two different branches.
+  const info=pages.map(page=>{
+    if(Object.prototype.hasOwnProperty.call(overrides ?? {},page.id))return null;
+    const tiles=list(page.tiles,Infinity);
+    return {name:tiles.map(t=>normText(t?.business?.name)).find(n=>n.length>=3) ?? '',address:tiles.map(t=>normText(t?.address)).find(Boolean) ?? '',
+      phones:new Set(tiles.flatMap(t=>list(t?.phones,Infinity).map(phoneKey)).filter(Boolean))};
+  });
+  for(let a=0;a<pages.length;a++)for(let b=a+1;b<pages.length;b++) {
+    const x=info[a],y=info[b];
+    if(!x?.name || !y?.name)continue;
+    const [short,long]=x.name.length<=y.name.length ? [x.name,y.name] : [y.name,x.name];
+    // A shorter name of 4+ characters may sit inside the longer one ("Good!" vs "クリーニング Good!").
+    if(!short || !(long.startsWith(short) || (short.length>=4 && long.includes(short))))continue;
+    if(x.address && y.address && x.address!==y.address)continue;
+    if(x.phones.size && y.phones.size && ![...x.phones].some(p=>y.phones.has(p)))continue;
+    join(a,b);
+  }
   const groups=new Map();
   pages.forEach((page,i)=>{
     const key=root(i);

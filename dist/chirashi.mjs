@@ -1,6 +1,6 @@
 import {stations, railLines, stationsOnLine, stores, walletOptions} from '/catalog.mjs';
 import {groupPages, storable, printedValue, savings, featureRow, parseDeadline} from '/mailbox.mjs';
-import {distanceMeters, neighbours, planOuting, walkMinutes, estimates, mapsLink, groceryOnTheWay, openStatus} from '/walks.mjs';
+import {distanceMeters, neighbours, nearestStation, orderStops, planOuting, walkMinutes, estimates, mapsLink, groceryOnTheWay, openStatus} from '/walks.mjs';
 import {japanToday, storePrograms, reward, nextBonus} from '/rules.mjs';
 
 const KEY = 'worth-the-walk-v1';
@@ -22,21 +22,23 @@ function load() {
     if (!Object.values(s.pages).every(p => record(p) && typeof p.id === 'string' && typeof p.scannedAt === 'string' && Array.isArray(p.tiles) && p.tiles.every(t => t === null || record(t)))) return fresh();
     if (!s.outings.every(o => record(o) && typeof o.id === 'string' && Number.isFinite(Date.parse(o.createdAt)) && Array.isArray(o.stopIds) && o.stopIds.every(id => typeof id === 'string') && Array.isArray(o.used) && Array.isArray(o.stamps) && pointValid(o.start) && pointValid(o.end) && Number.isFinite(o.meters) && Number.isFinite(o.minutes) && ['planned','active','done'].includes(o.status) && o.stamps.every(s => record(s) && typeof s.stopId === 'string' && Number.isFinite(Date.parse(s.at)) && ['gps','self'].includes(s.kind)) && o.used.every(u => record(u) && typeof u.flyerId === 'string' && ['offer','item'].includes(u.kind) && Number.isInteger(u.index) && u.index >= 0))) return fresh();
     const base = fresh();
-    base.settings = {lineId:railLines.some(l => l.id === s.settings.lineId) ? s.settings.lineId : null,home:stations.some(x => x.id === s.settings.home) ? s.settings.home : null,maxMinutes:[20,40,60].includes(s.settings.maxMinutes) ? s.settings.maxMinutes : 40,weightKg:Number.isFinite(s.settings.weightKg) && s.settings.weightKg > 0 ? s.settings.weightKg : 60};
+    base.settings = {lineId:railLines.some(l => l.id === s.settings.lineId) ? s.settings.lineId : null,home:stations.some(x => x.id === s.settings.home) ? s.settings.home : null,maxMinutes:[20,40,60,90].includes(s.settings.maxMinutes) ? s.settings.maxMinutes : 40,weightKg:Number.isFinite(s.settings.weightKg) && s.settings.weightKg > 0 ? s.settings.weightKg : 60};
     base.pages = s.pages; base.overrides = s.overrides; base.flyers = s.flyers.map(storable); base.outings = s.outings;
     base.labels = Object.fromEntries(Object.entries(s.labels).filter(([,v]) => v === 0 || v === 1));
+    base.shoppingList = Array.isArray(s.shoppingList) ? s.shoppingList.filter(key => typeof key === 'string') : [];
     for (const f of base.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete base.pages[id]; delete base.overrides[id]; }
     return base;
   } catch { return fresh(); }
 }
 let state = load(), coordinates = [], tab = 'mailbox', photos = [], busy = false, setupOpen = !state.settings.home;
 let scores = new Map(), rankModel = '', rankSequence = 0;
-let chosenStops = null, groceryChoice = null, shoppingList = new Set(), historyQuery = '', historyDetail = null;
+let chosenStops = null, groceryChoice = null, shoppingList = new Set(state.shoppingList ?? []), historyQuery = '', historyDetail = null;
 let reading = null, preparing = 0, recovering = true, recovered = false, photoStorage = true, wakeLock = null;
 let photoWork = Promise.resolve();
 const stampMessages = new Map();
 function notify(message = '') { $('notice').textContent = message; }
 function save() {
+  state.shoppingList = [...shoppingList];
   state.flyers = state.flyers.map(storable);
   for (const f of state.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; }
   try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
@@ -97,7 +99,7 @@ function personalNote() {
 function renderSetup() {
   $('setup').hidden = !setupOpen;
   if (!setupOpen) return;
-  $('setup').innerHTML = `<div class="cw-setup"><h1 id="setup-heading">Your walk starts here.</h1><p class="cw-muted">Choose the station you want to walk home to.</p><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option lang="ja" value="${escape(l.id)}">${escape(l.name)} · ${escape(l.ja)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60].map(n => `<label class="cw-check"><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-muted">Used only for the kcal estimate.</p><div class="cw-actions"><button class="cw-primary" type="submit" ${busy ? 'disabled' : ''}>Save</button>${state.settings.home ? '<button type="button" data-action="close-setup">Cancel</button>' : ''}</div></form></div>`;
+  $('setup').innerHTML = `<div class="cw-setup"><h1 id="setup-heading">Your walk starts here.</h1><p class="cw-muted">Choose the station you want to walk home to.</p><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option lang="ja" value="${escape(l.id)}">${escape(l.name)} · ${escape(l.ja)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label class="cw-check"><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-muted">Used only for the kcal estimate.</p><div class="cw-actions"><button class="cw-primary" type="submit" ${busy ? 'disabled' : ''}>Save</button>${state.settings.home ? '<button type="button" data-action="close-setup">Cancel</button>' : ''}</div></form></div>`;
   $('setup-line').value = state.settings.lineId ?? ''; stationOptions(state.settings.home);
   $('setup-line').addEventListener('change',() => stationOptions(null));
   $('setup-form').addEventListener('submit',event => {
@@ -492,24 +494,52 @@ function arrivalStatus(f,minutes) {
   return openStatus({hours:f.hours ?? f.location?.place?.hours},japanToday(date),Number(time[0])*60+Number(time[1]));
 }
 function candidates() {
-  const h = home(); if (!h) return [];
-  return sortedWalks().filter(f => f.location && !expired(f) && state.labels[f.id] !== 0 && arrivalStatus(f,walkMinutes(distanceMeters(h,f.location))) !== 'closed');
+  return [...sortedWalks(),...state.flyers.filter(f => f.bucket !== 'walk' && f.bucket !== 'keep' && walkItems(f).length)];
 }
+function walkItems(f,o = null) {
+  return (f.items ?? []).filter((_,index) => shoppingList.has(f.id+':'+index) || o?.shoppingList?.includes(f.id+':'+index) || o?.used?.some(u => u.flyerId === f.id && u.kind === 'item' && u.index === index));
+}
+function stopWarnings(f) {
+  const warnings=[];
+  if (expired(f)) warnings.push('Expired');
+  if (f.location && arrivalStatus(f,walkMinutes(distanceMeters(home(),f.location))) === 'closed') warnings.push("Closed when you'd arrive");
+  if (state.labels[f.id] === 0) warnings.push('You said 👎');
+  return warnings;
+}
+const stopSelected = f => chosenStops === null ? !stopWarnings(f).length : chosenStops.has(f.id);
 function plan() {
   const h = home(); if (!h) return null;
-  const selected = candidates().filter(f => chosenStops === null || chosenStops.has(f.id)).map(f => ({...f.location,id:f.id,name:f.business?.name ?? 'Flyer stop'}));
+  const selected = candidates().filter(f => f.location && stopSelected(f)).map(f => stop(f.id));
   if (groceryChoice) { const g = stop(groceryChoice); if (g) selected.push(g); }
   const starts = [h,...neighbours(stations,stationsOnLine,h.stationId,1).map(n => coordinates.find(s => s.id === n.station.id)).filter(Boolean).map(s => ({stationId:s.id,lat:s.lat,lon:s.lon}))];
-  const plans = starts.map(start => {
-    let kept = [...selected], result;
-    for (let i = 0; i <= selected.length; i++) {
-      result = planOuting({start,end:h,stops:kept,maxMinutes:state.settings.maxMinutes});
-      let previous = start, minutes = 0; const closed = new Set();
-      for (const p of result.stops) { minutes += walkMinutes(distanceMeters(previous,p)); const f = flyer(p.id); if (f && arrivalStatus(f,minutes) === 'closed') closed.add(p.id); previous = p; }
-      if (!closed.size) break; kept = kept.filter(p => !closed.has(p.id));
+  const plans = starts.map((start,index) => ({...planOuting({start,end:h,stops:selected,maxMinutes:state.settings.maxMinutes}),mode:index ? 'early' : 'home'}));
+  const stationPoint = p => {
+    const nearest = nearestStation(stations,coordinates,p);
+    const location = nearest && coordinates.find(c => c.id === nearest.station.id);
+    return location ? {stationId:location.id,lat:location.lat,lon:location.lon} : null;
+  };
+  // Keep the same stop priority as home/one-stop-early plans. Recompute train
+  // endpoints for each smaller selection so a dropped stop never anchors it.
+  for (let count=selected.length;count>0;count--) {
+    const kept=selected.slice(0,count), trainPlans=[];
+    // Pin the first and last stop, then minimise the route between them. This
+    // makes the train stations nearest to the actual route endpoints.
+    for (const first of kept) {
+      for (const final of kept.length === 1 ? kept : kept.filter(p => p !== first)) {
+        const middle=kept.filter(p => p !== first && p !== final);
+        const route=kept.length === 1 ? [first] : [first,...orderStops(first,final,middle).stops,final];
+        const start=stationPoint(first), last=stationPoint(final);
+        if (!start || !last) continue;
+        for (const end of [h,last]) {
+          let previous=start, meters=0;
+          for (const p of [...route,end]) { meters+=distanceMeters(previous,p); previous=p; }
+          const minutes=walkMinutes(meters);
+          if (minutes<=state.settings.maxMinutes) trainPlans.push({start,end,stops:route,meters,minutes,estimates:estimates(meters),dropped:selected.slice(count),mode:'train'});
+        }
+      }
     }
-    return result;
-  });
+    if (trainPlans.length) { plans.push(...trainPlans); break; }
+  }
   return plans.sort((a,b) => b.stops.length-a.stops.length || a.meters-b.meters)[0];
 }
 function totals(o) {
@@ -519,20 +549,20 @@ function totals(o) {
 function shortDate(value) { return formatDate(value).replace(/ \d{4}$/, ''); }
 function stopReason(f,o = null) {
   if (!f) return '';
-  const selected = (f.items ?? []).filter((_,index) => shoppingList.has(f.id+':'+index) || o?.used?.some(u => u.flyerId === f.id && u.kind === 'item' && u.index === index));
+  const selected = walkItems(f,o);
   let text = '';
-  if (f.category === 'supermarket' && selected.length) text = selected.map(i => `${i.name_en ?? i.name_ja ?? 'Item'} ${money(i.price_yen)}`).join(' · ');
+  if (selected.length) text = selected.map(i => `${i.name_en ?? i.name_ja ?? 'Item'} ${money(i.price_yen)}`).join(' · ');
   else {
     const best = [...(f.offers ?? [])].sort((a,b) => (printedValue(b) ?? -1)-(printedValue(a) ?? -1))[0];
     if (best) { const value = printedValue(best); text = `${best.text_en ?? 'Printed offer'}${value !== null ? ` · worth ${money(value)} as printed` : ''}`; }
-    else if (f.deadline) text = `until ${shortDate(f.deadline)}`;
+    else text = f.summary_en || (f.deadline ? `until ${shortDate(f.deadline)}` : 'Worth a walk');
   }
   return text ? `<p class="cw-stop-reason cw-muted">${escape(text)}</p>` : '';
 }
 function routeList(o,points) {
   let previous = o.start;
   const rows = points.map(p => { const minutes = walkMinutes(distanceMeters(previous,p)); previous = p; return `<li><p class="cw-meta">${minutes} min walking</p><strong lang="ja">${escape(p.name)}</strong>${stopReason(flyer(p.id),o)}</li>`; });
-  rows.push(`<li><p class="cw-meta">${walkMinutes(distanceMeters(previous,o.end))} min walking</p><strong>Home · ${escape(stationName(o.end))}</strong></li>`);
+  rows.push(`<li><p class="cw-meta">${walkMinutes(distanceMeters(previous,o.end))} min walking</p><strong>${o.end.stationId === state.settings.home ? 'Home' : 'Train station'} · ${escape(stationName(o.end))}</strong></li>`);
   return `<ol class="cw-route"><li><strong>${escape(stationName(o.start))} station</strong></li>${rows.join('')}</ol>`;
 }
 function mapRoute(o,points) {
@@ -543,16 +573,30 @@ function groceryNote(s) {
   if (s.chain === 'mybasket' && programs.includes('WAON POINT')) return `${reward(s.chain,japanToday())}× WAON POINT today · next bonus ${formatDate(nextBonus(japanToday()).date)}. Eligible payment and item conditions apply.`;
   return programs.length ? `${programs.join(' / ')} · check payment and item conditions in Shops.` : 'Point support unknown. Check the branch before relying on rewards.';
 }
+function stopChoice(f) {
+  const warnings=stopWarnings(f), h=home();
+  const distance=f.location ? estimates(distanceMeters(h,f.location)) : null;
+  const status=warnings.length ? warnings.join(' · ') : distance ? `${(distance.routeMeters/1000).toFixed(1)} km · ~${distance.minutes} min each way` : 'No location yet';
+  const lookup=!f.location ? `<p class="cw-meta">${warnings.length ? 'No location yet' : ''}</p><form data-locate="${escape(f.id)}"><label class="cw-field">Type the address<input name="address" required maxlength="300" placeholder="Printed address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form><a class="cw-link" href="${escape('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(f.business?.name ?? 'Flyer stop'))}" target="_blank" rel="noopener noreferrer">Find on Google Maps</a>` : '';
+  return `<div class="cw-stop-choice ${warnings.length ? 'cw-stop-warning' : ''}" data-stop-choice="${escape(f.id)}"><label class="cw-check"><input type="checkbox" data-stop="${escape(f.id)}" ${stopSelected(f) ? 'checked' : ''}><span><strong lang="ja">${escape(f.business?.name ?? 'Flyer stop')}</strong>${stopReason(f)}<span class="cw-meta">${escape(status)}</span></span></label>${lookup}</div>`;
+}
+function droppedStops(p) {
+  if (!p?.dropped.length) return '';
+  return `<section class="cw-dropped"><h3>Didn't fit in ${state.settings.maxMinutes} min</h3><ul>${p.dropped.map(s => `<li>${escape(s.name)}</li>`).join('')}</ul><div class="cw-actions">${[60,90].filter(n => n>state.settings.maxMinutes).map(n => `<button data-action="extend-walk" data-minutes="${n}">Make it ${n} min</button>`).join('')}</div></section>`;
+}
+function planTitle(p) {
+  return p.mode === 'train' ? `Take the train to ${escape(stationName(p.start))}, then walk · ${(estimates(p.meters).routeMeters/1000).toFixed(1)} km · ~${p.minutes} min` : p.start.stationId !== state.settings.home ? `Get off one stop early at ${escape(stationName(p.start))}` : 'Walk from your home station';
+}
 function renderWalk() {
   const active = state.outings.find(o => o.status === 'active');
-  if (active) return `<h1>Your walk is underway.</h1><p class="cw-muted">${escape(stationName(active.start))} → ${escape(stationName(active.end))}</p>${activeWalk(active)}<button class="cw-primary" data-action="finish" data-id="${escape(active.id)}">Finish walk</button>`;
+  if (active) return `<h1>Your walk is underway.</h1><p class="cw-muted">${active.mode === 'train' ? planTitle(active)+'<br>' : ''}${escape(stationName(active.start))} → ${escape(stationName(active.end))}</p>${activeWalk(active)}<button class="cw-primary" data-action="finish" data-id="${escape(active.id)}">Finish walk</button>`;
   if (!home()) return '<h1>Make room for a walk.</h1><p>Set your home station to plan a route.</p><button data-action="settings">Set up your walk</button>';
   const list = candidates(), p = plan();
   const suggested = p?.stops.length ? groceryOnTheWay([p.start,...p.stops,p.end],stores)[0]?.store : null;
-  return `<h1>A little walk home.</h1><p class="cw-muted">Finish at ${escape(stationName(home()))} · up to ${state.settings.maxMinutes} min</p><h2>Choose your stops</h2>${list.length ? list.map(f => `<label class="cw-check"><input type="checkbox" data-stop="${escape(f.id)}" ${chosenStops === null || chosenStops.has(f.id) ? 'checked' : ''}><span lang="ja">${escape(f.business?.name)}</span></label>`).join('') : '<p class="cw-muted">Read a flyer with a location to find a stop. Expired, closed and 👎 places are left out.</p>'}${suggested ? `<div class="cw-entry"><h3>Groceries on the way</h3><p>${escape(suggested.name)}</p><p class="cw-muted">${escape(groceryNote(suggested))}</p><label class="cw-check"><input type="checkbox" data-grocery="${escape('store:'+suggested.branchId)}" ${groceryChoice ? 'checked' : ''}>Include grocery stop</label></div>` : ''}<button data-action="plan" class="cw-primary" ${!list.length ? 'disabled' : ''}>Plan walk</button>${p?.stops.length ? planCard(p) : list.length ? '<p class="cw-muted">No selected stops fit this walk length. Change your stops or choose a longer walk in Settings.</p>' : ''}`;
+  return `<h1>A little walk home.</h1><p class="cw-muted">Up to ${state.settings.maxMinutes} min · home station: ${escape(stationName(home()))}</p><h2>Choose your stops</h2>${list.length ? list.map(stopChoice).join('') : '<p class="cw-muted">Read a worth-a-walk flyer or tick items for your walk list to find a stop.</p>'}${suggested ? `<div class="cw-entry"><h3>Groceries on the way</h3><p>${escape(suggested.name)}</p><p class="cw-muted">${escape(groceryNote(suggested))}</p><label class="cw-check"><input type="checkbox" data-grocery="${escape('store:'+suggested.branchId)}" ${groceryChoice ? 'checked' : ''}>Include grocery stop</label></div>` : ''}<button data-action="plan" class="cw-primary" ${!p?.stops.length ? 'disabled' : ''}>Plan walk</button>${p?.stops.length ? planCard(p) : list.length ? `<p class="cw-muted">${p?.dropped.length ? 'Try a longer walk to include your selected stops.' : 'Choose a stop above, or type its address to plan your walk.'}</p>${droppedStops(p)}` : ''}`;
 }
 function planCard(p) {
-  return `<div class="cw-plan"><h2>${p.start.stationId !== state.settings.home ? `Get off one stop early at ${escape(stationName(p.start))}` : 'Walk from your home station'}</h2>${routeList(p,p.stops)}<p class="cw-meta">${totals(p)}</p>${p.dropped.length ? `<p class="cw-muted">${p.dropped.length} ${plural(p.dropped.length,'stop','stops')} left out to fit your time.</p>` : ''}${mapRoute(p,p.stops)}<div class="cw-actions"><button class="cw-primary" data-action="start">Start walk</button></div></div>`;
+  return `<div class="cw-plan"><h2>${planTitle(p)}</h2>${routeList(p,p.stops)}<p class="cw-meta">${totals(p)}</p>${droppedStops(p)}${mapRoute(p,p.stops)}<div class="cw-actions"><button class="cw-primary" data-action="start">Start walk</button></div></div>`;
 }
 const usedEntries = (outings = state.outings) => outings.flatMap(o => o.used.map(u => ({entry:flyer(u.flyerId)?.[u.kind === 'offer' ? 'offers' : 'items']?.[u.index]})));
 function icon(category) {
@@ -643,7 +687,7 @@ function focusHeading() {
 function changeTab(value) { tab = value; historyDetail = null; render(); focusHeading(); window.scrollTo({top:0,behavior:'instant'}); }
 function newOuting(p,status) {
   state.outings = state.outings.filter(o => o.status !== 'planned');
-  state.outings.push({id:uid('o-'),createdAt:now(),start:p.start,end:p.end,stopIds:p.stops.map(s => s.id),meters:p.meters,minutes:p.minutes,status,stamps:[],used:[]}); save(); render();
+  state.outings.push({id:uid('o-'),createdAt:now(),start:p.start,end:p.end,stopIds:p.stops.map(s => s.id),meters:p.meters,minutes:p.minutes,mode:p.mode,shoppingList:[...shoppingList],status,stamps:[],used:[]}); save(); render();
 }
 async function action(button) {
   const id = button.dataset.id;
@@ -679,6 +723,12 @@ async function action(button) {
     case 'rate': if (flyer(id)?.bucket === 'keep') break; state.labels[id] = Number(button.dataset.label); save(); render(); await rank(); break;
     case 'merge-retry': if (!busy) { busy = true; render(); try { await mergeGroups(); } finally { busy = false; render(); } } break;
     case 'plan': { const p = plan(); if (p?.stops.length) { newOuting(p,'planned'); notify('Walk planned. Start when you are ready.'); } break; }
+    case 'extend-walk': {
+      const minutes=Number(button.dataset.minutes); if (![60,90].includes(minutes)) break;
+      state.settings.maxMinutes=minutes; save();
+      const p=plan(); if (p?.stops.length) newOuting(p,'planned'); else render();
+      notify(`Walk re-planned for up to ${minutes} min.`); break;
+    }
     case 'start': { if (state.outings.some(o => o.status === 'active')) break; const p = plan(); if (p?.stops.length) { newOuting(p,'active'); notify(); } break; }
     case 'here': { const o = state.outings.find(o => o.id === button.dataset.outing); if (o?.status === 'active') await here(o,id,button); break; }
     case 'stamp-anyway': { const o = state.outings.find(o => o.id === button.dataset.outing); if (o) stamp(o,id,'self',stampMessages.get(id)?.distance ?? null); break; }
@@ -701,10 +751,10 @@ document.addEventListener('change',event => {
     input.value = '';
     photoWork=photoWork.then(() => addPhotos(files)); safely(() => photoWork);
   } else if (input.dataset.stop) {
-    if (chosenStops === null) chosenStops = new Set(candidates().map(f => f.id));
+    if (chosenStops === null) chosenStops = new Set(candidates().filter(stopSelected).map(f => f.id));
     if (input.checked) chosenStops.add(input.dataset.stop); else chosenStops.delete(input.dataset.stop); render();
   } else if (input.dataset.grocery) { groceryChoice = input.checked ? input.dataset.grocery : null; render(); }
-  else if (input.dataset.shopping) { const key = input.dataset.shopping+':'+input.dataset.index; if (input.checked) shoppingList.add(key); else shoppingList.delete(key); }
+  else if (input.dataset.shopping) { const key = input.dataset.shopping+':'+input.dataset.index; if (input.checked) { shoppingList.add(key); if (chosenStops !== null) chosenStops.add(input.dataset.shopping); } else shoppingList.delete(key); save(); }
   else if (input.dataset.used) {
     const o = state.outings.find(o => o.id === input.dataset.outing); if (!o || o.status !== 'active') return;
     const u = {flyerId:input.dataset.used,kind:input.dataset.kind,index:Number(input.dataset.index)};
@@ -728,7 +778,7 @@ document.addEventListener('submit',event => {
       for (const phone of f.phones ?? []) query.append('phone',phone);
       if (h) { query.set('lat',h.lat); query.set('lon',h.lon); }
       const b = form.querySelector('button'); b.disabled = true;
-      try { const result = await api('/api/locate?'+query); if (result.location) { f.location = result.location; f.needsLookup = false; save(); render(); await rank(); } else notify('No location found. Try the printed address or the full business name.'); }
+      try { const result = await api('/api/locate?'+query); if (pointValid(result.location)) { f.location = result.location; f.needsLookup = false; save(); notify('Location found. Your walk has been updated.'); render(); await rank(); } else notify('No location found. Try the printed address or the full business name.'); }
       finally { b.disabled = false; }
     });
   } else if (form.dataset.fix) {

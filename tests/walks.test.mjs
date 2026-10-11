@@ -1,11 +1,66 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 import {stations,stores,stationsOnLine} from '../data/catalog.mjs';
-import {WALK_M_PER_MIN,DETOUR,HOLIDAYS,distanceMeters,walkMinutes,estimates,dayType,parseHours,openStatus,neighbours,orderStops,planOuting,mapsLink,groceryOnTheWay} from '../src/walks.mjs';
+import {WALK_M_PER_MIN,DETOUR,HOLIDAYS,distanceMeters,walkMinutes,estimates,dayType,parseHours,openStatus,neighbours,nearestStation,orderStops,planOuting,mapsLink,groceryOnTheWay} from '../src/walks.mjs';
 
 const weekday='2026-10-13', saturday='2026-10-17';
 const point=lon=>({lat:0,lon});
+test('nearest station uses coordinates, ignores missing points and keeps ties stable',()=>{
+  const stations=[{id:'missing'},{id:'a',lat:50,lon:50},{id:'b'},{id:'invalid'}];
+  const coordinates=[{id:'a',...point(0)},{id:'b',...point(0.02)},{id:'invalid',lat:NaN,lon:0}];
+  const nearest=nearestStation(stations,coordinates,point(0.019));
+  assert.equal(nearest.station,stations[2]);
+  assert.equal(nearest.meters,distanceMeters(coordinates[1],point(0.019)));
+  assert.equal(nearestStation(stations,coordinates,point(0.01)).station,stations[1]);
+  assert.equal(nearestStation([],coordinates,point(0)),null);
+  assert.equal(nearestStation(stations,[],point(0)),null);
+});
+test('nearest station finds real Tobu Skytree stations',()=>{
+  const coordinates=JSON.parse(readFileSync(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
+  const skytree=stationsOnLine(stations,'skytree');
+  for(const id of ['asakusa','hikifune','higashi-mukojima']) {
+    const location=coordinates.find(s=>s.id===id);
+    const nearest=nearestStation(skytree,coordinates,{lat:location.lat+0.0001,lon:location.lon});
+    assert.equal(nearest.station.id,id);assert.ok(nearest.meters>10 && nearest.meters<12);
+  }
+});
+
+// Exercise the shipped browser planner without launching a browser. These are
+// the real functions, with only their browser state supplied by the test.
+function browserPlanner(flyers,maxMinutes=40,chosenStops=null) {
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const coordinates=JSON.parse(readFileSync(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
+  const location=coordinates.find(s=>s.id==='asakusa');
+  const h={stationId:location.id,lat:location.lat,lon:location.lon};
+  const state={flyers,labels:{},settings:{home:'asakusa',maxMinutes}};
+  const context={state,coordinates,stations,stationsOnLine,chosenStops,groceryChoice:null,shoppingList:new Set(),
+    home:()=>h,flyer:id=>flyers.find(f=>f.id===id),stop:id=>({...flyers.find(f=>f.id===id).location,id,name:id}),
+    sortedWalks:()=>flyers.filter(f=>f.bucket==='walk'),expired:()=>false,arrivalStatus:()=> 'unknown',
+    distanceMeters,walkMinutes,estimates,neighbours,nearestStation,orderStops,planOuting};
+  const code=source.slice(source.indexOf('function candidates()'),source.indexOf('function totals('));
+  return runInNewContext(code+'\nplan();',context);
+}
+test('browser planner uses train starts, recomputes dropped endpoints and expands the budget',()=>{
+  const coordinates=JSON.parse(readFileSync(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
+  const station=coordinates.find(s=>s.id==='kanegafuchi');
+  const remote={id:'remote',bucket:'walk',items:[],location:{lat:station.lat,lon:station.lon}};
+  const train=browserPlanner([remote]);
+  assert.equal(train.mode,'train');assert.equal(train.start.stationId,'kanegafuchi');
+  assert.equal(train.end.stationId,'kanegafuchi');assert.equal(train.stops.length,1);assert.equal(train.dropped.length,0);
+  const far={id:'far',bucket:'walk',items:[],location:{lat:station.lat+0.024,lon:station.lon}};
+  const short=browserPlanner([remote,far]);
+  assert.equal(short.stops.length,1);assert.equal(short.dropped[0].id,'far');
+  const longer=browserPlanner([remote,far],60);
+  assert.equal(longer.stops.length,2);assert.equal(longer.dropped.length,0);assert.ok(longer.minutes<=60);
+  const unresolved={id:'unresolved',bucket:'walk',items:[],location:null};
+  assert.equal(browserPlanner([unresolved]).stops.length,0);
+  assert.equal(browserPlanner([remote],40,new Set()).stops.length,0);
+  const impossible={...far,id:'off-rail',location:{lat:0,lon:0}};
+  const empty=browserPlanner([impossible]);
+  assert.equal(empty.stops.length,0);assert.equal(empty.dropped[0].id,'off-rail');
+});
 test('distance and walking estimates',()=>{
   const coordinates=JSON.parse(readFileSync(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
   const meters=distanceMeters(coordinates.find(s=>s.id==='hikifune'),coordinates.find(s=>s.id==='higashi-mukojima'));
