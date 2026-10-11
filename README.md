@@ -4,7 +4,7 @@ Photograph the flyers in your mailbox, read what each one is in English, and pla
 
 ## How it works
 
-1. Photograph the pages. The browser cuts each page into six overlapping tiles and sends them in one request.
+1. Photograph the pages. Gemma 4 reads each page whole first (one call), so its card appears within seconds. Only walkable price lists (supermarkets, drugstores, cleaners, menus) get a second pass in six overlapping tiles for exact prices.
 2. Gemma 4 reads the tiles. The app groups pages from the same flyer, merges the readings, and gives each flyer a short English summary.
 3. Sort the pile into **worth a walk**, **deals to use at home**, **keep, not an ad**, and **safe to throw away**. Review the readings and correct page groups when needed.
 4. Rate the flyers you would act on. TabPFN learns from those choices; simple rules handle too few labels or a failed prediction. Plan a walk from your home station past selected places.
@@ -24,7 +24,7 @@ The model comparison matters because the smaller local model was poor at reading
 | Gemma 4 31B | Full flyer page | Read poorly; the app uses tiles instead |
 | Gemma 4 E2B through Ollama | Full page, then a tile | 0/8 on the page; 2/4 on the tile |
 
-Local mode warns you to check every price. These small checks do not establish accuracy across real mailbox flyers. The browser uses a 2×3 grid with 10% overlap, or 3×2 for landscape pages.
+Local mode warns you to check every price. These small checks do not establish accuracy across real mailbox flyers. Price-list pages are then read again as a 2×3 grid with 10% overlap (3×2 for landscape); on the real mailbox below, a whole-page read was enough for every service flyer (4–26 s, one call each).
 
 ## Architecture
 
@@ -41,7 +41,7 @@ Local mode warns you to check every price. These small checks do not establish a
 The request flow is **read-page NDJSON → group pages → merge → locate → rank → plan → stamp**.
 
 ```text
-Phone photo -> six tiles -> POST /api/read-page -> Gemma 4
+Phone photo -> whole page -> POST /api/read-page -> Gemma 4 -> needsDetail? -> six tiles (price lists only)
                               | NDJSON tile events
 Phone: group pages -> POST /api/merge -> merge readings -> locate
                                                           |-- GSI: printed address
