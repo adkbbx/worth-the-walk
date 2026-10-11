@@ -9,5 +9,15 @@
     "build": "node scripts/build.mjs",
     "check:browser": "node tests/browser.mjs"
   },
-  "devDependencies": {"playwright":"1.62.1"}
+  "devDependencies": {
+    "playwright": "1.62.1"
+  },
+  "dependencies": {
+    "@ai-sdk/openai-compatible": "3.0.67",
+    "@mastra/core": "1.75.0",
+    "@mastra/mcp": "2.2.0",
+    "@mastra/observability": "1.18.4",
+    "@mastra/sentry": "1.2.24",
+    "zod": "4.6.5"
+  }
 }
