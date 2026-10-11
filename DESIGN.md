@@ -129,7 +129,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Tallies: three columns with a 2px ink top rule: walks · km + steps · ¥ saved (Sale Red, "saved, printed on flyers"); hide zeros
 
 ### "Why open models?" stub
-- Opens from the header (◎ menu) and from the footer line; a ticket stub with a "✂ - - -" tear line on top
+- Opens from the first screen and from the footer line; a ticket stub with a "✂ - - -" tear line on top
 - Heading "Your mail is read by models anyone can run"; four numbered reasons (print-face numbers in circles), each a bold line plus one or two sentences with the real figures (see section 9)
 
 ### Sheets
@@ -213,7 +213,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### Why open models (in-app copy, keep the figures true)
 1. **You choose where your mail is read.** The same Gemma 4 family reads flyers on a hosted GPU or on your own laptop (`LOCAL_LLM=1`). A closed API has no run-it-at-home option.
-2. **We could check it on real flyers.** With open weights we tested both sizes on the same flyers: the small model got 0/8 prices from a whole page, the large one 4/4 from a tile. That is why reading works tile by tile.
+2. **We could check it on real flyers.** With open weights we tested both sizes on the same flyers: the small model got 0/8 prices from a whole page, the large one 4/4 from a tile. That is why price lists are read tile by tile.
 3. **It costs about half a yen a page** (≈ ¥0.4 on serverless inference), with no account and no subscription.
 4. **It learns your taste without your data.** TabPFN ranks flyers from your ✕ and stamps using only numbers (kind of place, distance, deal size). Names, addresses and photos never go to it.
 Footer note: addresses come from Japan's open GSI geocoder; photos are read and deleted; nothing is stored on a server.
