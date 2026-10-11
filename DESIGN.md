@@ -122,8 +122,8 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - At ≥960px the single tray moves into the side column below “Add more flyers” and above the stamp card. Slots become full-width rows: label and number on one baseline, description below, optional thumbnails last. There are no duplicate controls or IDs; crossing the breakpoint moves the same DOM section back under the ticket.
 
 ### Selected photo cards
-- Above the horizontally scrollable strip: uppercase print “1 page ready” / “N pages ready”. Each 108px paper card has a Rule border, Photo Shadow, alternating −1.5° / +1.5° static tilt, and a print “Page N” caption beneath the preview.
-- Round 44px paper buttons sit inside the top corners, 4px from the edges over the photo: rotate left, remove right. Paper background, Rule borders, soft Photo Shadow, Faded Ink glyphs, and the shared gate-blue focus ring. The strip keeps a 16px gap and vertical padding so tilted cards and focus rings do not clip or crowd their neighbours. Existing accessible names and photo actions stay intact.
+- Above the horizontally scrollable strip: uppercase print “1 page ready” / “N pages ready”. Each 148px paper card has a Rule border, Photo Shadow, alternating −1.5° / +1.5° static tilt, and the preview uncovered at full card width.
+- The card's footer row holds round 44px paper buttons either side of the print “Page N” caption: rotate left, remove right, so nothing covers the photo you are checking. Paper background, Rule borders, soft Photo Shadow, Faded Ink glyphs, and the shared gate-blue focus ring. The strip keeps a 16px gap and vertical padding so tilted cards and focus rings do not clip or crowd their neighbours. Existing accessible names and photo actions stay intact.
 - While the fixed Read dock shows, `cw-has-photos` reserves 112px plus the safe-area inset below main content so the final hint clears the dock, including on desktop.
 
 ### Reading ticket
