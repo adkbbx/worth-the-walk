@@ -1,0 +1,44 @@
+[
+  {
+    "business": {"name":"架空若葉合気道場","branch":"テスト支部","kind":"aikido dojo"},
+    "category":"lesson","summary_en":"A fictional aikido dojo offers a free trial.",
+    "offers":[{"kind":"free_trial","text_ja":"無料体験 通常3,300円","text_en":"Free trial, normally 3,300 yen","regular_yen":3300,"offer_yen":0,"discount_yen":null,"percent_off":null,"deadline_text":"11月30日(日)まで"}],
+    "items":[],"address":null,"phones":["0120-000-111"],"websites":[],"hours":null,
+    "valid_from_text":null,"valid_to_text":null,"comes_to_you":false,"delivery":false
+  },
+  {
+    "business":{"name":"架空若葉合気道場","branch":"テスト支部","kind":"aikido dojo"},
+    "category":"lesson","summary_en":"The fictional dojo's address and opening hours.",
+    "offers":[],"items":[],"address":"東京都テスト区1-2-3","phones":["0120-000-111"],"websites":[],
+    "hours":"毎週土曜 10:00～12:00","valid_from_text":null,"valid_to_text":null,"comes_to_you":false,"delivery":false
+  },
+  {
+    "business":{"name":"架空にじいろ市場","branch":"テスト店","kind":"supermarket"},
+    "category":"supermarket","summary_en":"A fictional supermarket lists three grocery prices.","offers":[],
+    "items":[
+      {"name_ja":"架空りんご","name_en":"Apples","price_yen":158,"price_tax_incl_yen":171,"regular_yen":198,"regular_label":"通常価格","unit":"1個","conditions":["members","cash"]},
+      {"name_ja":"架空たまご","name_en":"Eggs","price_yen":238,"price_tax_incl_yen":257,"regular_yen":null,"regular_label":null,"unit":"1パック","conditions":["limited_quantity"]},
+      {"name_ja":"架空だいこん","name_en":"Daikon","price_yen":98,"price_tax_incl_yen":106,"regular_yen":null,"regular_label":null,"unit":"1本","conditions":["today_only"]}
+    ],
+    "address":"東京都テスト区4-5-6","phones":["0120-000-222"],"websites":[],"hours":"9:00～20:00",
+    "valid_from_text":"10月11日","valid_to_text":"10月12日","comes_to_you":false,"delivery":false
+  },
+  {
+    "business":{"name":"架空くも弁当","branch":null,"kind":"meal delivery service"},
+    "category":"food_delivery","summary_en":"A fictional meal delivery service offers a coupon.",
+    "offers":[{"kind":"coupon","text_ja":"宅配クーポン500円引","text_en":"500 yen off delivery","regular_yen":null,"offer_yen":null,"discount_yen":500,"percent_off":null,"deadline_text":"10月31日まで"}],
+    "items":[],"address":null,"phones":["0120-000-333"],"websites":[],"hours":null,"valid_from_text":null,"valid_to_text":null,"comes_to_you":false,"delivery":true
+  },
+  {
+    "business":{"name":"架空はこ買取","branch":null,"kind":"home buying service"},
+    "category":"buying_service","summary_en":"A fictional buying service visits your home.",
+    "offers":[{"kind":"other","text_ja":"出張買取","text_en":"Home buying service","regular_yen":null,"offer_yen":null,"discount_yen":null,"percent_off":null,"deadline_text":null}],
+    "items":[],"address":null,"phones":["0120-000-444"],"websites":[],"hours":null,"valid_from_text":null,"valid_to_text":null,"comes_to_you":true,"delivery":false
+  },
+  {
+    "business":{"name":"架空テスト市税務室","branch":null,"kind":"fictional city tax office"},
+    "category":"official_or_personal","summary_en":"A fictional city tax notice addressed to a resident.",
+    "offers":[],"items":[],"address":"東京都テスト区7-8-9","phones":["0120-000-555"],"websites":[],"hours":null,
+    "valid_from_text":null,"valid_to_text":"10月31日","comes_to_you":false,"delivery":false
+  }
+]

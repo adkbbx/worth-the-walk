@@ -11,6 +11,9 @@ for(const line of railLines){
 await writeFile('STATIONS.md',coverage);
 await mkdir('dist/fonts',{recursive:true});
 await copyFile('src/rules.mjs','dist/rules.mjs');
+await copyFile('src/walks.mjs','dist/walks.mjs');
+await copyFile('src/mailbox.mjs','dist/mailbox.mjs');
+await copyFile('data/station-coordinates.json','dist/station-coordinates.json');
 await copyFile('data/catalog.mjs','dist/catalog.mjs');
 await copyFile('data/rail-lines.mjs','dist/rail-lines.mjs');
 await copyFile('data/researched.mjs','dist/researched.mjs');

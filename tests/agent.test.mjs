@@ -1,0 +1,358 @@
+import { test, before, after } from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import { readFileSync } from 'node:fs';
+import { once } from 'node:events';
+import { createApp } from '../agent/mastra.mjs';
+import { createTools, rulesRank } from '../agent/tools.mjs';
+import { createCallQueue, modelCall } from '../agent/queue.mjs';
+import { FEATURES, normalizeTile } from '../src/mailbox.mjs';
+import { createServer } from '../scripts/serve.mjs';
+
+process.env.MOCK_GEMMA = '1';
+const env = { MOCK_GEMMA: '1' };
+const image = 'data:image/png;base64,AAAA';
+const fixtures = JSON.parse(readFileSync(new URL('./fixtures/tiles.json', import.meta.url), 'utf8'));
+const noFetch = async () => { throw new Error('External network is forbidden in tests'); };
+const originalFetch = globalThis.fetch;
+before(() => { globalThis.fetch = noFetch; });
+after(() => { globalThis.fetch = originalFetch; });
+const response = body => new Response(JSON.stringify(body), { headers: { 'Content-Type': 'application/json' } });
+const predict = [
+  { id: 'trial', row: [0, 1, 0, 1, 2, 1, 0, 0, 1] },
+  { id: 'expired', row: [10, 3, -1, 0, 0, -1, 1, 0, 0] },
+];
+const mergeInput = (tiles = fixtures.slice(0, 2)) => ({ flyerId: 'dojo',
+  pages: tiles.map((tile, index) => ({ id: `p${index}`, tiles: [tile] })),
+  scanDate: '2026-10-11', home: { stationId: 'test', lat: 35.5, lon: 139.5 } });
+
+test('readPage emits one event per tile and a final ordered list, wrapping fixture indices', async () => {
+  const app = createApp({ env, fetch: noFetch });
+  const events = [];
+  const result = await app.readPage({ pageId: 'front', tiles: Array(9).fill(image) }, event => events.push(event));
+  assert.equal(events.length, 10);
+  assert.deepEqual(events.slice(0, -1).map(event => event.index).sort((a, b) => a - b), [0, 1, 2, 3, 4, 5, 6, 7, 8]);
+  assert.ok(events.slice(0, -1).every(event => event.type === 'tile'));
+  assert.deepEqual(result, events.at(-1));
+  assert.equal(result.type, 'done'); assert.equal(result.pageId, 'front');
+  assert.deepEqual(result.tiles, Array.from({ length: 9 }, (_, index) => normalizeTile(fixtures[index % 6])));
+  assert.equal(app.mastra.getAgent('flyerReader').name, 'flyer-reader');
+  assert.equal(app.mastra.getAgent('flyerMerger').name, 'flyer-merger');
+});
+
+test('mock merge combines two dojo pages, finalizes deadlines and chain fields, and locates via injected fetch', async () => {
+  let calls = 0;
+  const app = createApp({ env, fetch: async () => { calls++; return response([
+    { geometry: { coordinates: [139.6, 35.6] }, properties: { title: 'テスト住所' } },
+  ]); } });
+  const flyer = await app.mergeFlyer(mergeInput());
+  assert.equal(flyer.id, 'dojo'); assert.deepEqual(flyer.pageIds, ['p0', 'p1']);
+  assert.equal(flyer.bucket, 'walk'); assert.equal(flyer.business.name, fixtures[0].business.name);
+  assert.equal(flyer.address, fixtures[1].address); assert.deepEqual(flyer.phones, ['0120-000-111']);
+  assert.equal(flyer.deadline, '2026-11-30'); assert.equal(flyer.chain, null);
+  assert.equal(flyer.offers[0].page, 0); assert.equal(flyer.offers[0].regular_yen, 3300);
+  assert.equal(flyer.needsLookup, false); assert.equal(flyer.location.source, 'gsi'); assert.equal(calls, 1);
+});
+
+test('mock mode with no injected fetch skips all lookup, while personal mail returns storable only', async () => {
+  const app = createApp({ env });
+  assert.equal((await app.mergeFlyer(mergeInput())).location, null);
+  assert.equal(await app.locate({ q: 'test', name: 'test', lat: 35, lon: 139 }), null);
+  let calls = 0;
+  const personalApp = createApp({ env, fetch: async () => { calls++; throw new Error('Unexpected lookup'); } });
+  assert.deepEqual(await personalApp.mergeFlyer(mergeInput([fixtures[5]])), {
+    id: 'dojo', pageIds: ['p0'], bucket: 'keep', category: 'official_or_personal',
+  });
+  assert.equal(calls, 0);
+});
+
+test('all synthetic categories retain existing mailbox behavior', async () => {
+  const app = createApp({ env });
+  const market = await app.mergeFlyer(mergeInput([fixtures[2]]));
+  assert.equal(market.items.length, 3); assert.equal(market.items[0].regular_yen, 198);
+  assert.ok(market.items.every(item => item.page === 0));
+  assert.equal((await app.mergeFlyer(mergeInput([fixtures[3]]))).bucket, 'home');
+  assert.equal((await app.mergeFlyer(mergeInput([fixtures[4]]))).bucket, 'toss');
+});
+
+test('GSI maps first result, encodes address, sets 8s signal, and caches results', async () => {
+  let calls = 0;
+  const tools = createTools({ env, fetch: async (url, init) => {
+    calls++; assert.equal(url.origin, 'https://msearch.gsi.go.jp');
+    assert.equal(url.searchParams.get('q'), fixtures[1].address);
+    assert.ok(init.signal instanceof AbortSignal);
+    return response([{ geometry: { coordinates: [139.75, 35.65] }, properties: { title: 'テスト住所' } },
+      { geometry: { coordinates: [0, 0] } }]);
+  } });
+  const expected = { lat: 35.65, lon: 139.75, source: 'gsi', precision: 'block', title: 'テスト住所' };
+  const first = await tools.gsiGeocode({ q: fixtures[1].address });
+  assert.deepEqual(first, expected); first.lat = 0;
+  assert.deepEqual(await tools.gsiGeocode({ q: fixtures[1].address }), expected);
+  assert.equal(calls, 1); assert.equal(typeof tools.tools.gsiGeocode.execute, 'function');
+});
+
+test('GSI LRU evicts the oldest of 500 entries and refreshes recently used entries', async () => {
+  let calls = 0;
+  const tools = createTools({ env, fetch: async () => { calls++; return response([]); } });
+  for (let index = 0; index < 500; index++) await tools.gsiGeocode({ q: String(index) });
+  await tools.gsiGeocode({ q: '0' }); await tools.gsiGeocode({ q: '500' });
+  await tools.gsiGeocode({ q: '0' }); assert.equal(calls, 501);
+  await tools.gsiGeocode({ q: '1' }); assert.equal(calls, 502);
+});
+
+test('lookup failures and invalid coordinates return null', async () => {
+  for (const fetch of [noFetch, async () => new Response('', { status: 500 }),
+    async () => response([{ geometry: { coordinates: ['139', 35] } }]), async () => response([])]) {
+    assert.equal(await createTools({ env, fetch }).gsiGeocode({ q: 'test' }), null);
+  }
+});
+
+test('SerpApi maps place_results and local_results, operating hours, and normalized phone matches', async () => {
+  for (const direct of [true, false]) {
+    const place = { title: '架空店', address: 'テスト区', gps_coordinates: { latitude: 35.7, longitude: 139.7 },
+      rating: 4.5, reviews: 20, phone: '０１２０ ０００ １１１', operating_hours: { monday: '10–18' } };
+    const tools = createTools({ env: { ...env, SERPAPI_API_KEY: 'synthetic' }, fetch: async (url, init) => {
+      assert.equal(url.searchParams.get('engine'), 'google_maps'); assert.equal(url.searchParams.get('type'), 'search');
+      assert.equal(url.searchParams.get('q'), '架空店'); assert.equal(url.searchParams.get('ll'), '@35.5,139.5,14z');
+      assert.equal(url.searchParams.get('hl'), 'ja'); assert.ok(init.signal instanceof AbortSignal);
+      return response(direct ? { place_results: place, local_results: [{ title: 'ignored' }] } : { local_results: [place] });
+    } });
+    const result = await tools.serpapiPlace({ name: '架空店', lat: 35.5, lon: 139.5, phones: ['0120-000-111'] });
+    assert.deepEqual(result, { lat: 35.7, lon: 139.7, source: 'serpapi', precision: 'place',
+      place: { title: place.title, address: place.address, rating: 4.5, reviews: 20, phone: place.phone,
+        hours: place.operating_hours, phoneMatches: true } });
+    assert.equal((await tools.serpapiPlace({ name: '架空店', lat: 35.5, lon: 139.5, phones: ['0120-000-222'] })).place.phoneMatches, false);
+  }
+  const missingPhone = createTools({ env: { SERPAPI_API_KEY: 'synthetic' }, fetch: async () => response({
+    place_results: { gps_coordinates: { latitude: 35, longitude: 139 }, hours: '10–18' },
+  }) });
+  assert.equal((await missingPhone.serpapiPlace({ name: 'test', lat: 35, lon: 139, phones: ['bad'] })).place.phoneMatches, false);
+});
+
+test('missing SerpApi key or invalid coordinates skip fetch; no result returns null', async () => {
+  let calls = 0;
+  const fetch = async () => { calls++; return response({}); };
+  assert.equal(await createTools({ env, fetch }).serpapiPlace({ name: 'test', lat: 35, lon: 139 }), null);
+  const tools = createTools({ env: { SERPAPI_API_KEY: 'synthetic' }, fetch });
+  assert.equal(await tools.serpapiPlace({ name: 'test', lat: undefined, lon: 139 }), null); assert.equal(calls, 0);
+  assert.equal(await tools.serpapiPlace({ name: 'test', lat: 35, lon: 139 }), null); assert.equal(calls, 1);
+});
+
+test('locate falls back from a failed address to a nearby business only when home is available', async () => {
+  const calls = [];
+  const app = createApp({ env: { ...env, SERPAPI_API_KEY: 'synthetic' }, fetch: async url => {
+    calls.push(url.hostname);
+    return response(url.hostname === 'msearch.gsi.go.jp' ? [] : { local_results: [{
+      gps_coordinates: { latitude: 35, longitude: 139 }, phone: '0120-000-111',
+    }] });
+  } });
+  assert.equal((await app.mergeFlyer(mergeInput())).location.place.phoneMatches, true);
+  assert.deepEqual(calls, ['msearch.gsi.go.jp', 'serpapi.com']);
+  const withoutHome = await app.mergeFlyer({ ...mergeInput(), home: null });
+  assert.equal(withoutHome.location, null); assert.equal(calls.length, 2);
+});
+
+test('ranking uses the exact rules with no token, fewer than six rows, or one label', async () => {
+  const expected = rulesRank({ predict });
+  assert.equal(expected.model, 'rules');
+  assert.ok(Math.abs(expected.scores[0].p - 0.85) < 1e-12);
+  assert.ok(Math.abs(expected.scores[1].p - 0.15) < 1e-12);
+  for (const [token, train] of [[undefined, []], ['synthetic', Array(5).fill({ row: predict[0].row, label: 1 })],
+    ['synthetic', Array(6).fill({ row: predict[0].row, label: 1 })]]) {
+    const tools = createTools({ env: { ...env, PRIOR_LABS_MCP_TOKEN: token }, fetch: noFetch });
+    assert.deepEqual(await tools.rankFlyers({ train, predict }), expected);
+  }
+  assert.equal(rulesRank({ predict: [{ id: 'max', row: [0, 0, 0, 9, 3, 1, 0, 0, 1] }] }).scores[0].p, 1);
+  assert.equal(rulesRank({ predict: [{ id: 'min', row: [0, 3, 0, 0, 0, -1, 9, 0, 0] }] }).scores[0].p, 0);
+});
+
+test('MCP discovery failure falls back to rules without leaking its error', async () => {
+  const train = Array.from({ length: 6 }, (_, index) => ({ row: predict[0].row, label: index % 2 }));
+  const tools = createTools({ env: { ...env, PRIOR_LABS_MCP_TOKEN: 'synthetic' }, fetch: noFetch });
+  assert.deepEqual(await tools.rankFlyers({ train, predict }), rulesRank({ predict }));
+});
+
+test('MCP uses the discovered inline classification tool and maps probabilities of label one', async () => {
+  const train = Array.from({ length: 6 }, (_, index) => ({ row: predict[index % 2].row, label: index % 2 }));
+  let argumentsSent;
+  const tools = createTools({ env: { ...env, PRIOR_LABS_MCP_TOKEN: 'synthetic' }, fetch: async (url, init) => {
+    assert.equal(String(url), 'https://api.priorlabs.ai/mcp/server');
+    if (init.method === 'GET') return new Response(null, { status: 405 });
+    if (init.method === 'DELETE') return new Response(null, { status: 204 });
+    const message = JSON.parse(init.body);
+    if (message.id === undefined) return new Response(null, { status: 202 });
+    if (message.method === 'server/discover') return response({ jsonrpc: '2.0', id: message.id,
+      error: { code: -32601, message: 'Synthetic server uses legacy initialization' } });
+    let result;
+    if (message.method === 'initialize') result = { protocolVersion: '2025-03-26', capabilities: { tools: {} }, serverInfo: { name: 'synthetic', version: '1' } };
+    else if (message.method === 'tools/list') result = { tools: [{ name: 'fit_and_predict_inline', description: 'Synthetic classification',
+      inputSchema: { type: 'object', properties: { X_train: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
+        y_train: { type: 'array', items: { type: 'number' } }, X_test: { type: 'array', items: { type: 'array', items: { type: 'number' } } },
+        task_type: { type: 'string' }, output_type: { type: 'string' } }, required: ['X_train', 'y_train', 'X_test', 'task_type', 'output_type'] } }] };
+    else if (message.method === 'tools/call') {
+      assert.equal(message.params.name, 'fit_and_predict_inline');
+      argumentsSent = message.params.arguments;
+      result = { content: [{ type: 'text', text: JSON.stringify({ predictions: [[0.1, 0.9], [0.8, 0.2]] }) }] };
+    } else throw new Error('Unexpected synthetic MCP request');
+    return response({ jsonrpc: '2.0', id: message.id, result });
+  } });
+  assert.deepEqual(await tools.rankFlyers({ train, predict }), { model: 'tabpfn', scores: [{ id: 'trial', p: 0.9 }, { id: 'expired', p: 0.2 }] });
+  assert.deepEqual(argumentsSent, { X_train: train.map(value => value.row), y_train: train.map(value => value.label),
+    X_test: predict.map(value => value.row), task_type: 'classification', output_type: 'probas' });
+});
+
+test('the shared upstream queue caps concurrent calls at six and releases slots on failures', async () => {
+  let active = 0, peak = 0;
+  await Promise.all(Array.from({ length: 20 }, () => modelCall(async () => {
+    active++; peak = Math.max(peak, active);
+    await new Promise(resolve => setImmediate(resolve)); active--;
+  })));
+  assert.equal(peak, 6); assert.equal(active, 0);
+  const queue = createCallQueue(1);
+  const settled = await Promise.allSettled([queue(async () => { throw new Error('synthetic'); }), queue(async () => 42)]);
+  assert.equal(settled[0].status, 'rejected'); assert.equal(settled[1].value, 42);
+});
+
+test('Sentry is conditional and registered workflow traces omit payloads before reaching the exporter', async t => {
+  const plain = createApp({ env, fetch: noFetch });
+  assert.equal(plain.config().features.sentry, false);
+  const app = createApp({ env: { ...env, SENTRY_DSN: 'https://synthetic@example.invalid/1' }, fetch: noFetch });
+  const observability = app.mastra.observability;
+  t.after(() => observability.shutdown());
+  const instance = observability.getDefaultInstance();
+  assert.equal(instance.getConfig().serviceName, 'chirashi-walk');
+  const exporters = instance.getExporters();
+  assert.equal(exporters.length, 1); assert.equal(exporters[0].name, 'sentry');
+  // Replace the transport-facing exporter method before any trace can be sent.
+  const events = [];
+  exporters[0].exportTracingEvent = async event => { events.push(event); };
+  await app.readPage({ pageId: 'trace', tiles: [image] });
+  await observability.flush();
+  assert.ok(events.length > 0);
+  assert.equal(new Set(events.map(event => event.exportedSpan.traceId)).size, 1);
+  for (const { exportedSpan: span } of events) {
+    assert.equal(span.input, undefined); assert.equal(span.output, undefined);
+    assert.equal(span.errorInfo, undefined); assert.equal(span.requestContext, undefined);
+    assert.deepEqual(span.attributes, {}); assert.deepEqual(span.metadata, {});
+  }
+  assert.doesNotMatch(JSON.stringify(events), /data:image|無料体験|0120-000-111/);
+});
+
+function request(server, path, { method = 'GET', body, headers = {}, chunks } = {}) {
+  const payload = typeof body === 'string' ? body : body === undefined ? undefined : JSON.stringify(body);
+  return new Promise((resolveResponse, reject) => {
+    const req = http.request({ hostname: '127.0.0.1', port: server.address().port, path, method, headers: {
+      ...(payload === undefined ? {} : { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(payload) }), ...headers,
+    } }, res => {
+      let text = '';
+      res.setEncoding('utf8'); res.on('data', chunk => { text += chunk; }); res.on('error', reject);
+      res.on('end', () => resolveResponse({ status: res.statusCode, headers: res.headers, text }));
+    });
+    req.on('error', reject);
+    if (chunks) for (const chunk of chunks) req.write(chunk);
+    else if (payload !== undefined) req.write(payload);
+    req.end();
+  });
+}
+
+async function startServer(t, options = {}) {
+  const server = createServer({ env, fetch: noFetch, log: () => {}, ...options });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  t.after(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  assert.ok(server.listening); return server;
+}
+
+test('HTTP config, NDJSON, merge, locate, rank, and static serving work on an ephemeral port', async t => {
+  const server = await startServer(t);
+  const config = await request(server, '/api/config'); assert.equal(config.status, 200);
+  assert.equal(JSON.parse(config.text).mode, 'mock');
+  const read = await request(server, '/api/read-page', { method: 'POST', body: { pageId: 'http', tiles: [image, image] } });
+  assert.equal(read.status, 200); assert.equal(read.headers['content-type'], 'application/x-ndjson');
+  assert.ok(read.text.endsWith('\n'));
+  const events = read.text.trim().split('\n').map(line => JSON.parse(line));
+  assert.deepEqual(events.map(event => event.type), ['tile', 'tile', 'done']);
+  assert.deepEqual(events.at(-1).tiles, fixtures.slice(0, 2).map(normalizeTile));
+  const merge = await request(server, '/api/merge', { method: 'POST', body: mergeInput() });
+  assert.equal(merge.status, 200); assert.equal(JSON.parse(merge.text).flyer.bucket, 'walk');
+  const keep = await request(server, '/api/merge', { method: 'POST', body: mergeInput([fixtures[5]]) });
+  assert.deepEqual(Object.keys(JSON.parse(keep.text).flyer).sort(), ['bucket', 'category', 'id', 'pageIds']);
+  const locate = await request(server, '/api/locate?q=test'); assert.equal(locate.status, 200);
+  assert.deepEqual(JSON.parse(locate.text), { location: null });
+  const rank = await request(server, '/api/rank', { method: 'POST', body: { train: [], predict } });
+  assert.equal(rank.status, 200); assert.deepEqual(JSON.parse(rank.text), rulesRank({ predict }));
+  const index = await request(server, '/'); assert.equal(index.status, 200);
+  assert.match(index.headers['content-type'], /text\/html/);
+  assert.equal((await request(server, '/api/rank')).status, 405);
+  assert.equal((await request(server, '/api/unknown')).status, 404);
+  assert.equal((await request(server, '/%2e%2e%5cpackage.json')).status, 403);
+  assert.equal((await request(server, '/%broken')).status, 404);
+});
+
+test('HTTP rejects non-image URLs, invalid base64, too many tiles, invalid feature rows and malformed JSON', async t => {
+  const server = await startServer(t);
+  for (const tiles of [['data:text/plain;base64,AAAA'], ['data:image/svg+xml;base64,AAAA'],
+    ['data:image/png;base64,???'], ['data:image/png;base64,A'], ['data:image/png;base64,'],
+    [], Array(10).fill(image), ['data:image/png;base64,' + 'A'.repeat(2 * 1024 * 1024)]]) {
+    assert.equal((await request(server, '/api/read-page', { method: 'POST', body: { pageId: 'bad', tiles } })).status, 400);
+  }
+  assert.equal((await request(server, '/api/read-page', { method: 'POST', body: '{bad' })).status, 400);
+  for (const row of [[0], Array(FEATURES.length).fill('0')]) {
+    assert.equal((await request(server, '/api/rank', { method: 'POST', body: { train: [], predict: [{ id: 'bad', row }] } })).status, 400);
+  }
+  assert.equal((await request(server, '/api/locate?lat=NaN&lon=139')).status, 400);
+});
+
+test('HTTP enforces all three body limits including chunked requests', async t => {
+  const server = await startServer(t);
+  for (const [path, bytes] of [['/api/read-page', 12 * 1024 * 1024], ['/api/merge', 1024 * 1024], ['/api/rank', 256 * 1024]]) {
+    const result = await request(server, path, { method: 'POST', body: ' '.repeat(bytes + 1) });
+    assert.equal(result.status, 413); assert.equal(JSON.parse(result.text).error, 'Request body too large');
+  }
+  const chunked = await request(server, '/api/rank', { method: 'POST', chunks: [' '.repeat(200 * 1024), ' '.repeat(100 * 1024)] });
+  assert.equal(chunked.status, 413);
+});
+
+test('HTTP rejects tile 81 per IP, uses first forwarded IP, and allows reads after one hour', async t => {
+  let time = 1_000_000;
+  const server = await startServer(t, { now: () => time });
+  const send = (tiles, ip = '192.0.2.1, 192.0.2.2') => request(server, '/api/read-page', {
+    method: 'POST', headers: { 'x-forwarded-for': ip }, body: { pageId: 'rate', tiles: Array(tiles).fill(image) },
+  });
+  for (let index = 0; index < 8; index++) assert.equal((await send(9)).status, 200);
+  assert.equal((await send(8)).status, 200);
+  const limited = await send(1, '192.0.2.1, 192.0.2.9'); assert.equal(limited.status, 429);
+  assert.equal(JSON.parse(limited.text).retryAfter, 3600); assert.equal(limited.headers['retry-after'], '3600');
+  assert.equal((await send(1, '192.0.2.2')).status, 200);
+  time += 3_600_000; assert.equal((await send(1)).status, 200);
+});
+
+test('NDJSON delivers a completed tile before the final result exists', async t => {
+  const app = createApp({ env, fetch: noFetch });
+  let finish;
+  const gate = new Promise(resolve => { finish = resolve; });
+  app.readPage = async (input, onEvent) => {
+    await onEvent({ type: 'tile', index: 0, tile: normalizeTile(fixtures[0]) });
+    await gate;
+    await onEvent({ type: 'done', pageId: input.pageId, tiles: [normalizeTile(fixtures[0])] });
+  };
+  const server = await startServer(t, { app });
+  const body = JSON.stringify({ pageId: 'stream', tiles: [image] });
+  const lines = [];
+  await new Promise((resolveStream, reject) => {
+    const req = http.request({ hostname: '127.0.0.1', port: server.address().port, path: '/api/read-page',
+      method: 'POST', headers: { 'Content-Length': Buffer.byteLength(body) } }, res => {
+      let pending = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => {
+        pending += chunk;
+        while (pending.includes('\n')) {
+          const end = pending.indexOf('\n'); lines.push(JSON.parse(pending.slice(0, end))); pending = pending.slice(end + 1);
+          if (lines.length === 1) { assert.equal(lines[0].type, 'tile'); finish(); }
+        }
+      });
+      res.on('end', resolveStream); res.on('error', reject);
+    });
+    req.on('error', reject); req.end(body);
+  });
+  assert.deepEqual(lines.map(line => line.type), ['tile', 'done']);
+});
