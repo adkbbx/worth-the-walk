@@ -996,7 +996,10 @@ function render() {
   if ($('start-line')) { startLine=$('start-line').value; startStation=$('start-station').value; }
   revokeThumbs();
   $('panel').setAttribute('aria-label',view === 'home' ? 'Mailbox' : view === 'walk' ? 'Walk' : 'Walk done');
+  const hero=$('panel').querySelector('.cw-hero-scene');
   $('panel').innerHTML=view === 'walk' ? walkScreen(activeOuting()) : view === 'done' ? doneScreen() : renderHome();
+  // Keep the decorative welcome hero across re-renders so its one-time entrance is never restarted.
+  if (hero) $('panel').querySelector('.cw-hero-scene')?.replaceWith(hero);
   document.body.classList.toggle('cw-has-photos',view === 'home' && photos.length>0 && !reading && !recovered);
   document.body.classList.toggle('cw-is-walking',view === 'walk');
   dockObserver.disconnect();
