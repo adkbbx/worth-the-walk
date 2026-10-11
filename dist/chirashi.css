@@ -498,6 +498,7 @@ p { margin:0; }
 
 /* Accessibility: all controls, including radios, links and thumbnail stacks. */
 :where(button, input, select, textarea, summary, a[href], [tabindex]):focus-visible { outline:2px solid var(--gate); outline-offset:3px; }
+:where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus { outline:none; box-shadow:none; }
 :where(button, input, select, textarea, summary, a[href], [tabindex]) { scroll-margin-block:24px calc(var(--read-dock-height, 0px) + var(--notice-height, 0px) + 32px); }
 html { scroll-padding-bottom:calc(var(--read-dock-height, 0px) + var(--notice-height, 0px) + 32px); }
 .cw-icon { display:inline-block; width:18px; height:18px; vertical-align:middle; flex:none; }

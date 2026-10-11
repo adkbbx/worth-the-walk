@@ -680,7 +680,7 @@ try {
   assert.equal(await page.locator('.cw-spinner').evaluate(el => getComputedStyle(el).animationName),'none','reduced motion keeps the spinner still');
   await page.evaluate(() => window.releaseStampLocation()); await page.locator('.cw-stamp.gps').waitFor();
   assert.equal(await page.locator('.cw-stamp-label').textContent(),'Stamp 1 of 2 · GPS checked');
-  assert.match(await page.locator('#notice').textContent(),/^Stamped: /);
+  assert.match(await page.locator('#announce').textContent(),/^Stamped: /);
   assert.equal(await page.getByRole('heading',{name:'Did you use it?',exact:true}).evaluate(el => el===document.activeElement),true);
   assert.deepEqual(await page.evaluate(() => window.stampVibrations),[18],'one short vibration per GPS stamp');
   await lineChecks(page);
@@ -715,7 +715,7 @@ try {
   await bothWidths(page,'walk-far',true);
   await page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await page.locator('.cw-stamp.self').waitFor();
   assert.equal(await page.locator('.cw-stamp-label').textContent(),'Stamp 2 of 2 · without GPS');
-  assert.match(await page.locator('#notice').textContent(),/^Stamped: /);
+  assert.match(await page.locator('#announce').textContent(),/^Stamped: /);
   await lineChecks(page);
   const resultHeading=page.locator('.cw-used h2');
   assert.equal(await (await resultHeading.count() ? resultHeading : page.locator('[data-action=next-stop]')).evaluate(el => el===document.activeElement),true);

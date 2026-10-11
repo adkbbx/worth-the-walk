@@ -71,6 +71,11 @@ function applyTheme() {
   }
 }
 
+const announcer=document.createElement('div');
+announcer.id='announce'; announcer.className='cw-sr';
+announcer.setAttribute('role','status'); announcer.setAttribute('aria-live','polite'); announcer.setAttribute('aria-atomic','true');
+$('notice').after(announcer);
+
 function notify(message = '', {tone='info',actionLabel,onAction} = {}) {
   const notice=$('notice');
   if (message && !notice.hidden && notice.dataset.message === message && notice.dataset.tone === tone) return;
@@ -670,7 +675,7 @@ function stamp(o,id,kind,distance = null,announcement = null) {
   if (flyer(id)?.bucket !== 'keep' && flyer(id)) state.labels[id]=1;
   recentStamp=id;
   stampMessages.delete(id); save(); render();
-  notify(announcement ?? `Stamped: ${stopKind(id)}`);
+  announcer.innerHTML=modelText(announcement ?? `Stamped: ${stopKind(id)}`);
   const target=document.querySelector('.cw-used h2') ?? document.querySelector('[data-action="next-stop"]');
   if (target) { if (target.tagName !== 'BUTTON') target.tabIndex=-1; target.focus({preventScroll:true}); }
   if (kind === 'gps') { try { navigator.vibrate?.(18); } catch {} }
