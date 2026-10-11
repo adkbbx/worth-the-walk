@@ -18,6 +18,13 @@ test('parseJsonLoose reads fenced and prose-wrapped JSON without throwing',()=>{
   assert.deepEqual(parseJsonLoose('```\n{"ok":true}\n```'),{ok:true});
   for(const value of ['bad','{bad}',null,{},'{"a":1} {"b":2}','[1,2]'])assert.equal(parseJsonLoose(value),null);
 });
+test('parseJsonLoose repairs the key quoting and trailing commas a vision model produced',()=>{
+  // Real Gemma output shape: a missing quote before "unit" made the whole tile unreadable.
+  const raw='```json\n{"items":[{"name_ja":"テスト肉","price_yen":563,"regular_yen":579,"regular_label":"非会員・カード払価格",unit":"100g当たり"}],}\n```';
+  assert.deepEqual(parseJsonLoose(raw),{items:[{name_ja:'テスト肉',price_yen:563,regular_yen:579,regular_label:'非会員・カード払価格',unit:'100g当たり'}]});
+  assert.deepEqual(parseJsonLoose('{category:"shop", phones:["0120-000-111"]}'),{category:'shop',phones:['0120-000-111']});
+  assert.equal(parseJsonLoose('{"summary_en":"ok", "url":"https://x.test/a"}').url,'https://x.test/a');
+});
 test('yen normalizes printed currency and rejects missing or invalid values',()=>{
   for(const [value,expected] of [['1,080円',1080],['¥3,300',3300],['３３００',3300],['税込 1,166円',1166],['￥３，３００',3300],[0,0],[12.6,13],['12.6円',13]])assert.equal(yen(value),expected);
   for(const value of [null,undefined,NaN,Infinity,-1,'-1円','','free','100円～200円',true,{},'1,08円'])assert.equal(yen(value),null);

@@ -15,12 +15,18 @@ function list(value,limit) {
 function emptyTile() {
   return {business:{name:null,branch:null,kind:null},category:'other',summary_en:null,offers:[],items:[],address:null,phones:[],websites:[],hours:null,valid_from_text:null,valid_to_text:null,comes_to_you:false,delivery:false};
 }
+// Vision models sometimes drop a quote before a key (`,unit":`), leave keys unquoted or add trailing commas.
+function repairJson(s) {
+  return s.replace(/([{,]\s*)"?([A-Za-z_][A-Za-z0-9_]*)"?\s*:/g,'$1"$2":').replace(/,\s*([}\]])/g,'$1');
+}
 export function parseJsonLoose(value) {
   try {
     if(typeof value!=='string')return null;
     const s=value.replace(/```(?:json)?/gi,'').trim();
     const start=s.indexOf('{'),end=s.lastIndexOf('}');
-    return start>=0 && end>=start ? JSON.parse(s.slice(start,end+1)) : null;
+    if(start<0 || end<start)return null;
+    const body=s.slice(start,end+1);
+    try { return JSON.parse(body); } catch { return JSON.parse(repairJson(body)); }
   } catch { return null; }
 }
 export function yen(value) {
