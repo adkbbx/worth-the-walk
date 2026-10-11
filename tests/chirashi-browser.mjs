@@ -14,6 +14,7 @@ const coordinates=JSON.parse(await readFile(new URL('../data/station-coordinates
 const station=stationsOnLine(stations,'skytree')[0]; // Tobu Skytree only, never the user's home.
 const homePoint=coordinates.find(s => s.id === station.id);
 const errors=[], reads=[], merges=[], ranks=[], releases=[];
+const capturedScreens=new Set();
 let server,browser,serverError,logs='';
 const readState=page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
 const active=state => state.outings.find(o => o.status === 'active');
@@ -28,15 +29,64 @@ async function rows(page,store='pages') {
     };
   }),store);
 }
+async function copyThumbs(source,target) {
+  // storageState cannot serialize Blob values; copy the retained fixture JPEGs explicitly.
+  const thumbs=await source.evaluate(async () => {
+    const records=await new Promise((resolve,reject) => {
+      const r=indexedDB.open('worth-the-walk-photos',2); r.onerror=() => reject(r.error);
+      r.onsuccess=() => { const db=r.result, tx=db.transaction('thumbs','readonly'), q=tx.objectStore('thumbs').getAll();
+        tx.oncomplete=() => { db.close(); resolve(q.result); }; tx.onerror=() => { db.close(); reject(tx.error); };
+      };
+    });
+    return Promise.all(records.map(async record => ({...record,blob:{type:record.blob.type,bytes:Array.from(new Uint8Array(await record.blob.arrayBuffer()))}})));
+  });
+  await target.evaluate(thumbs => new Promise((resolve,reject) => {
+    const r=indexedDB.open('worth-the-walk-photos',2); r.onerror=() => reject(r.error);
+    r.onsuccess=() => { const db=r.result, tx=db.transaction('thumbs','readwrite'), store=tx.objectStore('thumbs');
+      for (const record of thumbs) store.put({...record,blob:new Blob([new Uint8Array(record.blob.bytes)],{type:record.blob.type})});
+      tx.oncomplete=() => { db.close(); resolve(); }; tx.onerror=() => { db.close(); reject(tx.error); };
+    };
+  }),thumbs);
+}
 async function overflow(page,label) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth),label+': document overflow');
   for (const dialog of await page.locator('dialog[open]').all()) assert.ok(await dialog.evaluate(el => el.scrollWidth<=el.clientWidth),label+': sheet overflow');
 }
 async function bothWidths(page,label,screenshot=false) {
+  await page.evaluate(() => document.fonts.ready);
   await page.setViewportSize({width:390,height:844}); await overflow(page,label+' 390');
-  if (screenshot) await page.screenshot({path:`.impeccable/review/chirashi-${label}.png`,fullPage:true});
+  if (screenshot && !capturedScreens.has(label)) await page.screenshot({path:`.impeccable/review/chirashi-${label}.png`,fullPage:true});
   await page.setViewportSize({width:1280,height:900}); await overflow(page,label+' 1280');
+  if (screenshot && !capturedScreens.has(label)) await page.screenshot({path:`.impeccable/review/chirashi-${label}-desktop.png`,fullPage:true});
+  if (screenshot) capturedScreens.add(label);
   await page.setViewportSize({width:390,height:844});
+}
+async function ticketChecks(page) {
+  const ticket=page.locator('.cw-ticket');
+  assert.equal(await ticket.count(),1,'answer is a ticket');
+  const route=ticket.locator('.cw-route');
+  const rows=route.locator(':scope > .cw-route-station, :scope > .cw-route-stop');
+  assert.ok(await rows.count()>=3,'route includes endpoints and stops');
+  assert.ok(await rows.first().evaluate(el => el.classList.contains('cw-route-station')),'route starts at a station');
+  assert.ok(await rows.last().evaluate(el => el.classList.contains('cw-route-station')),'route ends at a station');
+  assert.match(await ticket.locator('h2').evaluate(el => getComputedStyle(el).fontFamily),/^"?Dela Gothic One/);
+  assert.doesNotMatch(await page.locator('.cw-header, .cw-snap, .cw-tray').allTextContents().then(parts => parts.join(' ')),/[📷📄📞♻🔒⚙◎]/u,'icons use SVG or print labels');
+}
+async function sealChecks(page) {
+  assert.equal(await page.locator('#ink').count(),1,'shared ink filter exists exactly once');
+  assert.ok(await page.locator('svg g[filter="url(#ink)"]').count()>0,'SVG seals use the ink filter');
+  const ids=await page.locator('textPath').evaluateAll(paths => paths.flatMap(path => [path.id,path.getAttribute('href')?.slice(1)]));
+  assert.ok(ids.length>0 && ids.every(Boolean));
+  assert.equal(new Set(ids).size,ids.length,'all textPath IDs and referenced arc IDs are unique, including repeated stamps');
+  assert.ok(await page.locator('textPath').evaluateAll(paths => paths.every(path => document.getElementById(path.getAttribute('href').slice(1)))),'every textPath has an arc');
+}
+async function whyChecks(page) {
+  const opener=page.locator('.cw-footer [data-action=why-open]');
+  await opener.click(); await page.getByRole('heading',{name:'Why open models?',exact:true}).waitFor();
+  for (const figure of ['0/8','4/4','¥0.4']) assert.ok((await page.locator('#sheet').textContent()).includes(figure));
+  await bothWidths(page,'why-open',true);
+  await page.keyboard.press('Escape'); await page.locator('#sheet[open]').waitFor({state:'detached'});
+  await page.waitForFunction(() => document.activeElement?.matches('.cw-footer [data-action=why-open]'));
 }
 async function newPhone(options={}) {
   const context=await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation'],reducedMotion:'reduce',...options});
@@ -47,7 +97,7 @@ async function newPhone(options={}) {
 async function open(page) { await page.goto(base); await page.getByText('Demo mode',{exact:true}).waitFor(); }
 async function setup(page) {
   await open(page); await page.locator('#setup[open]').waitFor();
-  await bothWidths(page,'settings');
+  await bothWidths(page,'settings',true);
   assert.equal(await page.locator('#setup-weight').isVisible(),false,'weight stays under More');
   await page.locator('#setup-line').selectOption('skytree'); await page.locator('#setup-station').selectOption(station.id);
   await page.getByRole('button',{name:'Save',exact:true}).click(); await page.locator('#setup[open]').waitFor({state:'detached'});
@@ -132,7 +182,9 @@ try {
   assert.deepEqual(reads.filter(r => r.pageId===marketId).map(r => [r.mode,r.tiles.length]),[['page',1],['tiles',6]]);
   assert.ok(reads.filter(r => r.mode==='tiles').every(r => r.pageId===marketId));
   await page.getByRole('heading',{name:'3 places worth the walk',exact:true}).waitFor();
-  assert.match(await page.locator('.cw-stop-list').textContent(),/Trial ¥1,000 \(was ¥3,300\)/);
+  assert.match(await page.locator('.cw-stop-list').textContent(),/Trial ¥1,000 was ¥3,300/);
+  assert.ok(await page.locator('.cw-stop-list .cw-sticker').count()>0,'printed prices have a sticker');
+  await ticketChecks(page);
   assert.equal(await page.locator('.cw-stop-list img[src^="blob:"]').count(),4);
   assert.equal(await page.locator('.cw-stop-list img[src=x]').count(),0,'model markup is escaped');
   const keep=sorted.flyers.find(f => f.bucket==='keep'); assert.deepEqual(Object.keys(keep).sort(),['bucket','category','id','pageIds']);
@@ -141,7 +193,12 @@ try {
   const retained=await rows(page,'thumbs'); assert.ok(keep.pageIds.every(id => !retained.some(t => t.pageId===id)));
   assert.ok(!/data:image|blob:/.test(JSON.stringify(sorted)),'no photos or object URLs in localStorage');
   assert.ok(await page.locator('.cw-stop-list img').evaluateAll(imgs => imgs.every(i => Math.max(i.naturalWidth,i.naturalHeight)<=480)));
-  for (const text of ['📞 1 deal to order at home','♻ 1 flyer safe to recycle','🔒 1 letter to keep']) assert.ok(await page.getByRole('button',{name:new RegExp(text)}).count());
+  for (const [id,label,description] of [['home','Home','deal to use at home'],['toss','Recycle','flyer to recycle'],['keep','Keep','letter, not an ad']]) {
+    const slot=page.locator(`.cw-tray [data-action=bucket-sheet][data-id=${id}]`);
+    assert.equal(await slot.locator('em').textContent(),label);
+    assert.equal(await slot.locator('b').textContent(),'1');
+    assert.equal(await slot.locator('span').textContent(),description);
+  }
   for (const bucket of ['home','toss','keep']) { await page.locator(`[data-action=bucket-sheet][data-id=${bucket}]`).click(); await page.locator('#sheet[open]').waitFor(); await bothWidths(page,bucket+'-sheet'); if (bucket==='home') assert.match(await page.locator('#sheet a[href^="tel:"]').getAttribute('href'),/^tel:\d+$/); if (bucket==='keep') { assert.equal(await page.locator('#sheet img').count(),0); assert.ok(await page.getByText('Nothing from these was saved.',{exact:true}).isVisible()); } await page.getByRole('button',{name:'Close sheet',exact:true}).click(); }
   await bothWidths(page,'answer',true);
   const dojo=sorted.flyers.find(f => f.category==='lesson'), dojoRow=page.locator(`[data-flyer="${dojo.id}"]`);
@@ -171,8 +228,15 @@ try {
   assert.match(await page.getByRole('link',{name:'Open route in Google Maps',exact:true}).getAttribute('href'),/travelmode=walking/);
   await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.locator('.cw-walk-mode').waitFor();
   let state=await readState(page), outing=active(state); assert.equal(outing.cursor,0); assert.equal(outing.stopIds.length,2);
+  // Demo locations hash random page ids, so the walk order varies. The split page has no offer; walk the stop with one first.
+  const usable=id => { const f=state.flyers.find(f => f.id===id); return (f?.offers?.length ?? 0)+(f?.items?.length ?? 0)>0; };
+  if (!usable(outing.stopIds[0]) && usable(outing.stopIds[1])) {
+    await page.evaluate(key => { const s=JSON.parse(localStorage.getItem(key)); s.outings.find(o => o.status==='active').stopIds.reverse(); localStorage.setItem(key,JSON.stringify(s)); },key);
+    await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.locator('.cw-walk-mode').waitFor(); state=await readState(page); outing=active(state);
+  }
   const first=state.flyers.find(f => f.id===outing.stopIds[0]); await context.setGeolocation({latitude:first.location.lat,longitude:first.location.lon,accuracy:1});
   await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.locator('.cw-stamp.gps').waitFor();
+  await sealChecks(page); await bothWidths(page,'stamped-stop',true);
   assert.equal((await readState(page)).labels[first.id],1); assert.ok(await page.getByRole('heading',{name:'Did you use it?',exact:true}).isVisible());
   // Walk order varies with the demo locations, so pick the chip with the highest printed value (a stop may have none).
   const chips=await page.locator('[data-action=used]').evaluateAll(els => els.map(el => ({kind:el.dataset.kind,index:Number(el.dataset.index)})));
@@ -183,13 +247,14 @@ try {
   await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); state=await readState(page); outing=active(state); assert.equal(outing.cursor,1); assert.equal(outing.used.length,1);
   const second=state.flyers.find(f => f.id===outing.stopIds[1]); await context.setGeolocation({latitude:second.location.lat+650/111320,longitude:second.location.lon,accuracy:1});
   await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.getByText(/You're \d+ m away — keep walking/).waitFor();
-  assert.equal(await page.locator('.cw-stamp').count(),0); await bothWidths(page,'far-stop');
+  assert.equal(await page.locator('.cw-stamp-arrival .cw-stamp').count(),0); await bothWidths(page,'far-stop');
   await page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await page.locator('.cw-stamp.self').waitFor(); await page.getByRole('button',{name:'Next stop →',exact:true}).click();
   await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
   if (expectedYen>0) assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));
   const done=(await readState(page)).outings.at(-1); assert.equal(done.status,'done'); assert.equal(done.stamps.length,2); assert.equal(savings(done.used.map(u => ({entry:state.flyers.find(f => f.id===u.flyerId)[u.kind==='offer' ? 'offers' : 'items'][u.index]}))).yen,expectedYen);
   await bothWidths(page,'done',true); await page.locator('.cw-done').getByRole('button',{name:'Your stamps',exact:true}).click(); await page.locator('#sheet[open]').waitFor();
   assert.equal(await page.locator('#sheet [data-stamp]').count(),2); assert.equal(await page.locator('#sheet [data-history-flyer]').count(),5);
+  await sealChecks(page);
   await page.locator('#sheet [data-history-flyer] [data-action=flyer-sheet]').first().click(); await page.getByRole('heading',{name:'How to use',exact:true}).waitFor();
   await page.keyboard.press('Escape'); await page.getByRole('heading',{name:'Your stamps',exact:true}).waitFor();
   assert.equal(await page.locator('#sheet [data-history-flyer] [data-action=flyer-sheet]').first().evaluate(el => el===document.activeElement),true,'flyer returns focus to Your stamps');
@@ -197,6 +262,18 @@ try {
   await page.keyboard.press('Escape'); await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
   assert.equal((await readState(page)).outings.at(-1).stamps.length,2); await page.locator('#stamps-button').click(); assert.equal(await page.locator('#sheet [data-stamp]').count(),2); await page.keyboard.press('Escape');
   await page.getByRole('button',{name:'Back to my mailbox',exact:true}).click(); await page.locator('.cw-snap').waitFor(); await bothWidths(page,'returned-mailbox');
+  await whyChecks(page);
+  // Use the same saved mailbox to inspect both dark screens without additional reads.
+  const dark=await newPhone({colorScheme:'dark'});
+  await dark.page.addInitScript(({key,state}) => localStorage.setItem(key,JSON.stringify(state)),{key,state:{...await readState(page),outings:[]}});
+  await open(dark.page); await copyThumbs(page,dark.page); await dark.page.reload(); await dark.page.getByText('Demo mode',{exact:true}).waitFor();
+  await dark.page.locator('.cw-ticket').waitFor(); await ticketChecks(dark.page);
+  assert.ok(await dark.page.locator('.cw-ticket .cw-thumb[src^="blob:"]').count()>0,'dark screenshots retain the photographed flyers');
+  assert.notEqual(await dark.page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
+  await bothWidths(dark.page,'answer-dark',true);
+  await dark.page.getByRole('button',{name:'Start the walk →',exact:true}).click(); await dark.page.locator('.cw-walk-mode').waitFor();
+  assert.notEqual(await dark.page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
+  await bothWidths(dark.page,'walk-dark',true); await dark.context.close();
   await context.close();
   // Reload during the initial read, then resume the pending full JPEGs.
   const recovery=await newPhone(), waitWhole=gate(), seenRecovery=new Map(); let holdWhole=true;

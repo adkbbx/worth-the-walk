@@ -3,30 +3,42 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#174cbc">
+  <meta name="theme-color" content="#f6f8f2" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#151b1f" media="(prefers-color-scheme: dark)">
   <meta name="description" content="Turn the flyers in your mailbox into a walk, with printed deals and a stamp at each stop.">
   <title>Worth the Walk? — turn mailbox flyers into a walk</title>
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/styles.css">
   <link rel="stylesheet" href="/fonts/zen.css">
+  <link rel="stylesheet" href="/fonts/ticket.css">
   <link rel="stylesheet" href="/chirashi.css">
 </head>
 <body class="chirashi">
   <a class="skip" href="#content">Skip to app</a>
+  <div class="cw-app">
   <header class="cw-header"><div class="cw-header-inner">
     <a class="cw-brand" href="/">Worth the Walk?<span lang="ja">チラシを、さんぽに。</span></a>
-    <button id="stamps-button" type="button" aria-label="Your stamps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16v4H4zM7 17v-4h10v4M10 13V7a3 3 0 1 1 4 0v6"/></svg></button>
-    <button id="settings-button" type="button" aria-label="Settings">⚙</button>
+    <button id="stamps-button" type="button" aria-label="Your stamps"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6.5"/><path d="m8 12 2.5 2.5L16 9"/></svg></button>
+    <button id="settings-button" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.5 2.3-2 .9-2-.8-2 3.4 1.6 1.6v2.3l-1.6 1.6 2 3.4 2-.8 2 .9L10 21h4l.5-2.3 2-.9 2 .8 2-3.4-1.6-1.6v-2.3L21 8.7l-2-3.4-2 .8-2-.9L14 3z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div></header>
   <main class="cw-main" id="content" tabindex="-1">
     <p id="progress" class="cw-meta" role="status" aria-live="polite"></p>
     <p id="notice" class="cw-notice" role="status" aria-live="polite"></p>
     <section id="panel" aria-label="Mailbox"></section>
   </main>
-  <footer class="cw-footer">Photos stay on this phone. They're only sent to be read.<small id="mode"></small></footer>
+  <footer class="cw-footer">Photos stay on this phone. They're only sent to be read.<button class="cw-text" data-action="why-open">Why open models?</button><small id="mode"></small></footer>
+  </div>
   <dialog id="setup" class="cw-sheet" aria-labelledby="setup-heading"></dialog>
   <dialog id="sheet" class="cw-sheet" aria-labelledby="sheet-heading"></dialog>
   <noscript><p class="fatal">Enable JavaScript to read flyers and plan a walk.</p></noscript>
   <script type="module" src="/chirashi.mjs"></script>
+<svg width="0" height="0" style="position:absolute;width:0;height:0" aria-hidden="true">
+  <filter id="ink" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="4" result="grain"/>
+    <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.9 1.8" result="speckle"/>
+    <feComposite in="SourceGraphic" in2="speckle" operator="in" result="inked"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="1" seed="9" result="wobble"/>
+    <feDisplacementMap in="inked" in2="wobble" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
 </body>
 </html>

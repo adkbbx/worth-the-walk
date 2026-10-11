@@ -450,7 +450,7 @@ function stopWarnings(f) {
   const warnings=[];
   if (expired(f)) warnings.push('Expired');
   if (home() && f.location && arrivalStatus(f,walkMinutes(distanceMeters(home(),f.location))) === 'closed') warnings.push("Closed when you'd arrive");
-  if (state.labels[f.id] === 0) warnings.push('You said 👎');
+  if (state.labels[f.id] === 0) warnings.push('Marked Not for me');
   return warnings;
 }
 const stopSelected = f => chosenStops === null ? !stopWarnings(f).length : chosenStops.has(f.id);
@@ -494,16 +494,34 @@ function totals(o) {
   return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps · ~${e.kcal} kcal (estimates)`;
 }
 
-function icon(category) {
-  const path = ['supermarket','drugstore','shop'].includes(category) ? '<path d="m3 8 2-5h14l2 5M4 9v12h16V9M9 21v-7h6v7M3 8c0 4 6 4 6 0 0 4 6 4 6 0 0 4 6 4 6 0"/>' : ['restaurant','food_delivery'].includes(category) ? '<path d="M5 3v6m3-6v6M3 3v6a3 3 0 0 0 6 0M6 12v9M18 3v18m0-18c-4 2-4 9 0 9"/>' : ['clinic','cleaning'].includes(category) ? '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>' : ['lesson','fitness'].includes(category) ? '<circle cx="14" cy="4" r="2"/><path d="m6 21 5-7 1-6 5 5h4M3 12l5-4h4m-1 6 5 7"/>' : '<path d="m12 3 3 6 6 1-4 5 1 6-6-3-6 3 1-6-4-5 6-1z"/>';
-  return `<svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;
+let sealRender = 0;
+function sealHTML(stamp,{current=true,animate=true} = {}) {
+  const p=stop(stamp.stopId), f=p?.flyer, kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : 'Stamped place'));
+  const id=stamp.stopId+':'+stamp.at;
+  const hash=[...id].reduce((hash,c) => (hash*31+c.charCodeAt(0)) >>> 0,0), angle=hash%17-8;
+  const dojo=/dojo|aikido|karate|judo|kendo|martial|道場/i.test([f?.business?.kind,f?.business?.name,p?.name].join(' '));
+  const [mark,ink]=dojo ? ['道','teal'] : ['lesson','fitness'].includes(p?.category) ? ['体','indigo'] : p?.category === 'cleaning' ? ['洗','green'] : p?.category === 'clinic' ? ['医','green'] : ['supermarket','drugstore','shop'].includes(p?.category) ? ['市','vermilion'] : ['restaurant','food_delivery'].includes(p?.category) ? ['食','vermilion'] : p?.category === 'event' ? ['祭','teal'] : ['歩','teal'];
+  const arcId='stamp-arc-'+hash+'-'+(++sealRender), label=String(kind).toUpperCase(), date=japanToday(new Date(stamp.at)).replaceAll('-','.');
+  return `<svg class="cw-seal${current ? ' cw-stamp' : ''} ${stamp.kind === 'gps' ? 'gps' : 'self'}${animate && recentStamp === stamp.stopId ? ' new' : ''}" viewBox="0 0 100 100" style="--c:var(--ink-${ink});--r:${angle}deg" role="img" aria-label="${escape(kind)} stamp, ${escape(formatDate(stamp.at))}, ${stamp.kind === 'gps' ? 'GPS verified' : 'stamped without GPS'}">
+    <g filter="url(#ink)">
+      <circle class="outer" cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="4.2"/>
+      <circle cx="50" cy="50" r="39.5" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      <path id="${arcId}" d="M 19 52 A 31 31 0 0 1 81 52" fill="none"/>
+      <text class="arc"${label.length>16 ? ' textLength="86" lengthAdjust="spacingAndGlyphs"' : ''}${hasJapanese(kind) ? ' lang="ja"' : ''}><textPath id="text-${arcId}" href="#${arcId}" startOffset="50%" text-anchor="middle">${escape(label.slice(0,16))}</textPath></text>
+      <text class="mark" lang="ja" x="50" y="64" text-anchor="middle">${mark}</text>
+      <rect x="31" y="69.5" width="38" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text class="date" x="50" y="77.6" text-anchor="middle">${date}</text>
+    </g>
+  </svg>`;
 }
 function stampCard(stamp) {
-  const p = stop(stamp.stopId);
-  // Stop and time identify each stamp without changing the storage contract.
-  const id = stamp.stopId + ':' + stamp.at;
-  const angle = [...id].reduce((hash,c) => (hash * 31 + c.charCodeAt(0)) >>> 0,0) % 17 - 8;
-  return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}"><span class="cw-stamp ${stamp.kind === 'gps' ? 'gps' : 'self'}" style="--stamp-angle:${angle}deg" aria-label="${stamp.kind === 'gps' ? 'GPS verified solid stamp' : 'Self-reported outline stamp'}">${icon(p?.category)}<span class="cw-stamp-name" lang="ja">${escape(p?.name ?? 'Stamped place')}</span></span><p class="cw-meta">${formatDate(stamp.at)}</p><p class="cw-meta">${stamp.kind === 'gps' ? 'GPS verified' : 'self-reported'}</p></div>`;
+  const p=stop(stamp.stopId), f=p?.flyer, kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : 'Stamped place'));
+  const name=f?.business?.name ?? p?.name;
+  return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}">${sealHTML(stamp)}<div class="cw-stamp-name">${modelText(kind)}${name ? `<small${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</small>` : ''}</div><p class="cw-meta">${escape(formatDate(stamp.at))}</p></div>`;
+}
+function emptyStamp(label='',hidden=false) { return `<div class="cw-spot"${hasJapanese(label) ? ' lang="ja"' : ''}${hidden ? ' aria-hidden="true"' : ''}>${escape(label)}</div>`; }
+function walkRally(o) {
+  return `<div class="cw-rally" aria-label="This walk's stamps">${o.stopIds.slice(0,5).map((id,i) => { const stamped=o.stamps.find(s => s.stopId === id), p=stop(id); return stamped ? sealHTML(stamped,{current:false,animate:false}) : emptyStamp(`${i+1} · ${capital(p?.flyer?.business?.kind ?? p?.name ?? 'Stop')}`); }).join('')}</div>`;
 }
 function stamp(o,id,kind,distance = null) {
   if (o.status !== 'active' || o.stamps.some(s => s.stopId === id)) return;
@@ -530,28 +548,37 @@ const offerDeadline = (f,o) => parseDeadline(o.deadline_text,scanDate(f)) ?? par
 const currentOffers = f => (f.offers ?? []).map((entry,index) => ({entry,index,kind:'offer'})).filter(({entry}) => !offerDeadline(f,entry) || offerDeadline(f,entry) >= japanToday());
 const priceItems = f => (f.items ?? []).map((entry,index) => ({entry,index,kind:'item'})).sort((a,b) => (printedValue(b.entry) ?? -1)-(printedValue(a.entry) ?? -1));
 const usedEntries = (outings = state.outings) => outings.flatMap(o => o.used.map(u => ({entry:flyer(u.flyerId)?.[u.kind === 'offer' ? 'offers' : 'items']?.[u.index]})));
+// Gemma writes kinds in lower case ("dry cleaner"); show them as names.
+const capital = value => { const text=String(value ?? ''); return /^[a-z]/.test(text) ? text[0].toUpperCase()+text.slice(1) : text; };
 const hasJapanese = value => /[\u3040-\u30ff\u3400-\u9fff]/u.test(String(value ?? ''));
 const modelText = value => `<span${hasJapanese(value) ? ' lang="ja"' : ''}>${escape(value)}</span>`;
 function flyerTitle(f) {
-  const kind=f.business?.kind ?? f.category.replaceAll('_',' '), name=f.business?.name;
-  return `${modelText(kind)}${name ? ` · <span${hasJapanese(name) ? ' lang="ja" class="cw-ja"' : ''}>${escape(name)}</span>` : ''}`;
+  const kind=capital(f.business?.kind ?? f.category.replaceAll('_',' ')), name=f.business?.name;
+  return `${modelText(kind)}${name ? `<span class="cw-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</span>` : ''}`;
 }
-function bestDeal(f) {
+function dealParts(f) {
   const offers=currentOffers(f).map(o => o.entry), entries=[...offers,...(f.items ?? [])].filter(e => printedValue(e) !== null).sort((a,b) => printedValue(b)-printedValue(a));
   const best=entries[0];
-  if (!best) return shortText(offers[0]?.text_en ?? 'No printed deal');
-  const price=best.offer_yen ?? best.price_yen ?? (best.kind === 'free_trial' ? 0 : null);
-  // Cut the English text before its first amount and drop dangling filler ("Free trial, normally" → "Free trial").
+  if (!best) return {label:'',price:null,regular:null,value:null,text:shortText(offers[0]?.text_en ?? 'No printed deal')};
+  const price=best.offer_yen ?? best.price_yen ?? (best.kind === 'free_trial' ? 0 : null), value=printedValue(best);
+  // Keep the bestDeal selection and printed-label trimming used by the existing UI.
   const label=shortText(best.name_en ?? (best.text_en ?? '').split(/(?:normally|regular(?: price)?|now|only|for|at)?\s*[¥￥]|\d[\d,]*\s*(?:円|yen)/i)[0]
     .replace(/[\s→(,:;]+$/,'').replace(/[,\s]*\b(?:normally|usually|regular(?: price)?|now|only|for|at|from)$/i,'').replace(/[\s,]+$/,''),45) || 'Printed deal';
-  if (best.regular_yen != null && price != null && best.regular_yen > price) return price === 0 ? `${label}${/free/i.test(label) ? '' : ' · free'} (usually ${money(best.regular_yen)})` : `${label} ${money(price)} (was ${money(best.regular_yen)})`;
-  return `${label} · ${money(printedValue(best))} off`;
+  const regular=best.regular_yen != null && price != null && best.regular_yen>price ? best.regular_yen : null;
+  const text=regular !== null ? price === 0 ? `${label}${/free/i.test(label) ? '' : ' · free'} (usually ${money(regular)})` : `${label} ${money(price)} (was ${money(regular)})` : `${label} · ${money(value)} off`;
+  return {label,price,regular,value,text};
+}
+function bestDeal(f) { return dealParts(f).text; }
+function stickerHTML(f) {
+  const {label,price,regular,value,text}=dealParts(f);
+  if (value === null) return `<span class="cw-deal">${modelText(text)}</span>`;
+  return `<span class="cw-sticker">${modelText(label)} <b>${regular !== null ? price === 0 ? 'Free' : money(price) : money(value)+' off'}</b>${regular !== null ? ` <s><span class="cw-sr">was </span>${money(regular)}</s>` : ''}</span>`;
 }
 function revokeThumbs() { for (const url of thumbURLs.values()) URL.revokeObjectURL(url); thumbURLs.clear(); }
 function thumbnail(id,large = false) {
   const privatePage=state.flyers.some(f => f.bucket === 'keep' && f.pageIds.includes(id));
   const blob=privatePage ? null : thumbBlobs.get(id);
-  if (!blob) return `<span class="cw-thumb cw-placeholder${large ? ' cw-preview' : ''}" role="img" aria-label="No preview for this page">📄<small>No preview</small></span>`;
+  if (!blob) return `<span class="cw-thumb cw-placeholder${large ? ' cw-preview' : ''}" role="img" aria-label="No preview for this page">No preview</span>`;
   if (!thumbURLs.has(id)) thumbURLs.set(id,URL.createObjectURL(blob));
   return `<img class="cw-thumb${large ? ' cw-preview' : ''}" src="${escape(thumbURLs.get(id))}" alt="${large ? 'Page preview' : 'Flyer page preview'}">`;
 }
@@ -563,14 +590,14 @@ function pageStatus(p) { return p.status === 'read' ? 'Read' : p.status === 'fai
 function pendingGroups() { return groupPages(Object.values(state.pages),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id)))); }
 function addPagesCard() {
   const disabled=busy || preparing || recovering;
-  return `<section class="cw-snap" aria-label="Photograph flyers"><h1>One good reason<br>to go outside.</h1><p class="cw-muted">Your mailbox, turned into a little walk.</p><button class="${state.flyers.length ? 'cw-secondary' : 'cw-primary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>📷 Photograph your flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>` : ''}<p class="cw-tip">One photo per page, flat, in good light.</p>${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button></div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
+  return `<section class="cw-snap" aria-label="Photograph flyers">${state.flyers.length ? '<h2>Add more flyers</h2>' : '<h1>One good reason to go outside.</h1>'}<p class="cw-muted">Your mailbox, turned into a little walk.</p><button class="${state.flyers.length || photos.length || reading ? 'cw-secondary' : 'cw-primary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>Photograph your flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>` : ''}<p class="cw-tip">One photo per page, flat, in good light.</p>${!state.flyers.length ? '<button class="cw-text" data-action="why-open">Why open models?</button>' : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button></div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
 }
 function resumeCard() {
   const time=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
   return `<div class="cw-resume"><p>${photos.length} pages waiting from ${escape(time)}</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button class="cw-text" data-action="discard">Discard</button></div></div>`;
 }
 function readingCard() {
-  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p id="reading-message" class="cw-meta">${escape(reading.message)}</p>${reading.batch.filter(p => p.status === 'failed').map(p => `<div class="cw-actions"><p class="cw-meta">${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}">Retry page ${reading.batch.indexOf(p)+1}</button></div>`).join('')}${!reading.active && photos.length ? '<div class="cw-actions"><button data-action="resume">Resume</button><button data-action="discard">Discard</button></div>' : ''}</section>`;
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p id="reading-message" class="cw-meta">${escape(reading.message)}</p>${reading.batch.filter(p => p.status === 'failed').map(p => `<div class="cw-actions"><p class="cw-meta">${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}">Retry page ${reading.batch.indexOf(p)+1}</button></div>`).join('')}${!reading.active && photos.length ? '<div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button data-action="discard">Discard</button></div>' : ''}</section>`;
 }
 function updateReading() {
   if (!reading || !$('reading-progress')) return;
@@ -586,29 +613,47 @@ function updateReading() {
 function locateControl(f) {
   return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form>` : '';
 }
-function stopRow(f) {
-  const h=home(), location=f.location && h ? `${walkMinutes(distanceMeters(h,f.location))} min away${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : 'No location yet';
-  return `<article class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-deal">${modelText(bestDeal(f))}</span><span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me" title="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</article>`;
+function stopRow(f,previous=home()) {
+  const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : 'No location yet';
+  return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me" title="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
 }
 function routeSummary(p) { const e=estimates(p.meters,state.settings.weightKg); return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps`; }
+function stationHTML(point) {
+  const station=stations.find(s => s.id === point?.stationId);
+  return `${escape(station?.name ?? 'Station')}${station?.ja ? ` <span lang="ja">${escape(station.ja)}</span>` : ''}`;
+}
+function droppedHTML(p) {
+  return p?.dropped?.length ? `<div class="cw-dropped"><p class="cw-muted">${p.dropped.length} ${plural(p.dropped.length,'stop','stops')} didn't fit in ${state.settings.maxMinutes} min: ${modelText(p.dropped.map(s => s.name).join(', '))}</p><div class="cw-actions">${[60,90].filter(n => n>state.settings.maxMinutes).map(n => `<button data-action="extend-walk" data-minutes="${n}">Make it ${n} min</button>`).join('')}</div></div>` : '';
+}
+function groceryRow(p) {
+  return `<div class="cw-stop-row cw-store-row"><div class="cw-row-content"><strong>${modelText(p.name)}</strong><span class="cw-meta">Grocery stop on the way</span></div><button class="cw-store-toggle" data-action="grocery" data-id="${escape(p.id)}" aria-label="Remove grocery stop" aria-pressed="true">✕</button></div>`;
+}
+function routeHTML(p,list) {
+  if (!p?.stops.length) return `<ol class="cw-stop-list cw-candidates">${list.map(f => `<li>${stopRow(f)}</li>`).join('')}${p?.dropped?.length ? `<li>${droppedHTML(p)}</li>` : ''}</ol>`;
+  const onRoute=new Set(p.stops.map(s => s.id)), others=list.filter(f => !onRoute.has(f.id));
+  let previous=p.start;
+  const rows=p.stops.map((point,i) => { const content=point.flyer ? stopRow(point.flyer,previous) : groceryRow(point); previous=point; return `<li class="cw-route-stop"><span class="cw-dot" aria-hidden="true">${i+1}</span>${content}</li>`; }).join('');
+  const start=p.start.stationId === state.settings.home ? 'From '+stationHTML(p.start) : `Take the train to ${escape(stationName(p.start))}, then walk${stations.find(s => s.id === p.start.stationId)?.ja ? ` <span lang="ja">${escape(stations.find(s => s.id === p.start.stationId).ja)}</span>` : ''}`;
+  const end=(p.end.stationId === state.settings.home ? 'Home · ' : 'Train home from ')+stationHTML(p.end);
+  return `<ol class="cw-route cw-stop-list"><li class="cw-route-station"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">${start}</div></li>${rows}<li class="cw-route-station cw-route-end"><span class="cw-dot" aria-hidden="true"></span><div class="cw-station">${end}</div></li>${others.length ? `<li class="cw-off-route-label cw-print">Not on today's route</li>${others.map(f => `<li class="cw-off-route-row">${stopRow(f)}</li>`).join('')}` : ''}${p.dropped?.length ? `<li class="cw-off-route-row">${droppedHTML(p)}</li>` : ''}</ol>`;
+}
 function walkSummary(p) {
   if (!p || !p.stops.length && !p.dropped?.length) return '';
   const base=planWithoutGrocery(), suggested=base?.stops.length ? groceryOnTheWay([base.start,...base.stops,base.end],stores)[0]?.store : null;
-  const grocery=suggested ? `+ Grocery stop: ${suggested.name}${storePrograms(suggested,japanToday()).includes('waon') ? ` · ${reward(suggested.chain,japanToday())}× WAON today` : ''}` : '';
-  return `<section class="cw-walk-summary" aria-label="Walk summary">${p.stops.length ? `<p>${p.start.stationId !== state.settings.home ? `Take the train to ${escape(stationName(p.start))}, then walk · ` : ''}${routeSummary(p)}</p>` : ''}${p.dropped?.length ? `<div class="cw-dropped"><p class="cw-muted">${p.dropped.length} ${plural(p.dropped.length,'stop','stops')} didn't fit in ${state.settings.maxMinutes} min: ${modelText(p.dropped.map(s => s.name).join(', '))}</p><div class="cw-actions">${[60,90].filter(n => n>state.settings.maxMinutes).map(n => `<button data-action="extend-walk" data-minutes="${n}">Make it ${n} min</button>`).join('')}</div></div>` : ''}${suggested ? `<button class="cw-grocery cw-text" data-action="grocery" data-id="${escape('store:'+suggested.branchId)}" aria-pressed="${Boolean(groceryChoice)}">${modelText(grocery)}</button>` : ''}${p.stops.length ? '<button class="cw-primary cw-wide" data-action="start">Start the walk →</button>' : ''}</section>`;
+  const grocery=suggested ? `+ Grocery stop: ${suggested.name}${storePrograms(suggested,japanToday()).includes('waon') && reward(suggested.chain,japanToday())>1 ? ` · ${reward(suggested.chain,japanToday())}× WAON today` : ''}` : '';
+  return `<section class="cw-walk-summary" aria-label="Walk summary">${suggested ? `<button class="cw-grocery cw-text" data-action="grocery" data-id="${escape('store:'+suggested.branchId)}" aria-pressed="${Boolean(groceryChoice)}">${modelText(grocery)}</button>` : ''}${p.stops.length && !photos.length && !reading ? '<button class="cw-primary cw-wide" data-action="start">Start the walk →<small aria-hidden="true" lang="ja">改札</small></button>' : p.stops.length ? '<button class="cw-secondary cw-wide" data-action="start">Start the walk →<small aria-hidden="true" lang="ja">改札</small></button>' : ''}</section>`;
 }
 function planWithoutGrocery() { const choice=groceryChoice; groceryChoice=null; try { return plan(); } finally { groceryChoice=choice; } }
 function collapsedRows() {
-  const count=bucket => state.flyers.filter(f => f.bucket === bucket).length;
-  // Rows with nothing in them are hidden (DESIGN.md: no zero stats).
-  const row=(id,icon,one,many,rest) => count(id) ? `<button data-action="bucket-sheet" data-id="${id}">${icon} ${count(id)} ${plural(count(id),one,many)} ${rest} <span aria-hidden="true">›</span></button>` : '';
-  const rows=row('home','📞','deal','deals','to order at home')+row('toss','♻','flyer','flyers','safe to recycle')+row('keep','🔒','letter','letters','to keep');
-  return rows ? `<div class="cw-collapsed">${rows}</div>` : '';
+  const slot=(id,label,one,many) => { const n=state.flyers.filter(f => f.bucket === id).length; return n ? `<button class="cw-slot" data-action="bucket-sheet" data-id="${id}"><em>${label}</em><b>${n}</b><span>${plural(n,one,many)}</span></button>` : ''; };
+  const slots=slot('home','Home','deal to use at home','deals to use at home')+slot('toss','Recycle','flyer to recycle','flyers to recycle')+slot('keep','Keep','letter, not an ad','letters, not ads');
+  return slots ? `<div class="cw-tray" aria-label="The rest of your mailbox">${slots}</div>` : '';
 }
 function renderHome() {
-  const list=candidates(), p=plan();
-  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><h2 id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'Nothing worth a walk this time'}</h2>${!list.length ? `<p class="cw-muted">${state.flyers.some(f => f.bucket === 'walk') ? 'The walk offers are expired, closed, or marked Not for me.' : 'These pages have no in-person deals to walk to.'}</p>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}<div class="cw-stop-list">${list.map(stopRow).join('')}</div>${walkSummary(p)}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}${collapsedRows()}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
-  return addPagesCard()+answer;
+  const list=candidates(), p=plan(), e=p ? estimates(p.meters,state.settings.weightKg) : null;
+  const number=String(state.outings.filter(o => o.status === 'done').length+1).padStart(4,'0');
+  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h2 class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'Nothing worth a walk this time'}</h2>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${!list.length ? `<p class="cw-muted">${state.flyers.some(f => f.bucket === 'walk') ? 'The walk offers are expired, closed, or marked Not for me.' : 'These pages have no in-person deals to walk to.'}</p>` : ''}${routeHTML(p,list)}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}${collapsedRows()}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
+  return state.flyers.length && !photos.length && !reading ? answer+addPagesCard() : addPagesCard()+answer;
 }
 function actionsFor(f) {
   const actions=[];
@@ -625,7 +670,7 @@ function entryHTML(f,{entry,index,kind}) {
   const name=kind === 'offer' ? entry.text_en ?? 'Printed offer' : entry.name_en ?? 'Printed item';
   const ja=kind === 'offer' ? entry.text_ja : entry.name_ja, price=entry.offer_yen ?? entry.price_yen;
   const value=printedValue(entry);
-  return `<div class="cw-entry" data-${kind}-index="${index}"><p><strong>${modelText(name)}</strong></p>${ja ? `<p class="cw-ja" lang="ja">${escape(ja)}</p>` : ''}${price != null ? `<p>${money(price)}${entry.regular_yen != null ? ` <span class="cw-meta">was ${money(entry.regular_yen)}</span>` : ''}</p>` : ''}${value !== null ? `<p class="cw-value">${money(value)} saving printed on the flyer</p>` : ''}${entry.conditions?.length ? `<p class="cw-meta">${modelText(entry.conditions.join(' · '))}</p>` : ''}${kind === 'offer' && offerDeadline(f,entry) ? `<p class="cw-meta">Use by ${shortDate(offerDeadline(f,entry))}</p>` : ''}</div>`;
+  return `<div class="cw-entry" data-${kind}-index="${index}"><p><strong>${modelText(name)}</strong></p>${ja ? `<p class="cw-ja" lang="ja">${escape(ja)}</p>` : ''}${value !== null ? stickerHTML({...f,offers:kind === 'offer' ? [entry] : [],items:kind === 'item' ? [entry] : []}) : price != null ? `<p class="cw-meta">${money(price)}</p>` : ''}${value !== null ? `<p class="cw-value">${money(value)} saving printed on the flyer</p>` : ''}${entry.conditions?.length ? `<p class="cw-meta">${modelText(entry.conditions.join(' · '))}</p>` : ''}${kind === 'offer' && offerDeadline(f,entry) ? `<p class="cw-meta">Use by ${shortDate(offerDeadline(f,entry))}</p>` : ''}</div>`;
 }
 function flyerSheet(f) {
   if (!f || f.bucket === 'keep') return '<h2 id="sheet-heading">Letter to keep</h2><p>Nothing from these was saved.</p>';
@@ -635,7 +680,7 @@ function flyerSheet(f) {
 function pageSheet(id) {
   const owner=state.flyers.find(f => f.bucket !== 'keep' && f.pageIds.includes(id)), page=state.pages[id], readingText=page?.tiles?.find(Boolean)?.summary_en;
   if (!owner || !page) return '<h2 id="sheet-heading">Page unavailable</h2>';
-  const option=(value,f,label,checked) => `<label class="cw-group-option"><input type="radio" name="belongs" value="${escape(value)}" ${checked ? 'checked' : ''}>${f ? stack(f,false) : '<span class="cw-placeholder cw-own-page" aria-hidden="true">▧</span>'}<span>${f && value !== owner.id ? flyerTitle(f) : modelText(label)}</span></label>`;
+  const option=(value,f,label,checked) => `<label class="cw-group-option"><input type="radio" name="belongs" value="${escape(value)}" ${checked ? 'checked' : ''}>${f ? stack(f,false) : '<span class="cw-placeholder cw-own-page" aria-hidden="true">No preview</span>'}<span>${f && value !== owner.id ? flyerTitle(f) : modelText(label)}</span></label>`;
   return `<h2 id="sheet-heading">This page</h2>${thumbnail(id,true)}<p class="cw-page-reading cw-meta">${modelText(shortText(readingText || 'No one-line reading available',150))}</p><form data-page-move="${escape(id)}"><fieldset><legend>This page belongs to:</legend>${option(owner.id,owner,'This flyer',true)}${state.flyers.filter(f => f.id !== owner.id && f.bucket !== 'keep').map(f => option(f.id,f,f.business?.name ?? 'Other flyer',false)).join('')}${option('split',null,'A flyer of its own',false)}</fieldset><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Apply</button></form>`;
 }
 function bucketSheet(bucket) {
@@ -644,9 +689,18 @@ function bucketSheet(bucket) {
   return `<h2 id="sheet-heading">${list.length} ${bucket === 'home' ? 'deals to order at home' : 'flyers safe to recycle'}</h2>${list.map(f => { const phone=actionsFor(f).find(a => a.kind === 'phone'); return `<article class="cw-secondary-row">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-meta">${modelText(bucket === 'home' ? bestDeal(f) : f.comes_to_you ? 'They come to you' : ['buying_service','junk_removal'].includes(f.category) ? 'Only if you need the service' : f.category === 'real_estate' ? 'Property advert' : 'No in-person deal')}</span></button>${bucket === 'home' && phone ? `<a class="cw-link" href="${escape(phone.href)}">Call</a>` : ''}</article>`; }).join('')}`;
 }
 function stampsContent() {
-  const done=state.outings.filter(o => o.status === 'done'), stamps=state.outings.flatMap(o => o.stamps), meters=done.reduce((n,o) => n+o.meters,0), e=estimates(meters,state.settings.weightKg), yen=savings(usedEntries()).yen;
-  const stats=[[done.length,'walks'],[stamps.length,'places'],[meters ? (e.routeMeters/1000).toFixed(1) : 0,'km'],[e.steps,'steps'],[e.kcal,'kcal estimates'],[yen ? money(yen) : 0,'saved, printed']].filter(([n]) => Boolean(Number(n) || typeof n === 'string' && n.startsWith('¥')));
-  return `<h2 id="sheet-heading">Your stamps</h2>${stats.length ? `<div class="cw-stats">${stats.map(([n,label]) => `<div><strong>${escape(n)}</strong><span>${label}</span></div>`).join('')}</div>` : ''}${stamps.length ? `<div class="cw-stamp-grid">${stamps.map(stampCard).join('')}</div>` : '<p class="cw-muted">Your first walk starts with a flyer.</p>'}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
+  const done=state.outings.filter(o => o.status === 'done'), stamps=state.outings.flatMap(o => o.stamps).sort((a,b) => Date.parse(b.at)-Date.parse(a.at)), meters=done.reduce((n,o) => n+o.meters,0), e=estimates(meters,state.settings.weightKg), yen=savings(usedEntries()).yen;
+  const month=new Intl.DateTimeFormat('en-GB',{month:'long',timeZone:'Asia/Tokyo'}).format(new Date());
+  const stats=[done.length ? `<div><b>${done.length}</b><span>${plural(done.length,'walk','walks')}</span></div>` : '',meters ? `<div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>~${e.steps.toLocaleString('en-US')} steps</span></div>` : '',yen ? `<div><b class="cw-money">${money(yen)}</b><span>saved, printed on flyers</span></div>` : ''].join('');
+  return `<h2 id="sheet-heading">Your stamps</h2><p class="cw-print">Stamp rally · ${month}</p><div class="cw-rally-head"><h3>${stamps.length} ${plural(stamps.length,'place','places')} stamped</h3><p>Each kind of place has its own ink</p></div><div class="cw-rally">${stamps.map(stampCard).join('')}${emptyStamp('Next stamp')+emptyStamp('',true)+emptyStamp('',true)}</div>${stats ? `<div class="cw-tally">${stats}</div>` : ''}${stamps.some(s => s.kind === 'self') || meters ? '<p class="cw-small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>' : ''}${!stamps.length ? '<p class="cw-muted">Your first walk starts with a flyer.</p>' : ''}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
+}
+function whySheet() {
+  return `<h2 id="sheet-heading">Why open models?</h2><p class="cw-print" lang="ja">オープンだから、できること</p><div class="cw-stub"><h3>Your mail is read by models anyone can run</h3><ol class="cw-reasons">
+    <li><span class="n">1</span><div><strong>You choose where your mail is read.</strong> <p>The same Gemma 4 family reads flyers on a hosted GPU or on your own laptop (<em>LOCAL_LLM=1</em>). A closed API has no run-it-at-home option.</p></div></li>
+    <li><span class="n">2</span><div><strong>We could check it on real flyers.</strong> <p>With open weights we tested both sizes on the same flyers: the small model got <em>0/8</em> prices from a whole page, the large one <em>4/4</em> from a tile. That is why price lists are read tile by tile.</p></div></li>
+    <li><span class="n">3</span><div><strong>It costs about half a yen a page.</strong> <p>Reading one page costs roughly <em>¥0.4</em> on serverless inference. A whole mailbox is a few yen, with no account and no subscription.</p></div></li>
+    <li><span class="n">4</span><div><strong>It learns your taste without your data.</strong> <p>TabPFN ranks flyers from your ✕ and stamps using only numbers (kind of place, distance, deal size). Names, addresses and photos never go to it.</p></div></li>
+  </ol><p class="cw-small-note">Addresses come from Japan's open GSI geocoder; photos are read and deleted; nothing is stored on a server.</p></div>`;
 }
 function historyResults() {
   const query=historyQuery.toLowerCase(), list=[...state.flyers].reverse().filter(f => f.bucket !== 'keep' && [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
@@ -659,9 +713,10 @@ function walkScreen(o) {
   const cursor=currentCursor(o), id=o.stopIds[cursor], p=stop(id), f=p?.flyer, stamped=o.stamps.find(s => s.stopId === id), message=stampMessages.get(id);
   if (cursor>=o.stopIds.length) return doneScreen(o);
   const previous=cursor ? stop(o.stopIds[cursor-1]) ?? o.start : o.start;
-  const minutes=p ? walkMinutes(distanceMeters(previous,p)) : 0;
+  const meters=p ? distanceMeters(previous,p) : 0, minutes=walkMinutes(meters);
   const remaining=o.stopIds.slice(cursor).map(stop).filter(Boolean);
-  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><p class="cw-meta">Stop ${cursor+1} of ${o.stopIds.length} · ${minutes} min walk</p>${f ? stack(f) : ''}<h1>${f ? flyerTitle(f) : modelText(p?.name ?? 'Stop unavailable')}</h1>${f ? `<p class="cw-deal">${modelText(bestDeal(f))}</p>` : ''}${stamped ? `<div class="cw-stamp-arrival${recentStamp === id ? ' is-new' : ''}">${stampCard(stamped)}</div>${f ? usedChips(f,o) : ''}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<a class="cw-link" href="${escape(mapsLink(previous,remaining,o.end))}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a><button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here</button>${message ? `<p class="cw-warning" role="status">${escape(message.text)}</p><button class="cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}</section>`;
+  const kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : p?.name ?? 'Stop unavailable')), name=f?.business?.name ?? p?.name;
+  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board" role="status"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div></div><div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}<a class="cw-link" href="${escape(mapsLink(previous,remaining,o.end))}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a></div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-arrival">${stampCard(stamped)}</div>${f ? usedChips(f,o) : ''}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? `<p class="cw-warning" role="status">${escape(message.text)}</p><button class="cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
 }
 function usedChips(f,o) {
   // Printed savings first; otherwise let people still mark the offer they used (it counts as used, no printed value).
@@ -671,12 +726,12 @@ function usedChips(f,o) {
 }
 function doneScreen(o=state.outings.at(-1)) {
   if (!o) return renderHome();
-  return `<section class="cw-done"><h1>Walk done</h1><p class="cw-done-summary">${routeSummary(o)} · <strong>${money(savings(usedEntries([o])).yen)} saved</strong> (printed on the flyers)</p><div class="cw-stamp-grid">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">Your stamps</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button></section>`;
+  return `<section class="cw-done"><h1>Walk done</h1><p class="cw-done-summary">${routeSummary(o)}<strong>${money(savings(usedEntries([o])).yen)} saved <small>printed on the flyers</small></strong></p><div class="cw-rally">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">Your stamps</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button></section>`;
 }
-function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
+function focusKey(el) { if (el?.dataset.action === 'why-open') return {action:'why-open',footer:Boolean(el.closest('.cw-footer'))}; return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
 function restoreFocus(key) {
   const root=$('setup').open ? $('setup') : $('sheet').open ? $('sheet') : document;
-  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.index === key?.index);
+  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.index === key?.index && (key?.action !== 'why-open' || Boolean(el.closest('.cw-footer')) === key.footer));
   if (target && !target.disabled) target.focus({preventScroll:true}); else focusHeading();
 }
 function render() {
@@ -699,10 +754,10 @@ function openSheet(type,id,opener=document.activeElement) {
   sheet={type,id}; render(); if (!$('sheet').open) $('sheet').showModal(); $('sheet').scrollTop=0; focusHeading();
 }
 function renderSheet() {
-  const body=sheet.type === 'flyer' ? flyerSheet(flyer(sheet.id)) : sheet.type === 'page' ? pageSheet(sheet.id) : sheet.type === 'bucket' ? bucketSheet(sheet.id) : sheet.type === 'past' ? pastWalkSheet(sheet.id) : stampsContent();
+  const body=sheet.type === 'flyer' ? flyerSheet(flyer(sheet.id)) : sheet.type === 'page' ? pageSheet(sheet.id) : sheet.type === 'bucket' ? bucketSheet(sheet.id) : sheet.type === 'past' ? pastWalkSheet(sheet.id) : sheet.type === 'why' ? whySheet() : stampsContent();
   $('sheet').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-sheet" aria-label="Close sheet">✕</button></div>${body}`;
 }
-function pastWalkSheet(id) { const o=state.outings.find(o => o.id === id); return o ? `<h2 id="sheet-heading">Walk · ${formatDate(o.createdAt)}</h2><p>${totals(o)} · ${money(savings(usedEntries([o])).yen)} saved, printed</p><div class="cw-stamp-grid">${o.stamps.map(stampCard).join('')}</div>` : '<h2 id="sheet-heading">Walk unavailable</h2>'; }
+function pastWalkSheet(id) { const o=state.outings.find(o => o.id === id); return o ? `<h2 id="sheet-heading">Walk · ${formatDate(o.createdAt)}</h2><p class="cw-print">${totals(o)} · ${money(savings(usedEntries([o])).yen)} saved, printed</p><div class="cw-rally">${o.stamps.map(stampCard).join('')}</div>` : '<h2 id="sheet-heading">Walk unavailable</h2>'; }
 function closeSheet() {
   const previous=sheetTrail.pop();
   if (previous) { sheet=previous.sheet; render(); $('sheet').scrollTop=previous.scrollTop; restoreFocus(previous.opener); }
@@ -750,6 +805,7 @@ async function action(button) {
     case 'discard': if (!busy && !preparing) { for (const p of photos) { await photoDB('delete',p.id); if (!state.pages[p.id]) { thumbBlobs.delete(p.id); await photoDB('delete',p.id,'thumbs'); } URL.revokeObjectURL(p.url); } photos=[]; recovered=false; reading=null; render(); } break;
     case 'flyer-sheet': openSheet('flyer',id,button); break;
     case 'page-sheet': openSheet('page',id,button); break;
+    case 'why-open': openSheet('why',undefined,button); break;
     case 'bucket-sheet': openSheet('bucket',id,button); break;
     case 'close-sheet': closeSheet(); break;
     case 'close-setup': setupOpen=false; renderSetup(); break;
