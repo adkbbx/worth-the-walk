@@ -142,7 +142,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Screen padding 16px × 14px; ticket padding 14px; gaps 10–14px
 
 ### Grid & Container
-- Single app column, max 480px, centred on the Desk; sheets 560px on desktop
+- Phone: one column. Tablet (720–959px): a 480px column centred on the Desk. Desktop (≥960px): a 1120px page with two columns: the ticket, gate and tray on the left; a 380px side column with "Add more flyers", the stamp card and the "Why open models?" stub. Walk mode puts the walk's stamp slots in the side column. Sheets are 560px dialogs
 
 ### Whitespace Philosophy
 - **The ticket is the page.** The answer screen is one ticket, one gate, one tray. Nothing else competes.
@@ -190,7 +190,8 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 | Name | Width | Key changes |
 |---|---|---|
 | Phone (primary) | < 720px | Single column, bottom sheets, gate full width, 16px gutters |
-| Wide | ≥ 720px | 480px app column centred on the Desk; sheets as centred 560px dialogs |
+| Tablet | 720–959px | 480px app column centred on the Desk; sheets as centred 560px dialogs |
+| Desktop | ≥ 960px | 1120px page, ticket column + 380px side column (add flyers, stamp card, why-open stub); walk stamps beside the board |
 
 ### Touch Targets
 - 44px minimum hit area (✕ keeps 44px even if the glyph is small); gate buttons 52px+; "I'm here" 56px
