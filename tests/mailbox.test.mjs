@@ -228,10 +228,10 @@ test('parseDeadline rolls only dates more than 60 days before the scan',()=>{
   for(const value of ['garbage','',null,'13/1','11/31','2026年2月29日','令和0年11月30日','9/25～10/32'])assert.equal(parseDeadline(value,'2026-10-11'),null);
   assert.equal(parseDeadline('11/30','invalid'),null);assert.equal(parseDeadline('11/30','2026-02-30'),null);
 });
-test('finalizeFlyer chooses the earliest valid deadline and calls the chain resolver',()=>{
+test('finalizeFlyer keeps a flyer until its latest printed date and calls the chain resolver',()=>{
   const flyer=mergeFallback([page('p1',{business:{name:'テスト青空店'},category:'supermarket',valid_to_text:'11/30',offers:[{text_ja:'割引一',deadline_text:'invalid'},{text_ja:'割引二',deadline_text:'10/31'},{text_ja:'割引三',deadline_text:'11/10'}]})]);
   const result=finalizeFlyer(flyer,'2026-10-11',name=>{assert.equal(name,'テスト青空店');return 'synthetic';});
-  assert.equal(result.bucket,'walk');assert.equal(result.needsLookup,true);assert.equal(result.deadline,'2026-10-31');assert.equal(result.chain,'synthetic');assert.equal(flyer.deadline,null);
+  assert.equal(result.bucket,'walk');assert.equal(result.needsLookup,true);assert.equal(result.deadline,'2026-11-30');assert.equal(result.chain,'synthetic');assert.equal(flyer.deadline,null);
   const blank=finalizeFlyer(mergeFallback([page('blank',{})]),'2026-10-11');assert.equal(blank.deadline,null);assert.equal(blank.chain,null);
   const lesson=finalizeFlyer(mergeFallback([page('pc',{business:{name:'パソコン教室トップ'},category:'lesson'})]),'2026-10-11',matchChain);assert.equal(lesson.chain,null);
 });

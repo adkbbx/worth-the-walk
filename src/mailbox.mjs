@@ -232,7 +232,8 @@ export function finalizeFlyer(flyer,scanDate,chainOf=()=>null) {
   const dates=[flyer.valid_to_text,...list(flyer.offers,Infinity).map(o=>o.deadline_text)].map(s=>parseDeadline(s,scanDate)).filter(Boolean).sort();
   // Chain names like トップ or OK also appear inside unrelated business names, so only grocery flyers are matched.
   const grocery=['supermarket','drugstore'].includes(flyer.category);
-  return {...flyer,bucket:bucketOf(flyer),needsLookup:needsLookup(flyer),deadline:dates[0] ?? null,chain:grocery?chainOf(flyer.business?.name ?? null):null};
+  // A flyer stays worth a visit until its LAST printed date; one early "sale vol. 1" must not expire the whole flyer.
+  return {...flyer,bucket:bucketOf(flyer),needsLookup:needsLookup(flyer),deadline:dates.at(-1) ?? null,chain:grocery?chainOf(flyer.business?.name ?? null):null};
 }
 export function storable(flyer) {
   return flyer.bucket==='keep' ? {id:flyer.id,pageIds:flyer.pageIds,bucket:'keep',category:flyer.category} : flyer;
