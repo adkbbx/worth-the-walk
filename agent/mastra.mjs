@@ -202,7 +202,7 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
   const rankWorkflow = createWorkflow({ id: 'rankFlyers', inputSchema: rankSchema, outputSchema: z.unknown() }).then(rankStep).commit();
 
   const observability = env.SENTRY_DSN ? new Observability({ configs: { default: {
-    serviceName: 'chirashi-walk',
+    serviceName: 'worth-the-walk',
     exporters: [new PrivateSentryExporter({ dsn: env.SENTRY_DSN, environment: env.NODE_ENV || 'development', tracesSampleRate: 1, logger: noopLogger,
       options: { defaultIntegrations: false, sendDefaultPii: false } })],
     spanOutputProcessors: [privacyProcessor],

@@ -3,7 +3,7 @@ import {groupPages, storable, printedValue, savings, featureRow, parseDeadline} 
 import {distanceMeters, neighbours, planOuting, walkMinutes, estimates, mapsLink, groceryOnTheWay, openStatus} from '/walks.mjs';
 import {japanToday, storePrograms, reward, nextBonus} from '/rules.mjs';
 
-const KEY = 'chirashi-walk-v1';
+const KEY = 'worth-the-walk-v1';
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const plural = (n, one, many) => n === 1 ? one : many;

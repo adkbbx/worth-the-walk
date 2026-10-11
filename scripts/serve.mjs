@@ -164,7 +164,7 @@ if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.ur
   const server = createServer({ app });
   server.listen(port, host, () => {
     const { mode, model } = app.config();
-    console.log(`Chirashi Walk on http://${host}:${server.address().port} · mode ${mode} · model ${model}`);
+    console.log(`Worth the Walk? on http://${host}:${server.address().port} · mode ${mode} · model ${model}`);
   });
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => server.close());
 }

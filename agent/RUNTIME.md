@@ -23,7 +23,7 @@ and probability output. Any discovery, execution, or response error falls back
 to rules. Its selected tool name is printed once per process as requested.
 
 Sentry is registered through `Observability.configs.default.exporters` only with
-`SENTRY_DSN`, with service name `chirashi-walk`. A span processor drops inputs,
+`SENTRY_DSN`, with service name `worth-the-walk`. A span processor drops inputs,
 outputs, attributes, metadata, and error details before export. Registered workflow
 runs and their agent calls retain trace structure and timing without flyer payloads.
 Workflow runs also hide inputs and outputs at the trace level. Sentry's automatic

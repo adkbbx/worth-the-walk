@@ -7,7 +7,7 @@ import {stations,stationsOnLine} from '../data/catalog.mjs';
 import {printedValue,savings} from '../src/mailbox.mjs';
 
 const base = 'http://127.0.0.1:4180';
-const key = 'chirashi-walk-v1';
+const key = 'worth-the-walk-v1';
 let server, browser, serverError, logs = '';
 const errors = [], reads = [], merges = [], ranks = [];
 const readState = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
@@ -22,7 +22,7 @@ async function waitForServer() {
   for (let i = 0; i < 100; i++) {
     if (serverError) throw serverError;
     if (server.exitCode !== null) throw new Error(`Mock server exited: ${logs}`);
-    try { if (logs.includes('Chirashi Walk on '+base) && (await fetch(base+'/api/config')).ok) return; } catch {}
+    try { if (logs.includes('Worth the Walk? on '+base) && (await fetch(base+'/api/config')).ok) return; } catch {}
     await new Promise(resolve => setTimeout(resolve,100));
   }
   throw new Error(`Mock server did not start: ${logs}`);
@@ -233,7 +233,7 @@ try {
   assert.equal((await readState(freshPage)).flyers.length,0);
   await freshPage.goto(base+'/shops.html'); await freshPage.locator('.store').first().waitFor();
   assert.equal(await freshPage.title(),'Station Points — shops by station');
-  assert.equal(await freshPage.getByRole('link',{name:'← Chirashi Walk',exact:true}).getAttribute('href'),'/');
+  assert.equal(await freshPage.getByRole('link',{name:'← Worth the Walk?',exact:true}).getAttribute('href'),'/');
   assert.deepEqual(errors,[],'no browser page errors');
   console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · persistence, privacy, 4 tabs and 1280px verified.`);
   console.log('Screenshots: .impeccable/review/chirashi-{mailbox,walk,stamps,history}.png');

@@ -216,7 +216,7 @@ test('Sentry is conditional and registered workflow traces omit payloads before 
   const observability = app.mastra.observability;
   t.after(() => observability.shutdown());
   const instance = observability.getDefaultInstance();
-  assert.equal(instance.getConfig().serviceName, 'chirashi-walk');
+  assert.equal(instance.getConfig().serviceName, 'worth-the-walk');
   const exporters = instance.getExporters();
   assert.equal(exporters.length, 1); assert.equal(exporters[0].name, 'sentry');
   // Replace the transport-facing exporter method before any trace can be sent.

@@ -1,0 +1,33 @@
+services:
+  - type: web
+    name: worth-the-walk
+    runtime: node
+    plan: free
+    buildCommand: npm ci --omit=dev && node scripts/build.mjs
+    startCommand: node scripts/serve.mjs
+    healthCheckPath: /api/config
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: HOST
+        value: 0.0.0.0
+      # Render's proxy appends the real client address to X-Forwarded-For.
+      - key: TRUST_PROXY
+        value: "1"
+      - key: GRADIENT_MODEL
+        value: gemma-4-31B-it
+      # SerpApi free plan: 250 searches/month. Development keeps 40 of them.
+      - key: SERPAPI_LIVE
+        value: "1"
+      - key: SERPAPI_DAILY_LIMIT
+        value: "8"
+      - key: SERPAPI_MONTHLY_LIMIT
+        value: "180"
+      - key: GRADIENT_MODEL_ACCESS_KEY
+        sync: false
+      - key: SERPAPI_API_KEY
+        sync: false
+      - key: PRIOR_LABS_MCP_TOKEN
+        sync: false
+      - key: SENTRY_DSN
+        sync: false

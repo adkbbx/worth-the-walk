@@ -1,6 +1,6 @@
-# Chirashi Walk — architecture contract
+# Worth the Walk? — architecture contract
 
-Chirashi Walk turns the flyers in your mailbox into a walk around your neighbourhood. This file is the contract between the browser app, the Node server and the Mastra agent layer. Pure rules live in `src/` and run in both the browser and Node.
+Worth the Walk? turns the flyers in your mailbox into a walk around your neighbourhood. This file is the contract between the browser app, the Node server and the Mastra agent layer. Pure rules live in `src/` and run in both the browser and Node.
 
 ## Modules
 
@@ -45,7 +45,7 @@ Manual retry of the same locate logic for a user-typed address or name → `{loc
 Request: `{train: [{row: number[], label: 0|1}], predict: [{id, row: number[]}]}`; rows follow `FEATURES` in `src/mailbox.mjs` (numbers only).
 Response: `{model: 'tabpfn'|'rules', scores: [{id, p}]}`. TabPFN is used when `PRIOR_LABS_MCP_TOKEN` is set, `train` has ≥ 6 rows and both labels; otherwise `rules` (p from a fixed heuristic).
 
-## Phone storage (`localStorage['chirashi-walk-v1']`, saved after every change)
+## Phone storage (`localStorage['worth-the-walk-v1']`, saved after every change)
 ```
 { version: 1,
   settings: {lineId, home: stationId|null, maxMinutes: 40, weightKg: 60},
