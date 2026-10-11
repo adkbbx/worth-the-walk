@@ -86,6 +86,11 @@
 .cw-mail-row[aria-expanded=true]::after { content: ' ▴'; }
 .cw-card.cw-compact { padding: 8px 0; }
 .cw-flyer-details { margin-top: 10px; }
+.cw-row-call { flex-shrink: 0; font-size: 14px; white-space: nowrap; }
+.cw-how-to-use { margin-bottom: 16px; font-size: 14px; }
+.cw-how-to-use h4 { margin: 0 0 4px; font-size: 16px; }
+.cw-how-to-use ul { margin: 0; padding-left: 20px; }
+.cw-how-to-use li + li { margin-top: 4px; }
 .cw-photo-warning { color: var(--rail); font-size: 14px; }
 .cw-retake { display: inline-block; font-weight: 600; }
 .cw-card details { margin-top: 12px; }

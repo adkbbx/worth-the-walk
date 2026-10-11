@@ -122,18 +122,47 @@ function rating(f) {
   return `<div class="cw-ratings">${[1,0].map(v => `<button type="button" data-action="rate" data-id="${escape(f.id)}" data-label="${v}" aria-label="${v ? 'Interested' : 'Not interested'} in this flyer" aria-pressed="${state.labels[f.id] === v}">${v ? '👍' : '👎'}</button>`).join('')}</div>`;
 }
 function valueLine(entry) { const value = printedValue(entry); return value === null ? '' : `<p class="cw-value">worth ${money(value)} as printed</p>`; }
+// Home menus open separately from flyer details, only for this visit.
+const openMenus = new Set();
+function actionsFor(f) {
+  const actions = [];
+  for (const phone of f.phones ?? []) {
+    const digits = String(phone).normalize('NFKC').replace(/\D/g,'');
+    if (digits) actions.push({kind:'phone',text:`📞 Call ${phone}`,href:'tel:' + digits});
+  }
+  for (const website of f.websites ?? []) {
+    const text = String(website).trim();
+    try {
+      const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(text) ? text : 'https://' + text.replace(/^\/\//,''));
+      if (!['http:','https:'].includes(url.protocol) || !url.hostname) continue;
+      actions.push({kind:'website',text:['food_delivery','restaurant'].includes(f.category) ? '🌐 Order online' : '🌐 Website',href:url.href.replace(/^(https?:\/\/[^/]+)\/$/,'$1')});
+    } catch { /* An unreadable printed URL is not a link. */ }
+  }
+  if ((f.offers ?? []).some(o => ['coupon','discount','campaign'].includes(o.kind))) actions.push({text:f.bucket === 'home' ? "Mention or show this flyer's coupon when you order" : 'Show this flyer at the counter'});
+  const dates = [f.deadline,f.valid_to_text,...(f.offers ?? []).map(o => o.deadline_text)].map(date => parseDeadline(date,scanDate(f))).filter(Boolean).sort();
+  if (dates.length) actions.push({text:'Use by ' + shortDate(dates.at(-1))});
+  return actions;
+}
+function howToUse(f) {
+  if (f.bucket === 'toss') return (f.phones ?? []).map(phone => `<p class="cw-muted">${escape(phone)} · only if you need it</p>`).join('');
+  const actions = actionsFor(f);
+  return actions.length ? `<div class="cw-how-to-use"><h4>How to use</h4><ul>${actions.map(action => `<li>${action.href ? `<a class="cw-link" href="${escape(action.href)}">${escape(action.text)}</a>` : escape(action.text)}</li>`).join('')}</ul></div>` : '';
+}
 function entryList(f,outing = null) {
   const selected = (kind,index) => outing?.used?.some(u => u.flyerId === f.id && u.kind === kind && u.index === index);
   const control = (kind,index) => outing ? `<label class="cw-check"><input type="checkbox" data-used="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(outing.id)}" ${selected(kind,index) ? 'checked' : ''}>${kind === 'offer' ? 'Used it' : 'Bought it'}</label>` : f.bucket === 'walk' && kind === 'item' ? `<label class="cw-check"><input type="checkbox" data-shopping="${escape(f.id)}" data-index="${index}" ${shoppingList.has(f.id + ':' + index) ? 'checked' : ''}>add to my walk list</label>` : '';
   const offers = (f.offers ?? []).map((o,i) => ({o,i,deadline:offerDeadline(f,o)}));
   const old = offers.filter(({deadline}) => deadline && deadline < japanToday());
   const offerHtml = ({o,i,deadline}) => `<div class="cw-entry" data-offer-index="${i}"><p>${escape(o.text_en ?? 'Printed offer')}</p>${o.text_ja ? `<p lang="ja" class="cw-muted">${escape(o.text_ja)}</p>` : ''}${o.offer_yen != null ? `<p>${money(o.offer_yen)}</p>` : ''}${valueLine(o)}${deadline ? `<p class="cw-meta">${formatDate(deadline)}${deadline < japanToday() ? ' · expired' : ''}</p>` : o.deadline_text ? `<p lang="ja" class="cw-meta">${escape(o.deadline_text)}</p>` : ''}${control('offer',i)}</div>`;
-  const offerRows = offers.filter(entry => !old.includes(entry)).map(offerHtml).join('') + (old.length ? `<button type="button" data-action="expired-offers" data-id="${escape(f.id)}" aria-expanded="${expiredOffers.has(f.id)}" aria-controls="expired-${escape(f.id)}">${old.length} expired ${plural(old.length,'offer','offers')}</button><div id="expired-${escape(f.id)}" ${expiredOffers.has(f.id) ? '' : 'hidden'}>${expiredOffers.has(f.id) ? old.map(offerHtml).join('') : ''}</div>` : '');
+  const menu = !outing && f.bucket === 'home', limit = menu ? 10 : 5;
+  const current = offers.filter(entry => !old.includes(entry));
+  const offerRows = (menu ? current.slice(0,5) : current).map(offerHtml).join('') + (old.length ? `<button type="button" data-action="expired-offers" data-id="${escape(f.id)}" aria-expanded="${expiredOffers.has(f.id)}" aria-controls="expired-${escape(f.id)}">${old.length} expired ${plural(old.length,'offer','offers')}</button><div id="expired-${escape(f.id)}" ${expiredOffers.has(f.id) ? '' : 'hidden'}>${expiredOffers.has(f.id) ? old.map(offerHtml).join('') : ''}</div>` : '');
   // Keep source indexes even after sorting: walk lists and used entries store them.
   const items = f.bucket === 'toss' ? [] : (f.items ?? []).map((item,i) => ({item,i})).sort((a,b) => (printedValue(b.item) ?? -1) - (printedValue(a.item) ?? -1));
-  const visible = outing || allItems.has(f.id) ? items : items.slice(0,5);
+  const visible = menu && !openMenus.has(f.id) ? [] : outing || allItems.has(f.id) ? items : items.slice(0,limit);
   const itemRows = visible.map(({item,i}) => `<div class="cw-entry" data-item-index="${i}"><p><strong>${escape(item.name_en ?? 'Item')}</strong> <span lang="ja">${escape(item.name_ja)}</span></p><p>${money(item.price_yen)}${item.price_tax_incl_yen != null ? ` · ${money(item.price_tax_incl_yen)} incl. tax` : ''}${item.unit ? ` <span lang="ja">/ ${escape(item.unit)}</span>` : ''}</p>${item.regular_yen != null ? `<p class="cw-muted">Printed comparison: ${money(item.regular_yen)} <span lang="ja">${escape(item.regular_label)}</span></p>` : ''}${valueLine(item)}${item.conditions?.length ? `<p class="cw-muted">${escape(item.conditions.join(' · '))}</p>` : ''}${control('item',i)}</div>`).join('');
-  return offerRows + `<div id="items-${escape(f.id)}">${itemRows}</div>` + (!outing && items.length > 5 ? `<button type="button" data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}" aria-controls="items-${escape(f.id)}">${allItems.has(f.id) ? 'Show top 5' : 'Show all ' + items.length}</button>` : '');
+  const itemContent = `<div id="items-${escape(f.id)}">${itemRows}</div>` + (!outing && items.length > limit ? `<button type="button" data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}" aria-controls="items-${escape(f.id)}">${allItems.has(f.id) ? 'Show top ' + limit : 'Show all ' + items.length}</button>` : '');
+  return offerRows + (menu ? items.length ? `<button type="button" data-action="show-menu" data-id="${escape(f.id)}" aria-expanded="${openMenus.has(f.id)}" aria-controls="menu-${escape(f.id)}">${openMenus.has(f.id) ? 'Hide menu' : 'Show menu (' + items.length + ')'}</button><div id="menu-${escape(f.id)}" ${openMenus.has(f.id) ? '' : 'hidden'}>${itemContent}</div>` : '' : itemContent);
 }
 const shortText = (value,limit = 90) => {
   const text = String(value ?? '').replace(/\s+/g,' ').trim();
@@ -168,9 +197,15 @@ function locationLine(f) {
   if (l) return '<p class="cw-meta">📍 demo location near your selected station</p>';
   return `<form data-locate="${escape(f.id)}"><label class="cw-field">No address — type one<input name="address" required maxlength="300" placeholder="Printed address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form>`;
 }
+function pageLabel(id,index) {
+  const tile = state.pages[id]?.tiles?.find(Boolean);
+  if (!tile) return `Page ${index + 1} — (not stored)`;
+  const detail = shortText(tile.summary_en || tile.offers?.[0]?.text_en,50);
+  return `Page ${index + 1} — ${tile.business?.name || 'Flyer'}${detail ? ' · ' + detail : ''}`;
+}
 function fixControl(f) {
-  if (!f.pageIds.some(id => state.pages[id])) return `<p class="cw-meta">${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')}</p><p class="cw-muted">Personal text and page readings have been discarded.</p>`;
-  return `<details><summary>${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')} · Fix pages</summary><form data-fix="${escape(f.id)}">${f.pageIds.map((id,index) => `<label class="cw-field">Page ${index + 1}<select name="${escape(id)}"><option value="keep">Keep in this flyer</option>${state.flyers.filter(other => other.id !== f.id && other.bucket !== 'keep').map(other => `<option value="${escape(other.id)}">Move to ${escape(other.business?.name ?? 'another flyer')}</option>`).join('')}<option value="split">Split into new flyer</option></select></label>`).join('')}<button type="submit" ${busy ? 'disabled' : ''}>Save pages &amp; re-read groups</button></form></details>`;
+  if (!f.pageIds.some(id => state.pages[id])) return `<p class="cw-meta">${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')}</p>${f.pageIds.map((id,index) => `<p class="cw-muted">${escape(pageLabel(id,index))}</p>`).join('')}<p class="cw-muted">Personal text and page readings have been discarded.</p>`;
+  return `<details><summary>${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')} · check grouping</summary><form data-fix="${escape(f.id)}"><p class="cw-muted">Wrong grouping? Move a page to the flyer it belongs to.</p>${f.pageIds.map((id,index) => `<label class="cw-field"><span>${escape(pageLabel(id,index))}</span><select aria-label="${escape(pageLabel(id,index))}" name="${escape(id)}" ${state.pages[id] ? '' : 'disabled'}><option value="keep">Belongs to this flyer</option><option value="split">Its own flyer</option>${state.flyers.filter(other => other.id !== f.id && other.bucket !== 'keep').map(other => `<option value="${escape(other.id)}">Move to: ${escape(other.business?.name ?? 'another flyer')}</option>`).join('')}</select></label>`).join('')}<button type="submit" ${busy ? 'disabled' : ''}>Apply</button></form></details>`;
 }
 function pendingGroups() {
   return groupPages(Object.values(state.pages),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
@@ -183,8 +218,10 @@ function flyerCard(f) {
   const deal = `${escape(bestDeal(f))}${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}${expired(f) ? ' · expired' : ''}`;
   const open = openFlyers.has(f.id), count = f.offers.length + f.items.length;
   const toggle = `data-action="flyer-details" data-id="${escape(f.id)}" aria-expanded="${open}" aria-controls="details-${escape(f.id)}"`;
-  const head = f.bucket === 'walk' ? `<div class="cw-card-head"><h3><span lang="ja">${name}</span> <span class="cw-kind">· ${escape(f.business?.kind ?? f.category.replaceAll('_',' '))}</span></h3>${rating(f)}</div><p class="cw-verdict">${escape(shortText(f.summary_en))}</p><p class="cw-deal-line"><span class="cw-best-deal">${deal}</span> <span class="cw-location-chip">· ${escape(locationChip(f))}</span></p><button type="button" class="cw-disclosure" ${toggle}>${open ? 'Hide' : 'Show'} ${count === 1 ? '1 detail' : count+' prices &amp; offers'}</button>` : `<div class="cw-card-head"><button type="button" class="cw-mail-row" ${toggle}><strong lang="ja">${name}</strong> · ${f.bucket === 'toss' ? escape(reason) : `<span class="cw-deal-line">${deal}</span>`}</button>${rating(f)}</div>`;
-  const details = open ? entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '') + (f.bucket !== 'toss' ? fixControl(f) : '') : '';
+  const phone = f.bucket === 'home' ? actionsFor(f).find(action => action.kind === 'phone') : null;
+  const call = phone ? `<a class="cw-link cw-row-call" href="${escape(phone.href)}" aria-label="${escape(phone.text)}">📞 Call</a>` : '';
+  const head = f.bucket === 'walk' ? `<div class="cw-card-head"><h3><span lang="ja">${name}</span> <span class="cw-kind">· ${escape(f.business?.kind ?? f.category.replaceAll('_',' '))}</span></h3>${rating(f)}</div><p class="cw-verdict">${escape(shortText(f.summary_en))}</p><p class="cw-deal-line"><span class="cw-best-deal">${deal}</span> <span class="cw-location-chip">· ${escape(locationChip(f))}</span></p><button type="button" class="cw-disclosure" ${toggle}>${open ? 'Hide' : 'Show'} ${count === 1 ? '1 detail' : count+' prices &amp; offers'}</button>` : `<div class="cw-card-head"><button type="button" class="cw-mail-row" ${toggle}><strong lang="ja">${name}</strong> · ${f.bucket === 'toss' ? escape(reason) : `<span class="cw-deal-line">${deal}</span>`}</button>${call}${rating(f)}</div>`;
+  const details = open ? howToUse(f) + entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '') + (f.bucket !== 'toss' ? fixControl(f) : '') : '';
   return `<article class="cw-card${f.bucket === 'walk' ? '' : ' cw-compact'}" data-flyer="${escape(f.id)}">${head}${readingPrices ? '<p class="cw-meta" data-reading-prices role="status">Reading prices…</p>' : ''}${photoWarning(f)}<div class="cw-flyer-details" id="details-${escape(f.id)}" ${open ? '' : 'hidden'}>${details}</div></article>`;
 }
 function renderMailbox() {
@@ -750,7 +787,7 @@ function renderHistory() {
 }
 function render() {
   const focused = document.activeElement;
-  const focusKey = ['rate','flyer-details','all-items','expired-offers'].includes(focused?.dataset.action) ? {action:focused.dataset.action,id:focused.dataset.id,label:focused.dataset.label} : null;
+  const focusKey = ['rate','flyer-details','show-menu','all-items','expired-offers'].includes(focused?.dataset.action) ? {action:focused.dataset.action,id:focused.dataset.id,label:focused.dataset.label} : null;
   tossOpen = $('panel').querySelector('[data-bucket=toss]')?.open ?? tossOpen;
   // Async results (ranking, merges) re-render the panel; keep focus on its heading instead of dropping it to <body>.
   const headingFocused = $('panel').contains(document.activeElement) && /^H[1-3]$/.test(document.activeElement.tagName);
@@ -775,9 +812,10 @@ async function action(button) {
   const id = button.dataset.id;
   switch (button.dataset.action) {
     case 'flyer-details':
+    case 'show-menu':
     case 'all-items':
     case 'expired-offers': {
-      const set = button.dataset.action === 'flyer-details' ? openFlyers : button.dataset.action === 'all-items' ? allItems : expiredOffers;
+      const set = button.dataset.action === 'flyer-details' ? openFlyers : button.dataset.action === 'show-menu' ? openMenus : button.dataset.action === 'all-items' ? allItems : expiredOffers;
       if (set.has(id)) set.delete(id); else set.add(id);
       render(); break;
     }
