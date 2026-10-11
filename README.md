@@ -1,84 +1,202 @@
-# Station Points
+# Worth the Walk?
 
-Select a train line and station in Tokyo or Kanagawa to check researched grocery shops, point-card conditions and dated offers.
+Photograph the flyers in your mailbox, read what each one is in English, and plan a walk from your home station to the places worth visiting.
 
-The selector includes **74 stations**: all 30 distinct JR Nambu stations including the branch, all 27 Tokyu Den-en-toshi stations, 14 Tobu Skytree stations through Takenotsuka including Oshiage, and the original three Chūō/Sōbu pilot stations. Den-en-toshi is operated by Tokyu; it connects with Tokyo Metro Hanzomon services.
+## How it works
 
-**All 74 stations have at least five sourced candidates.** The snapshot contains 547 distinct branches and 1,908 station-to-branch associations. The app compares up to ten distinct retailers, prioritized by selected memberships and distance. Other branches are expandable under each retailer; counts of branches do not establish retailer diversity or complete coverage. Candidates are within 2.5 km straight-line distance or have explicit station access on their official page; this is a directory sample, not every local shop. [STATIONS.md](STATIONS.md) lists coverage.
+1. Photograph the pages. The browser cuts each page into six overlapping tiles and sends them in one request.
+2. Gemma 4 reads the tiles. The app groups pages from the same flyer, merges the readings, and gives each flyer a short English summary.
+3. Sort the pile into **worth a walk**, **deals to use at home**, **keep, not an ad**, and **safe to throw away**. Review the readings and correct page groups when needed.
+4. Rate the flyers you would act on. TabPFN learns from those choices; simple rules handle too few labels or a failed prediction. Plan a walk from your home station past selected places.
+5. At each stop, take one GPS reading to stamp it. Mark the offers you used. Savings count only values printed on the flyer.
 
-The wallet has 14 choices, including d POINT, V POINT, Ponta, PayPay Points, nanaco, JRE POINT, TOBU POINT and Sanwa/Food One. Branch card flags restrict chain defaults where available. Payment acceptance does not establish earning eligibility. There are 208 dated flyer records from 87 Life, Tokyu and Sanwa branches; advertised periods and publication periods are labeled separately. Recurring point bonuses and cash-discount conditions are verified separately. Item prices are not automatically extracted.
+## Why open models
 
-Run `python scripts/refresh.py` for an incremental refresh. Flyers update daily, directories and rule sources weekly, coordinates monthly. Expired/stale flyers disappear; changed/stale rules stop producing point matches until reviewed. Scheduling is not enabled. See [REFRESH.md](REFRESH.md) for the runner, caching, review queue, tests and publication workflow. `/data-status.html` exposes coverage and checks.
+Mail photos can contain personal information. Open models let you choose where image inference runs. Cloud mode sends tiles to DigitalOcean; `LOCAL_LLM=1` switches image reading and text merging to Ollama on your computer. Local mode does not disable the optional lookup, ranking, or tracing services.
 
-## Run the app
+The cloud check recorded about **$0.00044 per tile** in Sentry's cost attributes. Six tiles cost roughly a quarter of a cent per flyer page. This is an observed tile-reading cost, not a fixed price or a total that includes merging and retries.
 
-Node.js 22 or later is sufficient. The static assets, notice embeddings, fonts, and evaluation output are committed.
+The model comparison matters because the smaller local model was poor at reading these flyers.
+
+| Model | Checked input | Result |
+| --- | --- | --- |
+| Gemma 4 31B on DigitalOcean serverless inference | One cropped flyer section, through a Mastra agent | 4/4 product names and member and non-member prices correct in about 10 seconds |
+| Gemma 4 31B | Full flyer page | Read poorly; the app uses tiles instead |
+| Gemma 4 E2B through Ollama | Full page, then a tile | 0/8 on the page; 2/4 on the tile |
+
+Local mode warns you to check every price. These small checks do not establish accuracy across real mailbox flyers. The browser uses a 2×3 grid with 10% overlap, or 3×2 for landscape pages.
+
+## Architecture
+
+| Module | Runs in | Responsibility |
+| --- | --- | --- |
+| `dist/chirashi.mjs`, `dist/index.html` | Browser | Photos, tiling, mailbox, walk, stamps, dashboard, history, and localStorage |
+| `src/mailbox.mjs` | Browser and Node | Parse readings, group pages, sort buckets, extract deadlines, count printed savings, and build numeric ranking rows |
+| `src/walks.mjs` | Browser and Node | Distances, opening hours, stop order, time limits, walking estimates, and Maps links |
+| `agent/mastra.mjs`, `agent/models.mjs`, `agent/prompts.mjs` | Node | Mastra agents, read and merge workflows, cloud/local models, and private trace export |
+| `agent/tools.mjs`, `agent/serpapi.mjs`, `agent/tabpfn.mjs` | Node | GSI address search, budgeted place lookup, and Prior Labs MCP ranking |
+| `scripts/serve.mjs` | Node | Serve `dist/` and the HTTP API |
+| `src/rules.mjs`, `dist/shops.html`, `dist/app.mjs` | Browser and Node | Original Station Points directory and point-card rules |
+
+The request flow is **read-page NDJSON → group pages → merge → locate → rank → plan → stamp**.
+
+```text
+Phone photo -> six tiles -> POST /api/read-page -> Gemma 4
+                              | NDJSON tile events
+Phone: group pages -> POST /api/merge -> merge readings -> locate
+                                                          |-- GSI: printed address
+                                                          '-- SerpApi: eligible missing address
+Phone: numeric rows -> POST /api/rank -> TabPFN or rules
+Phone: plan walk -> one GPS reading per stamp -> localStorage
+```
+
+`/api/read-page` streams `tile` or `tile-error` events as reads finish, then a `done` event in input order. Four workers read a page with one retry per tile. A shared queue limits upstream calls to six, and the server limits each IP to 80 tile reads per hour.
+
+The browser groups pages by printed phone, website, or business name plus address. You can split or merge groups. `/api/merge` combines the text readings, applies bucket and deadline rules, and locates the flyer. Personal or official mail skips location lookup and keeps only a minimal marker.
+
+Ranking uses numeric features for category, distance, offer, free trial, printed value, time left, visiting services, delivery, and presence of an address. Walk planning orders stops and drops stops to fit your time limit. Distances and walking times are estimates; the route opens in Google Maps. GPS stamping uses a single reading, with a separate self-reported stamp when location is unavailable or you choose to stamp anyway.
+
+See [the architecture contract](docs/chirashi-architecture.md), [agent runtime](agent/RUNTIME.md), and [integration notes](agent/NOTES.md) for details.
+
+## Partner technology
+
+| Technology | Use in this app |
+| --- | --- |
+| Gemma 4 | Reads Japanese flyer tiles and merges readings into an English summary. Cloud default: `gemma-4-31B-it`; local default: `gemma4:e2b-it-qat`. |
+| DigitalOcean | Serverless inference for the cloud Gemma model through an OpenAI-compatible endpoint. |
+| Mastra | Runs the `readPage` and `mergeFlyer` workflows and their agents. Its MCP client connects to Prior Labs. |
+| TabPFN, Prior Labs MCP | Uploads numeric feature rows, fits a classifier, and predicts which flyers you would act on. No business names, addresses, or flyer text go to TabPFN. |
+| SerpApi | Finds places near your home station only for worth-a-walk flyers without a usable printed address. Uses a disk cache and a search-budget guard. |
+| Sentry Agent Tracing | Keeps model, token, cost, and timing attributes while dropping prompts, outputs, images, and URLs with query strings. |
+| Render | Hosts the Node server and static phone app using `render.yaml`. |
+| GSI address search, 国土地理院 | Resolves printed Japanese addresses. Free, no API key; results can be at block precision. |
+
+The live TabPFN check used synthetic labels. Through remote MCP's upload → fit → predict flow, it ranked a nearby free-trial flyer at **0.9996** and a far no-offer flyer at **0.0004** in **11.6 seconds**. This proves the integration on synthetic rows, not prediction quality for your choices. Fewer than six labels, only one label class, a missing token, or any failure uses simple rules.
+
+SerpApi live searches require `SERPAPI_LIVE=1`. The cache lasts 30 days. Default limits are five searches per day and 40 per month; the Render blueprint sets eight and 180. The budget guard stops searches when the reconciled account balance reaches the 20-search reserve. Run the status check to reconcile that balance. Tests forbid real network calls.
+
+A tile-read trace has this shape:
+
+```text
+invoke_workflow readPage
+└─ workflow.step read-tiles
+   └─ invoke_agent flyer-reader
+      └─ chat gemma-4-31B-it
+```
+
+One page request produces one workflow trace. You can inspect timing, model usage, and cost without exporting the flyer payload.
+
+## Savings rule
+
+Only offers and items you mark as used enter the savings total. The app counts a printed regular price minus a printed offer price, a printed yen discount, or a printed percentage discount with a printed regular price. A free trial counts only when its regular price is printed. An item price alone does not establish savings. Offers without enough printed values remain uncounted.
+
+## Privacy rules
+
+- The browser tiles photos, sends each page once to the app server, and discards the photos after reading. The server does not save images or mailbox records. Cloud mode forwards tiles to DigitalOcean for inference.
+- Settings, extracted flyer records, labels, walks, and stamps live in the phone's localStorage. There are no accounts. Clearing browser storage removes that history.
+- Personal or official mail retains only its ID, page IDs, bucket, and category. Its extracted page readings are removed from saved state.
+- GSI receives a printed or manually entered address. SerpApi receives a business name and the location of your home station. Its server-side cache stores sanitized public place results and a budget ledger, not mail photos.
+- TabPFN receives numeric feature rows and labels. Sentry receives sanitized traces. GPS readings stay in the browser; the app saves stamp time, type, and distance rather than a GPS trail.
+- Opening a walking route sends the route locations to Google Maps.
+
+## Run it
+
+Use Node.js 22 and install dependencies:
+
+```sh
+npm ci
+```
+
+Create a root `.env` file and copy the keys you need into it:
+
+```dotenv
+GRADIENT_MODEL_ACCESS_KEY=your_digitalocean_inference_key
+SERPAPI_API_KEY=your_serpapi_key
+PRIOR_LABS_MCP_TOKEN=your_prior_labs_token
+SENTRY_DSN=your_sentry_dsn
+```
+
+Omit optional keys for services you do not use. Keep real keys out of version control. Shell environment variables override `.env`.
+
+| Variable | If missing |
+| --- | --- |
+| `GRADIENT_MODEL_ACCESS_KEY` | Cloud mode cannot start unless the alias `DIGITALOCEAN_INFERENCE_KEY` is set. Local and mock modes need neither key. |
+| `GRADIENT_MODEL` | Uses `gemma-4-31B-it`. |
+| `LOCAL_LLM` | Uses cloud mode. Set to `1` for Ollama. |
+| `LOCAL_LLM_MODEL` | Uses `gemma4:e2b-it-qat` in local mode. |
+| `LOCAL_LLM_URL` | Uses `http://127.0.0.1:11434/v1` in local mode. |
+| `SERPAPI_API_KEY` | Live place search is unavailable; GSI address search still works. |
+| `SERPAPI_LIVE` | No live SerpApi searches. Set to `1` to enable budgeted searches. |
+| `SERPAPI_DAILY_LIMIT` | Limit is five searches per day. |
+| `SERPAPI_MONTHLY_LIMIT` | Limit is 40 searches per month. |
+| `PRIOR_LABS_MCP_TOKEN` | Ranking uses simple rules. |
+| `SENTRY_DSN` | No Sentry trace export. |
+| `MOCK_GEMMA` | Uses the selected real model. `1` enables synthetic fixtures; `dev:mock` sets this for you. |
+| `HOST` | Listens on `127.0.0.1`. |
+| `PORT` | Listens on port `4175`. |
+| `TRUST_PROXY` | Rate limits use the socket's IP. `1` trusts the last forwarded IP from the proxy. |
+| `NODE_ENV` | Sentry uses the `development` environment. |
+
+Build the assets, then start cloud mode:
 
 ```sh
 node scripts/build.mjs
-node --test tests/rules.test.mjs
-node scripts/serve.mjs
+npm start
 ```
 
-Open `http://127.0.0.1:4175`. Model search is optional and downloads about 135 MB of model/tokenizer assets plus runtime files on first use. The core store comparison works without this download. There is no account or API key.
-
-The browser fetches the model from Hugging Face and Transformers.js 3.8.1 from jsDelivr. Queries are encoded locally with ONNX Runtime WASM and are not sent to an inference API. Point-card selections are saved in the browser's local storage. Station selection appears in the URL. Google Maps receives the origin and destination when you open directions. Retailer links open their own websites.
-
-## What the open-source AI does
-
-Multilingual MiniLM ranks source-reviewed Japanese notice paraphrases against English or Japanese queries. For example, “cheaper food when I pay with banknotes” finds the OK Club cash-discount condition without needing the Japanese wording.
-
-The model does **not** read flyer images, extract prices, calculate points, or determine whether a payment qualifies. Point facts and the single advertised item price were manually checked against official sources. Date rules and store ordering are deterministic. Similarity scores are not probabilities.
-
-- Base model: [sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2), Apache-2.0.
-- ONNX conversion: [Xenova/paraphrase-multilingual-MiniLM-L12-v2](https://huggingface.co/Xenova/paraphrase-multilingual-MiniLM-L12-v2).
-- Revision and file SHA-256 hashes: [data/model.json](data/model.json).
-- 384 dimensions, q8, attention-masked mean pooling, L2 normalization, 128-token maximum.
-
-## Reproduce retrieval evaluation
-
-Use Python 3.12. This installation stays within the project folder.
+Open `http://127.0.0.1:4175`. For local mode, run Ollama with the configured model available, then start:
 
 ```sh
-python -m pip install --target .python -r requirements.txt
-python scripts/download_model.py
-python scripts/embeddings.py
-python scripts/evaluate.py
-node scripts/build.mjs
+LOCAL_LLM=1 npm start
 ```
 
-The download script reuses the recorded revision. The encoder verifies file hashes before inference. The index is built from Japanese notice text only, without evaluation queries or expected IDs. No fine-tuning or query-based threshold tuning was performed.
+In PowerShell, use `$env:LOCAL_LLM='1'` followed by `npm start` instead. Remove that variable to return to cloud mode.
 
-The fixture has 20 manually reviewed Japanese paraphrases and 40 author-written queries, split equally between English and Japanese. Some queries have multiple acceptable relevant notices. Evaluation searches the entire corpus; UI station, rule freshness and notice-date filtering change the candidate set.
-
-Life, Welcia and Sanwa are now included. Expired item notices and chains whose rules need review are filtered out in the browser. Flyer metadata does not trigger re-embedding; it is separate from the authored rule-notice corpus.
-
-| Method | Queries | Hit@1 | Hit@3 | MRR |
-| --- | ---: | ---: | ---: | ---: |
-| Quantized multilingual MiniLM | 40 | 70.0% | 87.5% | 0.797 |
-| Character-bigram Jaccard | 40 | 40.0% | 60.0% | 0.538 |
-
-The gain is mostly cross-language retrieval. For Japanese queries, the lexical baseline reaches 65.0% Hit@1 and 95.0% Hit@3, compared with the model's 65.0% and 90.0%. Expanded coverage reduced the model's old headline score; those older 14-notice figures no longer describe the current corpus. The [per-query report](data/evaluation.json) includes every ranking and runtime measurements. `/evaluation.html` displays results and misses.
-
-**This is a smoke benchmark, not a résumé-scale validation study.** The same project authored the paraphrases and queries. Labels were not independently audited. There is no held-out retailer test, field trial, OCR evaluation, or trained new model. Report these limits with the scores.
-
-## Verify the browser
-
-Install the development dependency, use an installed Microsoft Edge, and start the local server first.
+For the offline demo, use synthetic readings and locations:
 
 ```sh
-npm install
-npm run check:browser
+npm run dev:mock
 ```
 
-To include the real browser model download and inference, set `TEST_AI=1`. Set `TEST_BROWSER=chrome` to use installed Chrome instead of Edge. Checks cover station selection, card ordering and filtering, empty-state recovery, promotion/service-end dates, source links, directions, and desktop/mobile overflow. Screenshots are saved in the ignored `.impeccable/review/` directory.
+The integration checks are separate from the offline tests:
 
-## Data and contribution rules
+| Command | What it does |
+| --- | --- |
+| `node scripts/serpapi-check.mjs` | Prints budget status and reconciles the account balance if a key exists. Spends no searches without both `--search` and `--yes`. A search also needs `--near lat,lon`; cached results may avoid spending. |
+| `node scripts/tabpfn-check.mjs` | Runs the synthetic ranking check against Prior Labs. Requires its token for a TabPFN result; exits unsuccessfully if it falls back to rules. |
+| `node scripts/sentry-check.mjs` | Reads `.local-fixtures/meat.png` through cloud inference, exports a trace, and prints its ID. Requires the local fixture, a DigitalOcean inference key, and `SENTRY_DSN`. This makes a live model call. |
 
-See [DATA.md](DATA.md). Add branch facts in `data/catalog.mjs`, notice paraphrases in `data/notices.json`, and independent evaluation queries in `data/eval-queries.json`. Regenerate embeddings after changing notice text. Keep missing point or price information explicitly unknown. A payment logo is not evidence of loyalty-program support.
+## Tests
 
-The root workspace's separate Before I Call app is unrelated; this project lives in its own folder and repository.
+```sh
+npm test
+npm run check:chirashi
+```
+
+`npm test` runs unit, agent, and server tests offline with fixtures and injected transports. It does not call real model or lookup services.
+
+`npm run check:chirashi` uses Playwright and an installed Microsoft Edge. It starts its own mock server, uses a 390×844 phone viewport and a fixed clock, and checks scanning, grouping, privacy, ranking requests, walks, GPS and self-reported stamps, printed savings, and persistence. It also checks desktop overflow and `/shops.html`. Screenshots go to `.impeccable/review/`. Use `TEST_BROWSER=chrome` to select installed Chrome instead.
+
+## Deploy on Render
+
+Create a Render Blueprint from this repository using [render.yaml](render.yaml). The blueprint selects Node 22, installs production dependencies, builds the assets, and starts the Node server. Its health check is `/api/config`.
+
+Enter `GRADIENT_MODEL_ACCESS_KEY` for cloud inference. Enter `SERPAPI_API_KEY`, `PRIOR_LABS_MCP_TOKEN`, and `SENTRY_DSN` for the optional integrations you use. The blueprint sets `HOST=0.0.0.0`, `GRADIENT_MODEL=gemma-4-31B-it`, and enables budgeted live SerpApi searches.
+
+`TRUST_PROXY=1` makes per-IP rate limits use the last address in Render's `X-Forwarded-For` header. Set it only behind a trusted proxy. The blueprint does not attach a persistent disk, so the SerpApi disk cache and budget ledger can reset on redeploy. Account reconciliation supplies the balance used by the reserve guard.
+
+## Original Station Points directory
+
+The original grocery and point-card directory remains at [`/shops.html`](dist/shops.html). It contains sourced store candidates, membership conditions, and dated offers around stations. Its data and refresh documentation stays in [DATA.md](DATA.md), [REFRESH.md](REFRESH.md), and [STATIONS.md](STATIONS.md).
+
+## Accuracy on real mailbox flyers
+
+**TODO: the author will fill this table with real mailbox results.** The small model checks above and the synthetic TabPFN check are separate from this evaluation.
+
+| flyer type | pages | business correct | category correct | address correct | offer correct |
+| --- | --- | --- | --- | --- | --- |
+| TODO | TODO | TODO | TODO | TODO | TODO |
 
 ## License
 
-Project code and original annotations: MIT. Model and runtime dependencies keep their own licenses. Schibsted Grotesk font files use the SIL Open Font License, included in `dist/fonts/OFL.txt`. Retailer notices, logos, and flyer images are not relicensed; flyer images are not redistributed. Links and limited factual summaries retain source attribution.
+Project code and original annotations use the [MIT license](LICENSE). Models and runtime dependencies keep their own licenses. The original directory's multilingual MiniLM base model uses Apache-2.0; its revision and file hashes are recorded in [data/model.json](data/model.json). Schibsted Grotesk fonts use the SIL Open Font License in `dist/fonts/OFL.txt`. Retailer notices, logos, and flyer images are not relicensed. Flyer images are not redistributed. Links and limited factual summaries retain source attribution.
