@@ -53,6 +53,9 @@ async function overflow(page,label) {
   assert.ok(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth),label+': document overflow');
   for (const dialog of await page.locator('dialog[open]').all()) assert.ok(await dialog.evaluate(el => el.scrollWidth<=el.clientWidth),label+': sheet overflow');
   assert.deepEqual(await page.locator('.cw-main button, .cw-main a, dialog[open] button, dialog[open] a, select').evaluateAll(els => els.filter(el => el.getClientRects().length).filter(el => { const r=el.getBoundingClientRect(); return r.width<43.9 || r.height<43.9; }).map(el => el.textContent.trim())),[],label+': controls have 44px targets');
+  for (const text of await page.locator('.cw-line-station.current b').all()) {
+    assert.ok(await text.evaluate(el => { const label=el.getBoundingClientRect(),dot=el.parentElement.querySelector('.cw-line-dot').getBoundingClientRect(),board=el.closest('.cw-board').getBoundingClientRect(); return Math.abs((label.left+label.right-dot.left-dot.right)/2)<1 && label.left>=board.left && label.right<=board.right; }),label+': line label is centred on its dot and inside the board');
+  }
 }
 async function resize(page,size) {
   await page.setViewportSize(size);
@@ -198,6 +201,148 @@ async function interceptRead(page,handler) {
 async function waitServer() {
   for (let n=0;n<100;n++) { if (serverError) throw serverError; if (server.exitCode!==null) throw new Error(logs); try { if (logs.includes(base) && (await fetch(base+'/api/config')).ok) return; } catch {} await delay(100); }
   throw new Error('Mock server did not start: '+logs);
+}
+async function nonHappyChecks(sampleState) {
+  const saved={...structuredClone(sampleState),flyers:[],outings:[],labels:{},pages:{},overrides:{}};
+  async function seed(page,state=saved) {
+    await page.addInitScript(({key,state}) => localStorage.setItem(key,JSON.stringify(state)),{key,state});
+  }
+  const empty=await newPhone();
+  const homeFlyer=sampleState.flyers.find(f => f.bucket==='home'), tossFlyer=sampleState.flyers.find(f => f.bucket==='toss');
+  const emptyState={...structuredClone(saved),flyers:Array.from({length:6},(_,i) => ({...structuredClone(i<2 ? homeFlyer : tossFlyer),id:'empty-'+i,pageIds:[],sample:false}))};
+  await seed(empty.page,emptyState); await open(empty.page);
+  await empty.page.getByRole('heading',{name:'No walk today',exact:true}).waitFor();
+  assert.ok(await empty.page.getByText('We read 6 flyers: 2 deals to use at home, 4 safe to recycle. None is a place to walk to.',{exact:true}).isVisible());
+  assert.equal(await empty.page.locator('.cw-slot').count(),2);
+  const chooser=empty.page.waitForEvent('filechooser');
+  await empty.page.getByRole('button',{name:'Add more flyers',exact:true}).click(); await chooser;
+  await bothWidths(empty.page,'empty-walk',true);
+  await empty.page.locator('#stamps-button').click();
+  assert.ok(await empty.page.getByText('Your first stamp is one walk away.',{exact:true}).isVisible());
+  assert.equal(await empty.page.locator('.cw-month-rally .cw-rally > *').count(),3);
+  await empty.page.getByRole('button',{name:'Plan a walk',exact:true}).click();
+  await empty.page.locator('#sheet[open]').waitFor({state:'detached'});
+  await empty.page.waitForFunction(() => document.activeElement?.id==='answer-heading');
+  await empty.context.close();
+
+  const blocked=await newPhone();
+  await blocked.page.addInitScript(() => { Storage.prototype.setItem=function() { throw new DOMException('Blocked','SecurityError'); }; });
+  await open(blocked.page); await blocked.page.locator('#saving-strip').waitFor();
+  assert.ok(await blocked.page.getByText("This browser isn't saving. Your mailbox and stamps will be lost when you close this page.",{exact:true}).isVisible());
+  await blocked.page.getByRole('button',{name:'Dismiss saving warning',exact:true}).click();
+  await blocked.page.locator('#settings-button').click(); await blocked.page.getByLabel('Dark',{exact:true}).check();
+  assert.equal(await blocked.page.locator('#saving-strip').count(),0,'saving warning stays dismissed for this session');
+  await blocked.context.close();
+
+  const config=await newPhone(); await seed(config.page);
+  await config.page.route('**/api/config',route => route.fulfill({status:503,contentType:'application/json',body:'{}'}));
+  await config.page.goto(base); await config.page.locator('#service-strip').waitFor();
+  assert.ok(await config.page.getByText('Reading is unavailable right now. You can still try the sample mailbox.',{exact:true}).isVisible());
+  const readBefore=reads.length, mergeBefore=merges.length;
+  await config.page.locator('#service-strip').getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
+  await config.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor();
+  assert.equal(reads.length,readBefore); assert.equal(merges.length,mergeBefore,'sample needs no reading service');
+  await config.context.close();
+
+  const offline=await newPhone(); await seed(offline.page,{...structuredClone(sampleState),outings:[],labels:{}}); await open(offline.page);
+  await offline.page.clock.install({time:clock});
+  await select(offline.page,await files(offline.page,1));
+  await offline.context.setOffline(true); await offline.page.locator('#offline-strip').waitFor();
+  assert.equal(await offline.page.getByRole('button',{name:'Read 1 flyer',exact:true}).isDisabled(),true);
+  assert.ok(await offline.page.getByText('Reading flyers needs a connection.',{exact:true}).isVisible());
+  await bothWidths(offline.page,'offline',true);
+  await offline.context.setOffline(false); await offline.page.locator('#offline-strip').waitFor({state:'detached'});
+  await offline.page.locator('#notice').getByText('Back online.',{exact:true}).waitFor();
+  assert.equal(await offline.page.locator('#notice').getAttribute('role'),'status');
+  await resize(offline.page,{width:390,height:844}); await offline.page.evaluate(() => scrollTo(0,document.body.scrollHeight));
+  assert.ok(await offline.page.evaluate(() => scrollY>0),'toast check uses a scrolled mailbox');
+  assert.ok(await offline.page.locator('#notice').evaluate(el => { const r=el.getBoundingClientRect(),dock=document.querySelector('.cw-read-dock').getBoundingClientRect(); return r.top>=0 && r.bottom<=innerHeight && r.left>=0 && r.right<=innerWidth && r.bottom<=dock.top; }),'toast stays in viewport above dock while scrolled');
+  await bothWidths(offline.page,'toast',true);
+  await offline.page.clock.fastForward(6100); assert.equal(await offline.page.locator('#notice').isVisible(),false,'info hides after six seconds');
+  await offline.page.route('**/api/read-page',route => route.fulfill({status:429,contentType:'application/json',headers:{'Retry-After':'120'},body:'{}'}));
+  await offline.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click();
+  await offline.page.locator('[data-reading-page][data-status=failed]').waitFor();
+  await offline.page.getByRole('button',{name:'Retry page 1',exact:true}).waitFor();
+  assert.ok(await offline.page.locator('#reading-failures').getByText('Page 1: Reading limit reached — try again in 2 min',{exact:true}).isVisible());
+  await offline.page.getByText('None of these pages could be read.',{exact:true}).waitFor();
+  assert.ok(await offline.page.getByRole('button',{name:'Retry all',exact:true}).isVisible());
+  assert.ok(await offline.page.getByRole('button',{name:'Remove these photos',exact:true}).isVisible());
+  await bothWidths(offline.page,'read-failed',true);
+  assert.equal(await offline.page.locator('#notice').getAttribute('role'),'alert');
+  await offline.page.clock.fastForward(7000); assert.ok(await offline.page.locator('#notice').isVisible(),'error persists');
+  await offline.page.getByRole('button',{name:'Dismiss',exact:true}).click(); assert.equal(await offline.page.locator('#notice').isVisible(),false);
+  await offline.page.unroute('**/api/read-page');
+  for (const [status,error,reason] of [[413,'Payload too large','Photo too large — try a closer, smaller photo'],[400,'Timed out','Took too long'],[400,'Unknown',"Couldn't read this page"]]) {
+    await offline.page.route('**/api/read-page',route => route.fulfill({status,contentType:'application/json',body:JSON.stringify({error})}));
+    await offline.page.getByRole('button',{name:'Retry page 1',exact:true}).click();
+    await offline.page.locator('#reading-failures').getByText('Page 1: '+reason,{exact:true}).waitFor();
+    await offline.page.waitForFunction(() => !document.querySelector('[data-action=retry-page]').disabled);
+    await offline.page.unroute('**/api/read-page');
+  }
+  await offline.page.getByRole('button',{name:'Remove these photos',exact:true}).click();
+  const images=await files(offline.page,2);
+  await select(offline.page,images);
+  const disconnected=gate(), requestSeen=offline.page.waitForRequest('**/api/read-page');
+  await offline.page.route('**/api/read-page',async route => { await disconnected.promise; await route.abort('internetdisconnected'); });
+  await offline.page.getByRole('button',{name:'Read 2 flyers',exact:true}).click();
+  await requestSeen;
+  await offline.context.setOffline(true); disconnected.release();
+  await offline.page.waitForFunction(() => document.querySelectorAll('[data-status=failed]').length===2);
+  await offline.page.getByText('None of these pages could be read.',{exact:true}).waitFor();
+  assert.equal(await offline.page.locator('#reading-failures').getByText(/No connection/).count(),2);
+  assert.ok(await offline.page.getByRole('button',{name:'Retry all',exact:true}).isDisabled());
+  await offline.context.setOffline(false);
+  await offline.page.getByRole('button',{name:'Remove these photos',exact:true}).click();
+  await offline.page.locator('#photos-input').setInputFiles([images[0],{name:'note.txt',mimeType:'text/plain',buffer:Buffer.from('not a photo')},{name:'unsupported.heic',mimeType:'image/heic',buffer:Buffer.from('unsupported photo')}]);
+  await offline.page.locator('#notice').getByText('2 files skipped: not photos.',{exact:true}).waitFor();
+  assert.equal(await offline.page.locator('.cw-photo').count(),1,'accepted photo survives skipped files');
+  assert.equal(await offline.page.locator('#notice').getAttribute('role'),'status');
+  await offline.page.clock.fastForward(7000); assert.ok(await offline.page.locator('#notice').isVisible(),'warn persists');
+  await offline.context.close();
+
+  const hidden=await newPhone();
+  const hiddenState={...structuredClone(sampleState),outings:[],labels:Object.fromEntries(sampleState.flyers.filter(f => f.bucket==='walk').map(f => [f.id,0]))};
+  await seed(hidden.page,hiddenState); await open(hidden.page);
+  await hidden.page.getByRole('heading',{name:'No walk today',exact:true}).waitFor();
+  assert.ok(await hidden.page.getByText('The places on these flyers have ended their offers or you said Not for me.',{exact:true}).isVisible());
+  await hidden.page.getByRole('button',{name:'Show places I said Not for me',exact:true}).click();
+  await hidden.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor();
+  assert.deepEqual((await readState(hidden.page)).labels,{});
+  await hidden.page.evaluate(key => {
+    const s=JSON.parse(localStorage.getItem(key));
+    s.outings=[{id:'four-stamps',createdAt:'2026-10-11T02:00:00Z',start:s.settings.place,end:s.settings.place,stopIds:s.flyers.filter(f => f.bucket==='walk').map(f => f.id),meters:1000,minutes:16,mode:'walk',status:'done',cursor:4,skipped:[],stamps:s.flyers.filter(f => f.bucket==='walk').map(f => ({stopId:f.id,kind:'self',at:'2026-10-11T02:00:00Z'})),used:[]}];
+    localStorage.setItem(key,JSON.stringify(s));
+  },key);
+  // The init script seeds once per navigation, so remove it by using a separate context for the four-stamp fixture.
+  const rallyState=await readState(hidden.page), rally=await newPhone(); await seed(rally.page,rallyState); await open(rally.page);
+  await rally.page.locator('#stamps-button').click();
+  assert.equal(await rally.page.locator('.cw-month-rally .cw-rally > *').count(),6,'four stamps pad to six cells');
+  assert.equal(await rally.page.locator('.cw-month-rally .cw-spot').count(),2);
+  await rally.context.close();
+  await hidden.context.close();
+
+  const address=await newPhone(), missing={...structuredClone(sampleState.flyers.find(f => f.bucket==='walk')),id:'missing-address',pageIds:[],sample:false,location:null};
+  await seed(address.page,{...structuredClone(saved),flyers:[missing]}); await open(address.page);
+  assert.ok(await address.page.getByText('No address on the flyer',{exact:true}).isVisible());
+  await address.page.getByRole('button',{name:'Add address',exact:true}).click();
+  await address.context.setOffline(true);
+  assert.equal(await address.page.getByRole('button',{name:'Find address',exact:true}).isDisabled(),true);
+  assert.ok(await address.page.getByText('Finding an address needs a connection.',{exact:true}).isVisible());
+  await address.context.setOffline(false); await address.page.getByRole('button',{name:'Dismiss',exact:true}).click();
+  await address.page.route('**/api/locate?*',route => route.fulfill({status:503,contentType:'application/json',body:'{}'}));
+  await address.page.getByLabel('Printed address',{exact:true}).fill('Fictional unknown address');
+  await address.page.getByRole('button',{name:'Find address',exact:true}).click();
+  await address.page.locator('.cw-locate').getByText("Couldn't find that. Try the address printed on the flyer (住所) or the full business name.",{exact:true}).waitFor();
+  assert.equal(await address.page.locator('#notice').isVisible(),false,'address failure stays inline');
+  await address.context.close();
+
+  const stationFailure=await newPhone(); let failCoordinates=true;
+  await stationFailure.page.route('**/station-coordinates.json',route => failCoordinates ? route.fulfill({status:503,body:''}) : route.continue());
+  await open(stationFailure.page); await stationFailure.page.locator('.cw-welcome [data-action=sample]').click();
+  await stationFailure.page.locator('.cw-start').getByText('Station coordinates could not be loaded. Reload to pick a station.',{exact:true}).waitFor();
+  failCoordinates=false; await stationFailure.page.getByRole('button',{name:'Reload',exact:true}).click();
+  await stationFailure.page.getByRole('button',{name:'Reload',exact:true}).waitFor({state:'detached'});
+  await stationFailure.context.close();
 }
 try {
   server=spawn(process.execPath,['scripts/serve.mjs','--mock'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4180',HOST:'127.0.0.1',MOCK_GEMMA:'1',SENTRY_DSN:''},stdio:['ignore','pipe','pipe'],windowsHide:true});
@@ -383,6 +528,7 @@ try {
   const pick=chips.map((c,i) => ({...c,i,value:printedValue(first[c.kind==='offer' ? 'offers' : 'items'][c.index])})).sort((a,b) => (b.value ?? -1)-(a.value ?? -1))[0];
   const used=page.locator('[data-action=used]').nth(pick.i), expectedYen=pick.value ?? 0;
   await used.click(); assert.equal(await used.getAttribute('aria-pressed'),'true');
+  assert.equal(await used.evaluate(el => el===document.activeElement),true,'used chip keeps focus after rendering');
   assert.doesNotMatch(await used.getAttribute('aria-label'),/^✓/,'chip accessible names start with the item');
   if (expectedYen>0) {
     assert.equal(await page.locator('.cw-walk-savings').textContent(),`¥${expectedYen.toLocaleString('en-US')} saved on this walk · printed on the flyer`);
@@ -415,13 +561,18 @@ try {
   assert.match(await page.locator('.cw-done .cw-tally').textContent(),/2stamps collected.*km.*~[\d,]+steps · estimate.*~\d+kcal · estimate/);
   assert.ok(await page.getByRole('button',{name:'Back to my mailbox',exact:true}).isVisible());
   await sealChecks(page);
-  if (expectedYen>0) assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));
+  if (expectedYen>0) {
+    assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));
+    assert.equal(await page.locator('.cw-done-summary > span').textContent(),'printed on the flyers');
+    assert.ok(await page.locator('.cw-done-summary').evaluate(el => { const money=el.querySelector('strong'),suffix=el.querySelector('span'); return getComputedStyle(money).whiteSpace==='nowrap' && money.getBoundingClientRect().bottom<=suffix.getBoundingClientRect().top; }),'done savings and printed suffix use separate lines');
+  }
   const done=(await readState(page)).outings.at(-1); assert.equal(done.status,'done'); assert.equal(done.stamps.length,2); assert.equal(savings(done.used.map(u => ({entry:state.flyers.find(f => f.id===u.flyerId)[u.kind==='offer' ? 'offers' : 'items'][u.index]}))).yen,expectedYen);
   assert.equal(await page.locator('#stamps-button .cw-stamp-count').textContent(),'2');
   await bothWidths(page,'done',true); await page.locator('.cw-done').getByRole('button',{name:'See your stamp card',exact:true}).click(); await page.locator('#sheet[open]').waitFor();
   assert.ok(await page.locator('.cw-month-rally').getByText('Stamp rally · October',{exact:true}).isVisible());
   assert.equal(await page.locator('.cw-spot-mark').textContent(),'歩');
   assert.equal(await page.locator('#sheet [data-stamp]').count(),2); assert.equal(await page.locator('#sheet [data-history-flyer]').count(),5);
+  assert.equal(await page.locator('.cw-month-rally .cw-rally > *').count()%3,0,'stamp rally has full rows');
   await sealChecks(page);
   await page.locator('#sheet [data-history-flyer] [data-action=flyer-sheet]').first().click(); await page.getByRole('heading',{name:'How to use',exact:true}).waitFor();
   await page.keyboard.press('Escape'); await page.getByRole('heading',{name:'Your stamps',exact:true}).waitFor();
@@ -662,15 +813,20 @@ try {
   assert.equal(await sample.page.locator('.cw-start, #setup[open]').count(),0); await sample.context.close();
 
   // Denied location reveals the station picker without losing the pending sample action.
-  const denied=await newPhone();
-  await denied.page.addInitScript(() => { navigator.geolocation.getCurrentPosition=(_success,error) => error({code:1}); });
+  await nonHappyChecks(sampleState);
+  const denied=await newPhone({permissions:[]});
   await setup(denied.page); await denied.page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
   await denied.page.getByRole('button',{name:'Use my location',exact:true}).click();
-  await denied.page.getByText('Location unavailable. Pick a station instead.',{exact:true}).waitFor();
+  await denied.page.locator('.cw-start').getByText('Location is off for this site, so pick a station instead.',{exact:true}).waitFor();
   assert.ok(await denied.page.locator('#start-line').isVisible());
+  assert.equal(await denied.page.locator('#start-line').evaluate(el => el===document.activeElement),true);
   await denied.page.locator('#start-line').selectOption('skytree'); await denied.page.locator('#start-station').selectOption(station.id);
   await denied.page.getByRole('button',{name:'Use this station',exact:true}).click();
-  await denied.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor(); await denied.context.close();
+  await denied.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor();
+  await denied.page.locator('#settings-button').click(); await denied.page.getByRole('button',{name:'Use my location',exact:true}).click();
+  await denied.page.locator('#setup').getByText('Location is off for this site, so pick a station instead.',{exact:true}).waitFor();
+  assert.equal(await denied.page.locator('#setup-line').evaluate(el => el===document.activeElement),true);
+  await denied.context.close();
 
   const empty=await newPhone(); await setup(empty.page); assert.equal((await readState(empty.page)).flyers.length,0); assert.equal((await readState(empty.page)).settings.home,null); assert.equal(await empty.page.locator('#setup-station').count(),0); await bothWidths(empty.page,'empty-app');
   await empty.page.locator('#settings-button').click(); assert.equal(await empty.page.locator('#setup-weight').isVisible(),false);
@@ -686,7 +842,7 @@ try {
   assert.ok(merges.every(m => !m.home || typeof m.home.stationId==='string' && coarse(m.home.lat) && coarse(m.home.lon)),'stations and GPS both use coarse merge coordinates');
   assert.ok(locates.every(l => coarse(l.lat) && coarse(l.lon)),'all locate start coordinates are coarse');
   console.log('Chirashi browser: PASS · welcome → inline start → sample/photo → answer → walk · visual grouping · implicit labels · GPS/self stamps · printed savings · thumbnails/privacy · separate contexts · adaptive reading/merge recovery · train starts · 60/90 min · focus/escaping · 390/1280px · GPS request privacy · sample cleanup · station compatibility.');
-  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,reading,settings,answer,flyer-sheet,page-sheet,walk,walk-far,stamped-stop,done,stamps}.png and -desktop.png');
+  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,reading,settings,answer,flyer-sheet,page-sheet,walk,walk-far,stamped-stop,done,stamps,empty-walk,offline,read-failed,toast}.png and -desktop.png');
 } finally {
   for (const release of releases) release();
   await browser?.close();

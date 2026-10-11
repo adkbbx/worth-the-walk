@@ -21,9 +21,10 @@
     <button id="stamps-button" type="button" aria-label="Your stamps"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="6.5"/><path d="m8 12 2.5 2.5L16 9"/></svg></button>
     <button id="settings-button" type="button" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m10 3-.5 2.3-2 .9-2-.8-2 3.4 1.6 1.6v2.3l-1.6 1.6 2 3.4 2-.8 2 .9L10 21h4l.5-2.3 2-.9 2 .8 2-3.4-1.6-1.6v-2.3L21 8.7l-2-3.4-2 .8-2-.9L14 3z"/><circle cx="12" cy="12" r="3"/></svg></button>
   </div></header>
+  <div id="availability" class="cw-availability" aria-live="polite"></div>
   <main class="cw-main" id="content" tabindex="-1">
     <p id="progress" class="cw-meta" role="status" aria-live="polite"></p>
-    <p id="notice" class="cw-notice" role="status" aria-live="polite"></p>
+    <div id="notice" class="cw-notice" role="status" aria-live="polite" hidden></div>
     <section id="panel" aria-label="Mailbox"></section>
   </main>
   <footer class="cw-footer">Photos stay on this phone. They're only sent to be read.<small id="mode"></small></footer>

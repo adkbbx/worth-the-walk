@@ -16,9 +16,13 @@ const record = value => value && typeof value === 'object' && !Array.isArray(val
 // Personal letters retain no extracted text; samples also retain their demo marker.
 const savedFlyer = f => f.sample ? {...storable(f),sample:true} : storable(f);
 const pointValid = p => record(p) && Number.isFinite(p.lat) && Math.abs(p.lat) <= 90 && Number.isFinite(p.lon) && Math.abs(p.lon) <= 180;
+let savingFailed=false, savingDismissed=false;
 function load() {
+  let saved;
+  try { saved=localStorage.getItem(KEY); }
+  catch { savingFailed=true; return fresh(); }
   try {
-    const s = JSON.parse(localStorage.getItem(KEY));
+    const s = JSON.parse(saved);
     if (!record(s) || s.version !== 1 || !record(s.settings) || !record(s.pages) || !record(s.overrides) || !record(s.labels) || !Array.isArray(s.flyers) || !Array.isArray(s.outings)) return fresh();
     if (!s.flyers.every(f => record(f) && typeof f.id === 'string' && typeof f.category === 'string' && Array.isArray(f.pageIds) && f.pageIds.every(id => typeof id === 'string') && Object.hasOwn(titles,f.bucket) && (f.bucket === 'keep' || (record(f.business) && Array.isArray(f.offers) && f.offers.every(record) && Array.isArray(f.items) && f.items.every(i => record(i) && Array.isArray(i.conditions)) && (!f.location || pointValid(f.location)))))) return fresh();
     if (!Object.values(s.pages).every(p => record(p) && typeof p.id === 'string' && typeof p.scannedAt === 'string' && Array.isArray(p.tiles) && p.tiles.every(t => t === null || record(t)))) return fresh();
@@ -44,6 +48,14 @@ const thumbBlobs = new Map(), thumbURLs = new Map(), allItems = new Set(), addre
 let reading = null, preparing = 0, recovering = true, recovered = false, photoStorage = true, wakeLock = null;
 let photoWork = Promise.resolve();
 const stampMessages = new Map();
+const addressErrors = new Map();
+let offline=!navigator.onLine, serviceUnavailable=false, coordinatesFailed=false, startError='', noticeTimer;
+const offlineReason="You're offline. Reading flyers needs a connection; your mailbox, walk and stamps still work.";
+const serviceReason='Reading is unavailable right now. You can still try the sample mailbox.';
+const readUnavailable = () => offline;
+function availability() {
+  $('availability').innerHTML=`${offline ? `<div id="offline-strip" class="cw-strip"><p>${offlineReason}</p></div>` : ''}${savingFailed && !savingDismissed ? `<div id="saving-strip" class="cw-strip" data-tone="error"><p>This browser isn't saving. Your mailbox and stamps will be lost when you close this page.</p><button data-action="dismiss-saving" aria-label="Dismiss saving warning">✕</button></div>` : ''}${serviceUnavailable ? `<div id="service-strip" class="cw-strip" data-tone="warn"><p>${serviceReason}</p><button class="cw-text" data-action="sample" ${busy || startRequest ? 'disabled' : ''}>Try a sample mailbox</button></div>` : ''}`;
+}
 
 function applyTheme() {
   const root=document.documentElement, theme=state.settings.theme;
@@ -56,13 +68,29 @@ function applyTheme() {
   }
 }
 
-function notify(message = '') { $('notice').textContent = message; }
+function notify(message = '', {tone='info',actionLabel,onAction} = {}) {
+  clearTimeout(noticeTimer);
+  const notice=$('notice');
+  notice.replaceChildren(); notice.hidden=!message;
+  notice.dataset.tone=tone;
+  notice.setAttribute('role',tone === 'error' ? 'alert' : 'status');
+  notice.setAttribute('aria-live',tone === 'error' ? 'assertive' : 'polite');
+  if (!message) return;
+  const text=document.createElement('span'); text.textContent=message; notice.append(text);
+  if (actionLabel && onAction) {
+    const action=document.createElement('button'); action.className='cw-text'; action.textContent=actionLabel;
+    action.addEventListener('click',() => safely(onAction)); notice.append(action);
+  }
+  const close=document.createElement('button'); close.className='cw-toast-close'; close.setAttribute('aria-label','Dismiss'); close.textContent='✕';
+  close.addEventListener('click',() => notify('')); notice.append(close);
+  if (tone === 'info') noticeTimer=setTimeout(() => notify(''),6000);
+}
 function save() {
   delete state.shoppingList;
   state.flyers = state.flyers.map(savedFlyer);
   for (const f of state.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; thumbBlobs.delete(id); void photoDB('delete',id,'thumbs'); }
   try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
-  catch { notify('Phone storage is full or unavailable. Keep this page open; new changes could not be saved.'); return false; }
+  catch { savingFailed=true; availability(); return false; }
 }
 function home() {
   if (state.settings.home) {
@@ -85,7 +113,8 @@ async function continueStart() {
 }
 function useStation(lineId,stationId) {
   const point=coordinates.find(s => s.id === stationId);
-  if (!pointValid(point)) { notify('Choose a station with available coordinates.'); return false; }
+  if (!pointValid(point)) { startError='Choose a station with available coordinates.'; render(); if (setupOpen) renderSetup(); return false; }
+  startError='';
   state.settings.home=stationId; state.settings.lineId=lineId; delete state.settings.place;
   groceryChoice=null; save(); return true;
 }
@@ -97,11 +126,11 @@ async function useLocation() {
     const place={lat:rounded(position.coords.latitude,4),lon:rounded(position.coords.longitude,4)};
     if (!pointValid(place)) throw new Error('Invalid location');
     state.settings.place=place; state.settings.home=null; state.settings.lineId=null;
-    groceryChoice=null; save(); notify();
-  } catch { startPicker=true; notify('Location unavailable. Pick a station instead.'); }
+    groceryChoice=null; startError=''; save(); notify();
+  } catch { startPicker=true; startError='Location is off for this site, so pick a station instead.'; }
   finally { locatingStart=false; render(); if (setupOpen) renderSetup(); }
-  if (home()) await continueStart();
-  else (setupOpen ? $('setup-line') : $('start-line'))?.focus({preventScroll:true});
+  if (startError) (setupOpen ? $('setup-line') : $('start-line'))?.focus({preventScroll:true});
+  else if (home()) await continueStart();
 }
 function stationSelects(prefix,lineId,stationId) {
   const options=(rows,selected) => rows.map(row => `<option value="${escape(row.id)}"${row.id === selected ? ' selected' : ''}>${escape(row.name)}</option>`).join('');
@@ -113,7 +142,15 @@ function stationOptions(prefix,selected=null) {
   station.value=selected ?? '';
 }
 function startChooser() {
-  return startRequest ? `<section class="cw-start" aria-labelledby="start-heading"><h2 id="start-heading" tabindex="-1">Where do you start walking?</h2><p class="cw-muted">We plan the walk from here and back. Your location stays on this phone.</p><button class="cw-primary cw-wide" data-action="use-location" ${locatingStart ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-secondary cw-wide" data-action="pick-station" aria-expanded="${startPicker}" ${locatingStart ? 'disabled' : ''}>Pick a station</button>${startPicker ? stationSelects('start',startLine,startStation)+`<button class="cw-secondary cw-wide" data-action="use-station" ${locatingStart ? 'disabled' : ''}>Use this station</button>` : ''}</section>` : '';
+  return startRequest ? `<section class="cw-start" aria-labelledby="start-heading"><h2 id="start-heading" tabindex="-1">Where do you start walking?</h2><p class="cw-muted">We plan the walk from here and back. Your location stays on this phone.</p><button class="cw-primary cw-wide" data-action="use-location" ${locatingStart ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-secondary cw-wide" data-action="pick-station" aria-expanded="${startPicker}" ${locatingStart ? 'disabled' : ''}>Pick a station</button>${startProblems()}${startPicker ? stationSelects('start',startLine,startStation)+`<button class="cw-secondary cw-wide" data-action="use-station" ${locatingStart ? 'disabled' : ''}>Use this station</button>` : ''}</section>` : '';
+}
+function startProblems() {
+  return `${startError ? `<p class="cw-inline-reason" role="status">${escape(startError)}</p>` : ''}${coordinatesFailed ? '<div class="cw-inline-reason" role="status"><p>Station coordinates could not be loaded. Reload to pick a station.</p><button data-action="reload-coordinates">Reload</button></div>' : ''}`;
+}
+async function loadCoordinates() {
+  try { const response=await fetch('/station-coordinates.json'); if (!response.ok) throw new Error(); const points=await response.json(); if (!Array.isArray(points)) throw new Error(); coordinates=points; coordinatesFailed=false; }
+  catch { coordinatesFailed=true; }
+  render(); if (setupOpen) renderSetup();
 }
 const stationName = point => stations.find(s => s.id === point?.stationId)?.name ?? 'Station';
 const flyer = id => state.flyers.find(f => f.id === id);
@@ -133,9 +170,16 @@ const scanDate = f => state.pages[f.pageIds?.[0]]?.scannedAt?.slice(0,10) ?? jap
 const sortedWalks = () => state.flyers.filter(f => f.bucket === 'walk').sort((a,b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
 function row(f) { const h = home(); return featureRow(f,{today:japanToday(),distanceMeters:h && f.location ? distanceMeters(h,f.location) : null}); }
 function requestError(response,data) {
-  const error = new Error(response.status === 429 ? `Reading limit reached for now — try again in ${Math.max(1,Math.ceil(Number(data.retryAfter || response.headers.get('Retry-After')) / 60) || 1)} min` : data.error ?? 'Request failed. Please try again.');
+  const error = new Error(response.status === 429 ? `Reading limit reached — try again in ${Math.max(1,Math.ceil(Number(data.retryAfter || response.headers.get('Retry-After')) / 60) || 1)} min` : data.error ?? 'Request failed. Please try again.');
   error.status = response.status;
   return error;
+}
+function readingReason(error) {
+  if (offline || error instanceof TypeError || /network|fetch|connection|interrupted/i.test(error.message)) return 'No connection';
+  if (error.status === 429) return error.message;
+  if (['AbortError','TimeoutError'].includes(error.name) || /timeout|timed out/i.test(error.message)) return 'Took too long';
+  if (error.status === 413 || /too (large|detailed)|payload|detail limit/i.test(error.message)) return 'Photo too large — try a closer, smaller photo';
+  return "Couldn't read this page";
 }
 async function api(path, body, signal) {
   const response = await fetch(path,body === undefined ? {signal} : {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body),signal});
@@ -153,7 +197,7 @@ async function rank() {
     const result = await api('/api/rank',{train,predict:state.flyers.filter(f => !f.sample && f.bucket === 'walk').map(f => ({id:f.id,row:row(f)}))});
     if (sequence !== rankSequence) return;
     scores = new Map(result.scores.map(s => [s.id,s.p])); rankModel = result.model; render();
-  } catch (error) { if (sequence === rankSequence) notify(error.message); }
+  } catch { if (sequence === rankSequence) notify('The order could not be updated. Your mailbox is still available.',{tone:'error'}); }
 }
 
 // Prepared photos and retained thumbnails live in IndexedDB, never localStorage.
@@ -184,7 +228,7 @@ async function photoDB(method,value,store = 'pages') {
     });
   } catch {
     photoStorage = false;
-    notify('Keep this screen open until reading finishes. Photo storage is unavailable.');
+    notify('Photo storage is unavailable. Keep this screen open until reading finishes.',{tone:'warn'});
     return method === 'getAll' ? [] : false;
   } finally { try { db?.close(); } catch {} }
 }
@@ -264,14 +308,16 @@ async function preparePhoto(photo) {
   } finally { bitmap.close(); }
 }
 async function addPhotos(files) {
+  let skipped=0;
   preparing++; render();
   try {
     for (const file of files) {
+      if (!file.type.startsWith('image/')) { skipped++; continue; }
       const photo={id:uid('p-'),file,rotation:0,addedAt:now(),status:'waiting',parts:new Set()};
       try { await preparePhoto(photo); photos.push(photo); render(); }
-      catch (error) { notify(error.message ?? 'Could not prepare this photo. Try another image.'); }
+      catch (error) { if (['InvalidStateError','NotSupportedError'].includes(error.name) || /decode|unsupported|source image/i.test(error.message)) skipped++; else notify('This photo could not be prepared. Try another photo.',{tone:'error'}); }
     }
-  } finally { preparing--; render(); }
+  } finally { preparing--; render(); if (skipped) notify(`${skipped} ${plural(skipped,'file','files')} skipped: not photos.`,{tone:'warn'}); }
 }
 async function tilePage(photo) {
   const bitmap = await createImageBitmap(photo.blob);
@@ -330,7 +376,7 @@ async function readPass(photo,session,tiles,mode) {
     line(buffer); session.controller.signal.throwIfAborted();
     if (!done) throw new Error('Reading was interrupted. Your photo is ready to try again.');
     if (page.tiles.every(t => !t)) throw new Error('No parts could be read. Try a clearer photo.');
-    if (failed) notify(`${failed} parts could not be read. Check the printed flyer before using an offer.`);
+    if (failed) notify(`${failed} parts could not be read. Check the printed flyer before using an offer.`,{tone:'warn'});
     return page.tiles;
   } finally { reader.releaseLock(); }
 }
@@ -442,20 +488,32 @@ async function releaseWakeLock() {
   try { await lock?.release(); } catch {}
 }
 function guardUnload(event) { event.preventDefault(); event.returnValue=''; }
-function stopReading(message='Reading stopped. Your unread pages are kept for later.') {
+function stopReading(message='Reading stopped. Your unread pages are kept for later.',keepWaiting=true) {
   if (!reading?.active) return;
-  reading.message=message; reading.controller.abort(); updateReading();
+  reading.message=message; reading.keepWaiting=keepWaiting; reading.controller.abort(); updateReading();
   window.removeEventListener('beforeunload',guardUnload); void releaseWakeLock();
 }
+async function retryPages(ids) {
+  if (readUnavailable()) return;
+  const failed=photos.filter(p => ids.includes(p.id) && p.status === 'failed');
+  if (!failed.length) return;
+  if (reading?.active && !reading.controller.signal.aborted) {
+    for (const p of failed) { p.status='waiting'; p.error=''; p.parts.clear(); reading.queue.push(p); }
+    updateReading();
+  } else await readPhotos(failed.map(p => p.id));
+}
 async function readPhotos(ids=null) {
+  if (readUnavailable()) return;
   if (!home()) { askStart('read',ids); return; }
   if (!photos.length || busy || preparing || recovering) return;
   const batch=photos.filter(p => !ids || ids.includes(p.id)); if (!batch.length) return;
+  const previous=reading;
+  const batchWithFailures=ids ? [...(previous?.batch ?? []).filter(p => !batch.includes(p)),...batch].sort((a,b) => a.pageNumber-b.pageNumber) : batch;
   busy=true; recovered=false; view='home';
   const cleared=await clearSample(); notify(cleared ? 'Sample mailbox cleared.' : '');
-  const session={batch,queue:[...batch],controller:new AbortController(),active:true,started:performance.now(),durations:[],message:''};
+  const session={batch:batchWithFailures,completed:previous?.completed ?? 0,queue:[...batch],controller:new AbortController(),active:true,started:performance.now(),durations:[],message:''};
   reading=session;
-  for (const p of batch) { p.status='waiting'; p.parts.clear(); p.error=''; p.wholeRead=Boolean(state.pages[p.id]?.detailPending); p.detailNeeded=p.wholeRead; }
+  for (const p of batch) { p.pageNumber ??= photos.indexOf(p)+1; p.status='waiting'; p.parts.clear(); p.error=''; p.wholeRead=Boolean(state.pages[p.id]?.detailPending); p.detailNeeded=p.wholeRead; }
   render(); $('reading-card').scrollIntoView({block:'start'}); $('reading-heading').focus({preventScroll:true});
   window.addEventListener('beforeunload',guardUnload); void acquireWakeLock(session);
   const timer=setInterval(updateReading,1000);
@@ -466,8 +524,9 @@ async function readPhotos(ids=null) {
       try { await mergeGroups(new Set([id]),session.controller.signal); }
       catch (error) {
         if (error.name !== 'AbortError') {
-          session.message=`Your readings are saved. Sorting failed: ${error.message}. Use Retry sorting saved readings.`; notify(session.message);
-          if (error.status === 429) stopReading(error.message);
+          if (error.status >= 500) { serviceUnavailable=true; availability(); }
+          session.message='Your readings are saved. Use Retry sorting saved readings to finish sorting them.'; notify(session.message,{tone:'error',actionLabel:'Retry',onAction:retryMerge});
+          if (error.status === 429) { stopReading(error.message,false); notify(error.message,{tone:'error'}); }
         }
       }
     });
@@ -481,10 +540,12 @@ async function readPhotos(ids=null) {
         const p=session.queue.shift();
         try { await readPage(p,session,sortReadings); }
         catch (error) {
-          p.status=error.name === 'AbortError' ? 'waiting' : 'failed';
-          p.error=error.name === 'AbortError' ? '' : error.message || 'Network failure. Retry this page.';
-          if (error.status === 429) stopReading(error.message);
-          else if (error.name !== 'AbortError') { session.message='Some pages could not be read. Retry the failed pages.'; notify(p.error); }
+          const stopped=error.name === 'AbortError' && session.controller.signal.aborted && session.keepWaiting;
+          p.status=stopped ? 'waiting' : 'failed';
+          p.error=stopped ? '' : readingReason(error);
+          if (error.status >= 500) { serviceUnavailable=true; availability(); }
+          if (error.status === 429) { stopReading(error.message,false); notify(error.message,{tone:'error'}); }
+          else if (!stopped) { session.message='Some pages could not be read. Retry the failed pages.'; notify(p.error,{tone:'error',actionLabel:'Retry',onAction:() => retryPages([p.id])}); }
           await storePhoto(p);
           $('progress').textContent=`Page ${batch.indexOf(p)+1}: ${pageStatus(p)}${p.error ? '. '+p.error : ''}`;
           updateReading();
@@ -496,6 +557,7 @@ async function readPhotos(ids=null) {
     clearInterval(timer); session.active=false; window.removeEventListener('beforeunload',guardUnload); await releaseWakeLock();
     for (const p of batch.filter(p => p.status === 'read')) URL.revokeObjectURL(p.url);
     // Remove completed rows before revoking their preview URLs on a paused card.
+    session.completed+=session.batch.filter(p => p.status === 'read').length;
     session.batch=session.batch.filter(p => p.status !== 'read');
     if (!session.batch.length) reading=null;
     busy=false; render();
@@ -611,14 +673,14 @@ function stamp(o,id,kind,distance = null) {
   requestAnimationFrame(() => { recentStamp=null; }); void rank();
 }
 async function here(o,id,button) {
-  const p = stop(id); if (!p) { notify('This stop no longer has a location.'); return; }
+  const p = stop(id); if (!p) { notify('This stop no longer has a location. Add its printed address in your mailbox.',{tone:'warn'}); return; }
   button.disabled = true; button.setAttribute('aria-busy','true'); button.innerHTML = '<span class="cw-spinner" aria-hidden="true"></span>Checking location…';
   try {
     const position = await new Promise((resolve,reject) => navigator.geolocation ? navigator.geolocation.getCurrentPosition(resolve,reject,{enableHighAccuracy:true,timeout:15000,maximumAge:0}) : reject(new Error('Location unavailable')));
     const distance = distanceMeters({lat:position.coords.latitude,lon:position.coords.longitude},p);
     if (distance-position.coords.accuracy <= 200) stamp(o,id,'gps',Math.round(distance));
     else { stampMessages.set(id,{distance:Math.round(distance),text:`You're ${Math.round(distance)} m away — keep walking`}); render(); }
-  } catch { stamp(o,id,'self'); notify(`Stamped: ${stopKind(id)}. Location unavailable. Added a self-reported outline stamp.`); }
+  } catch { stamp(o,id,'self'); notify(`Stamped: ${stopKind(id)}. Location unavailable, so the stamp has a dashed outline.`,{tone:'warn'}); }
   finally { button.disabled = false; button.removeAttribute('aria-busy'); }
 }
 
@@ -678,25 +740,32 @@ function heroScene() {
     </div></div></div>`;
 }
 function addPagesCard() {
-  const disabled=busy || preparing || recovering, welcome=!state.flyers.length && !photos.length && !reading;
-  return `<section class="cw-snap${welcome ? ' cw-welcome' : ''}" aria-label="Photograph flyers">${welcome ? `${heroScene()}<div class="cw-welcome-copy"><p class="cw-print">For the flyers (<span lang="ja">チラシ</span>) in your mailbox</p><h1>One good reason to go outside.</h1><p class="cw-muted">Photograph the flyers in your mailbox. We'll find the ones worth walking to, plan a short walk past them, and give you a stamp at each stop.</p>` : `<h2>${state.flyers.length ? 'Add more flyers' : 'Your mailbox'}</h2>`}<button class="${welcome ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>${welcome ? '<svg class="cw-camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>' : ''}Photograph my flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button>${welcome ? `<div class="cw-sample-invite"><button class="cw-secondary cw-wide" data-action="sample" ${disabled || startRequest ? 'disabled' : ''}>Try a sample mailbox</button><p class="cw-muted">No flyers to hand? Try it with made-up shops.</p></div></div>` : ''}<input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<p class="cw-print">${photos.length} ${plural(photos.length,'page','pages')} ready</p><div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><p class="cw-print">Page ${i+1}</p><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div><p class="cw-muted">Add every page of every flyer, then tap Read.</p>` : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled || startRequest ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button></div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
+  const disabled=busy || preparing || recovering, readDisabled=disabled || readUnavailable(), welcome=!state.flyers.length && !photos.length && !reading;
+  return `<section class="cw-snap${welcome ? ' cw-welcome' : ''}" aria-label="Photograph flyers">${welcome ? `${heroScene()}<div class="cw-welcome-copy"><p class="cw-print">For the flyers (<span lang="ja">チラシ</span>) in your mailbox</p><h1>One good reason to go outside.</h1><p class="cw-muted">Photograph the flyers in your mailbox. We'll find the ones worth walking to, plan a short walk past them, and give you a stamp at each stop.</p>` : `<h2>${state.flyers.length ? 'Add more flyers' : 'Your mailbox'}</h2>`}<button class="${welcome ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>${welcome ? '<svg class="cw-camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>' : ''}Photograph my flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button>${welcome ? `<div class="cw-sample-invite"><button class="cw-secondary cw-wide" data-action="sample" ${disabled || startRequest ? 'disabled' : ''}>Try a sample mailbox</button><p class="cw-muted">No flyers to hand? Try it with made-up shops.</p></div></div>` : ''}<input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<p class="cw-print">${photos.length} ${plural(photos.length,'page','pages')} ready</p><div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><p class="cw-print">Page ${i+1}</p><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div><p class="cw-muted">Add every page of every flyer, then tap Read.</p>` : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${readDisabled || startRequest ? 'disabled' : ''}${readUnavailable() ? ' aria-describedby="read-reason"' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button>${readUnavailable() ? `<p id="read-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}</div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
 }
 function resumeCard() {
   const time=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
-  return `<div class="cw-resume"><p>${photos.length} pages waiting from ${escape(time)}</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button class="cw-text" data-action="discard">Discard</button></div></div>`;
+  return `<div class="cw-resume"><p>${photos.length} pages waiting from ${escape(time)}</p>${readUnavailable() ? `<p id="resume-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}<div class="cw-actions"><button class="cw-primary" data-action="resume" ${readUnavailable() ? 'disabled aria-describedby="resume-reason"' : ''}>Resume</button><button class="cw-text" data-action="discard">Discard</button></div></div>`;
+}
+function failedReadingActions() {
+  const failed=reading.batch.filter(p => p.status === 'failed'), allFailed=!reading.active && failed.length === reading.batch.length && !reading.completed;
+  const retryDisabled=readUnavailable() || (busy && (!reading.active || reading.controller.signal.aborted));
+  return `${allFailed ? '<p class="cw-empty-reading">None of these pages could be read.</p>' : ''}${failed.map(p => `<div class="cw-failed-page"><p class="cw-meta">Page ${p.pageNumber}: ${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}" ${retryDisabled ? 'disabled' : ''}>Retry page ${p.pageNumber}</button></div>`).join('')}${failed.length >= 2 || allFailed ? `<button class="${allFailed ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="retry-failed" ${retryDisabled ? 'disabled' : ''}>${allFailed ? 'Retry all' : 'Retry all failed'}</button>` : ''}${!reading.active && photos.length ? `<div class="cw-actions">${!allFailed ? `<button class="cw-primary" data-action="resume" ${readUnavailable() ? 'disabled' : ''}>Resume</button>` : ''}<button data-action="discard">${allFailed ? 'Remove these photos' : 'Discard'}</button></div>` : ''}${readUnavailable() ? `<p id="resume-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}`;
 }
 function readingCard() {
-  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p class="cw-muted">Keep this screen open. Cards appear as each flyer is read.</p><div class="cw-reading-pages">${reading.batch.map((p,i) => `<div class="cw-reading-page" data-reading-page="${escape(p.id)}" data-status="${escape(p.status)}">${p.url ? `<img src="${escape(p.url)}" alt="Page ${i+1}">` : `<span class="cw-reading-blank" aria-label="Page ${i+1}">${i+1}</span>`}<span data-page-status>${pageStatus(p)}${p.status === 'read' ? ' \u2713' : ''}</span></div>`).join('')}</div><p id="reading-message" class="cw-meta">${escape(reading.message)}</p>${reading.batch.filter(p => p.status === 'failed').map(p => `<div class="cw-actions"><p class="cw-meta">${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}">Retry page ${reading.batch.indexOf(p)+1}</button></div>`).join('')}${!reading.active && photos.length ? '<div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button data-action="discard">Discard</button></div>' : ''}</section>`;
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p class="cw-muted">Keep this screen open. Cards appear as each flyer is read.</p><div class="cw-reading-pages">${reading.batch.map((p,i) => `<div class="cw-reading-page" data-reading-page="${escape(p.id)}" data-status="${escape(p.status)}">${p.url ? `<img src="${escape(p.url)}" alt="Page ${p.pageNumber ?? i+1}">` : `<span class="cw-reading-blank" aria-label="Page ${p.pageNumber ?? i+1}">${p.pageNumber ?? i+1}</span>`}<span data-page-status>${pageStatus(p)}${p.status === 'read' ? ' \u2713' : ''}</span></div>`).join('')}</div><p id="reading-message" class="cw-meta">${escape(reading.message)}</p><div id="reading-failures">${failedReadingActions()}</div></section>`;
 }
 function updateReading() {
   if (!reading || !$('reading-progress')) return;
   const r=reading, calls=r.batch.reduce((n,p) => n+(p.wholeRead ? 1 : 0)+p.parts.size,0), total=r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0);
-  const done=r.batch.filter(p => p.status === 'read').length, lanes=Math.min(3,r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status)).length) || 1;
+  const done=r.completed+r.batch.filter(p => p.status === 'read').length, lanes=Math.min(3,r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status)).length) || 1;
   const average=r.durations.reduce((n,d) => n+d,0)/(r.durations.length || 1);
   const remaining=Math.max(1,Math.ceil((average || 15000)*(total-calls)/lanes/60000));
   $('reading-progress').max=total; $('reading-progress').value=calls;
   $('reading-count').textContent=r.active ? `Reading ${Math.min(done+1,r.batch.length)} of ${r.batch.length} · about ${remaining} min left` : `${done} pages read · paused`;
   $('reading-message').textContent=r.message;
+  const failures=$('reading-failures'), failureHTML=failedReadingActions();
+  if (failures.dataset.html !== failureHTML) { const focus=focusKey(document.activeElement); failures.innerHTML=failureHTML; failures.dataset.html=failureHTML; if (focus && focus.action?.startsWith('retry')) restoreFocus(focus); }
   for (const chip of document.querySelectorAll('[data-reading-page]')) {
     const p=r.batch.find(p => p.id === chip.dataset.readingPage);
     if (!p) continue;
@@ -708,10 +777,10 @@ function updateReading() {
   for (const badge of document.querySelectorAll('[data-reading-prices]')) { const f=flyer(badge.dataset.readingPrices); badge.hidden=!r.active || !r.batch.some(p => f?.pageIds.includes(p.id) && p.status === 'detailing'); }
 }
 function locateControl(f) {
-  return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form>` : '';
+  return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy || offline ? 'disabled' : ''}${offline ? ` aria-describedby="address-offline-${escape(f.id)}"` : ''}>Find address</button>${offline ? `<p id="address-offline-${escape(f.id)}" class="cw-inline-reason">Finding an address needs a connection.</p>` : ''}${addressErrors.has(f.id) ? `<p class="cw-inline-reason" role="status">${escape(addressErrors.get(f.id))}</p>` : ''}</form>` : '';
 }
 function stopRow(f,previous=home()) {
-  const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : 'No location yet';
+  const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : f.location ? '' : 'No address on the flyer';
   return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
 }
 function routeSummary(p) { const e=estimates(p.meters,state.settings.weightKg); return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps`; }
@@ -746,10 +815,15 @@ function collapsedRows() {
   const slots=slot('home','Home','deal to use at home','deals to use at home')+slot('toss','Recycle','flyer to recycle','flyers to recycle')+slot('keep','Keep','letter, not an ad','letters, not ads');
   return slots ? `<section class="cw-mailbox-tray" aria-label="Sorted mailbox"><p class="cw-print">The rest of your mailbox</p><div class="cw-tray" aria-label="The rest of your mailbox">${slots}</div></section>` : '';
 }
+function emptyWalkReason() {
+  if (state.flyers.some(f => f.bucket === 'walk')) return 'The places on these flyers have ended their offers or you said Not for me.';
+  const counts=['home','toss','keep'].map(bucket => { const n=state.flyers.filter(f => f.bucket === bucket).length; return n ? `${n} ${bucket === 'home' ? plural(n,'deal','deals')+' to use at home' : bucket === 'toss' ? 'safe to recycle' : plural(n,'letter','letters')+' to keep'}` : ''; }).filter(Boolean);
+  return `We read ${state.flyers.length} ${plural(state.flyers.length,'flyer','flyers')}: ${counts.join(', ')}. None is a place to walk to.`;
+}
 function renderHome() {
-  const list=candidates(), p=plan(), e=p ? estimates(p.meters,state.settings.weightKg) : null;
+  const list=candidates(), p=list.length ? plan() : null, e=p ? estimates(p.meters,state.settings.weightKg) : null;
   const number=String(state.outings.filter(o => o.status === 'done').length+1).padStart(4,'0');
-  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h2 class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'Nothing worth a walk this time'}</h2>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${p?.stops.length ? '<p class="cw-muted cw-ticket-hint">Tap ✕ on any place you don\'t want. Start when you\'re ready.</p>' : ''}${!list.length ? `<p class="cw-muted">${state.flyers.some(f => f.bucket === 'walk') ? 'The walk offers are expired, closed, or marked Not for me.' : 'These pages have no in-person deals to walk to.'}</p>` : ''}${routeHTML(p,list)}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}<div class="cw-tray-anchor">${collapsedRows()}</div>${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
+  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h2 class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'No walk today'}</h2>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${p?.stops.length ? '<p class="cw-muted cw-ticket-hint">Tap ✕ on any place you don\'t want. Start when you\'re ready.</p>' : ''}${!list.length ? `<p class="cw-muted">${emptyWalkReason()}</p>` : ''}${list.length ? routeHTML(p,list) : ''}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}<div class="cw-tray-anchor">${collapsedRows()}</div>${!list.length ? `<div class="cw-empty-actions"><button class="cw-primary cw-wide" data-action="choose-photos" ${busy || preparing || recovering ? 'disabled' : ''}>Add more flyers</button>${state.flyers.some(f => f.bucket === 'walk') ? '<button class="cw-text cw-wide" data-action="restore-places">Show places I said Not for me</button>' : ''}${!state.flyers.some(f => f.sample) ? '<button class="cw-text cw-wide" data-action="sample">Try a sample mailbox</button>' : ''}</div>` : ''}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
   const snapFirst=!(state.flyers.length && !photos.length && !reading);
   const stamps=stampPreview(), side=(snapFirst ? "" : addPagesCard())+(stamps ? `<div class="cw-wide-only">${stamps}</div>` : "");
   const sample=state.flyers.some(f => f.sample) ? '<section class="cw-sample-banner" aria-label="Sample mailbox"><p class="cw-print">Sample mailbox</p><p class="cw-muted">Made-up shops placed near your start.</p><button class="cw-text" data-action="clear-sample">Clear sample</button></section>' : "";
@@ -806,7 +880,7 @@ function stampsContent() {
   const done=state.outings.filter(o => o.status === 'done'), stamps=state.outings.flatMap(o => o.stamps).sort((a,b) => Date.parse(b.at)-Date.parse(a.at)), meters=done.reduce((n,o) => n+o.meters,0), e=estimates(meters,state.settings.weightKg), yen=savings(usedEntries()).yen;
   const month=new Intl.DateTimeFormat('en-GB',{month:'long',timeZone:'Asia/Tokyo'}).format(new Date());
   const stats=[done.length ? `<div><b>${done.length}</b><span>${plural(done.length,'walk','walks')}</span></div>` : '',meters ? `<div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>~${e.steps.toLocaleString('en-US')} steps</span></div>` : '',yen ? `<div><b class="cw-money">${money(yen)}</b><span>saved, printed on flyers</span></div>` : ''].join('');
-  return `<h2 id="sheet-heading">Your stamps</h2><section class="cw-ticket cw-month-rally"><div class="cw-ticket-kicker"><span>Stamp rally · ${month}</span><span>${stamps.length} collected</span></div><div class="cw-rally-head"><h3>${stamps.length} ${plural(stamps.length,'place','places')} stamped</h3><p>Each kind of place has its own ink</p></div><div class="cw-rally">${stamps.map(stampCard).join('')}${emptyStamp('Next stamp')+emptyStamp('',true)+emptyStamp('',true)}</div></section>${stats ? `<div class="cw-tally">${stats}</div>` : ''}${stamps.some(s => s.kind === 'self') || meters ? '<p class="cw-small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>' : ''}${!stamps.length ? '<p class="cw-muted">Your first walk starts with a flyer.</p>' : ''}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
+  return `<h2 id="sheet-heading">Your stamps</h2><section class="cw-ticket cw-month-rally"><div class="cw-ticket-kicker"><span>Stamp rally · ${month}</span><span>${stamps.length} collected</span></div><div class="cw-rally-head"><h3>${stamps.length} ${plural(stamps.length,'place','places')} stamped</h3><p>Each kind of place has its own ink</p></div><div class="cw-rally">${stamps.map(stampCard).join('')}${Array.from({length:3-stamps.length%3},(_,i) => emptyStamp(i ? '' : 'Next stamp',i>0)).join('')}</div></section>${stats ? `<div class="cw-tally">${stats}</div>` : ''}${stamps.some(s => s.kind === 'self') || meters ? '<p class="cw-small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>' : ''}${!stamps.length ? '<p class="cw-muted">Your first stamp is one walk away.</p><button class="cw-primary cw-wide" data-action="plan-walk">Plan a walk</button>' : ''}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
 }
 function historyResults() {
   const query=historyQuery.toLowerCase(), list=[...state.flyers].reverse().filter(f => f.bucket !== 'keep' && [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
@@ -848,16 +922,21 @@ function doneScreen(o=state.outings.at(-1)) {
   const e=estimates(o.meters,state.settings.weightKg), yen=savings(usedEntries([o])).yen;
   const number=String(Math.max(1,state.outings.indexOf(o)+1)).padStart(4,'0');
   const more=candidates().filter(f => !o.stopIds.includes(f.id) && !state.outings.some(w => w.stamps.some(s => s.stopId === f.id) || (w.skipped ?? []).includes(f.id))).length;
-  return `<section class="cw-done"><article class="cw-ticket cw-used-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h1 class="cw-ticket-title">Walk done</h1><p class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</p></div><div class="cw-tally cw-done-tally"><div><b>${o.stamps.length}</b><span>stamps collected</span></div><div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>walk distance</span></div><div><b>~${e.steps.toLocaleString('en-US')}</b><span>steps · estimate</span></div><div><b>~${e.kcal}</b><span>kcal · estimate</span></div></div>${yen>0 ? `<p class="cw-done-summary"><strong>${money(yen)} saved</strong> <span>· printed on the flyers</span></p>` : ''}${sealHTML({stopId:o.id,at:now(),kind:'gps'},{current:false,animate:false,finished:true})}</article><div class="cw-rally" aria-label="This walk's stamps">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">See your stamp card</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button>${more ? `<p class="cw-small-note">${more} more ${plural(more,'place is','places are')} still worth the walk.</p>` : ''}</section>`;
+  return `<section class="cw-done"><article class="cw-ticket cw-used-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h1 class="cw-ticket-title">Walk done</h1><p class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</p></div><div class="cw-tally cw-done-tally"><div><b>${o.stamps.length}</b><span>stamps collected</span></div><div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>walk distance</span></div><div><b>~${e.steps.toLocaleString('en-US')}</b><span>steps · estimate</span></div><div><b>~${e.kcal}</b><span>kcal · estimate</span></div></div>${yen>0 ? `<p class="cw-done-summary"><strong>${money(yen)} saved</strong> <span>printed on the flyers</span></p>` : ''}${sealHTML({stopId:o.id,at:now(),kind:'gps'},{current:false,animate:false,finished:true})}</article><div class="cw-rally" aria-label="This walk's stamps">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">See your stamp card</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button>${more ? `<p class="cw-small-note">${more} more ${plural(more,'place is','places are')} still worth the walk.</p>` : ''}</section>`;
 }
-function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
+function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,kind:el.dataset.kind,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
 function restoreFocus(key) {
+  if (!key) { focusHeading(); return; }
   const root=$('setup').open ? $('setup') : $('sheet').open ? $('sheet') : document;
-  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.index === key?.index);
+  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.kind === key?.kind && el.dataset.index === key?.index);
   if (target && !target.disabled) target.focus({preventScroll:true}); else focusHeading();
 }
 // Move the one tray when crossing the desktop breakpoint; its controls stay unique.
 const desktopLayout=matchMedia('(min-width:960px)');
+const dockObserver=new ResizeObserver(entries => {
+  const height=entries[0]?.target.getBoundingClientRect().height ?? 0;
+  document.documentElement.style.setProperty('--read-dock-height',height+'px');
+});
 function placeTray() {
   const tray=document.querySelector('.cw-mailbox-tray'), side=document.querySelector('.cw-home-side'), anchor=document.querySelector('.cw-tray-anchor');
   if (!tray || !anchor) return;
@@ -874,7 +953,11 @@ function render() {
   $('panel').innerHTML=view === 'walk' ? walkScreen(activeOuting()) : view === 'done' ? doneScreen() : renderHome();
   document.body.classList.toggle('cw-has-photos',view === 'home' && photos.length>0 && !reading && !recovered);
   document.body.classList.toggle('cw-is-walking',view === 'walk');
-  placeTray();
+  dockObserver.disconnect();
+  const dock=document.querySelector('.cw-read-dock');
+  document.documentElement.style.setProperty('--read-dock-height',(dock?.getBoundingClientRect().height ?? 0)+'px');
+  if (dock) dockObserver.observe(dock);
+  placeTray(); availability();
   const stampCount=state.outings.reduce((n,o) => n+o.stamps.length,0), button=$('stamps-button');
   button.querySelector('.cw-stamp-count')?.remove();
   if (stampCount) { const badge=document.createElement('span'); badge.className='cw-stamp-count'; badge.setAttribute('aria-hidden','true'); badge.textContent=stampCount>99 ? '99+' : String(stampCount); button.append(badge); }
@@ -904,11 +987,11 @@ $('sheet').addEventListener('cancel',event => { if (sheetTrail.length) { event.p
 $('sheet').addEventListener('close',() => { sheet=null; sheetTrail.length=0; render(); restoreFocus(sheetOpener); sheetOpener=null; });
 function renderSetup() {
   if (!setupOpen) { if ($('setup').open) $('setup').close(); return; }
-  $('setup').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button></div><h2 id="setup-heading">Your walk starts here.</h2><p class="cw-muted">${state.settings.home ? 'Starting from '+stationHTML(home() ?? {stationId:state.settings.home}) : state.settings.place ? 'Starting from your location' : 'Choose where you start walking.'}</p><button class="cw-secondary cw-wide" data-action="use-location" ${locatingStart || busy ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><form id="setup-form">${stationSelects('setup',state.settings.lineId,state.settings.home)}<fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><fieldset><legend>Appearance</legend><div class="cw-radio cw-radio-appearance">${[['light','Light'],['dark','Dark'],['auto','Match my device']].map(([value,label]) => `<label><input type="radio" name="theme" value="${value}" ${state.settings.theme === value ? 'checked' : ''}>${label}</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
+  $('setup').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button></div><h2 id="setup-heading">Your walk starts here.</h2><p class="cw-muted">${state.settings.home ? 'Starting from '+stationHTML(home() ?? {stationId:state.settings.home}) : state.settings.place ? 'Starting from your location' : 'Choose where you start walking.'}</p><button class="cw-secondary cw-wide" data-action="use-location" ${locatingStart || busy ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-text cw-wide" data-action="pick-station">Pick a station</button><form id="setup-form">${startProblems()}${stationSelects('setup',state.settings.lineId,state.settings.home)}<fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><fieldset><legend>Appearance</legend><div class="cw-radio cw-radio-appearance">${[['light','Light'],['dark','Dark'],['auto','Match my device']].map(([value,label]) => `<label><input type="radio" name="theme" value="${value}" ${state.settings.theme === value ? 'checked' : ''}>${label}</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
   $('setup-form').addEventListener('submit',event => {
     event.preventDefault();
     if ($('setup-station').value) { if (!useStation($('setup-line').value,$('setup-station').value)) return; }
-    else if ($('setup-line').value) { notify('Choose a station on this line.'); return; }
+    else if ($('setup-line').value) { startError='Choose a station on this line.'; renderSetup(); $('setup-station')?.focus(); return; }
     state.settings.maxMinutes=Number(new FormData(event.target).get('minutes'));
     state.settings.weightKg=Number($('setup-weight').value);
     state.settings.theme=new FormData(event.target).get('theme'); applyTheme();
@@ -997,6 +1080,11 @@ async function action(button) {
       try { indexedDB.deleteDatabase('worth-the-walk-photos'); } catch {}
       location.reload();
     } break;
+    case 'dismiss-saving': savingDismissed=true; availability(); break;
+    case 'reload-coordinates': await loadCoordinates(); break;
+    case 'restore-places': for (const f of state.flyers.filter(f => f.bucket === 'walk')) if (state.labels[f.id] === 0) delete state.labels[f.id]; chosenStops=null; save(); render(); await rank(); break;
+    case 'plan-walk': sheetTrail.length=0; sheetOpener=null; $('sheet').close(); view='home'; render(); focusHeading(); break;
+    case 'retry-failed': await retryPages(photos.filter(p => p.status === 'failed').map(p => p.id)); break;
     case 'take-photo': $('camera-input').click(); break;
     case 'choose-photos': $('photos-input').click(); break;
     case 'rotate': if (!busy && !preparing) { const p=photos.find(p => p.id === id); if (!p) break; preparing++; p.rotation=(p.rotation+90)%360; render(); try { await preparePhoto(p); } finally { preparing--; render(); } } break;
@@ -1005,10 +1093,10 @@ async function action(button) {
     case 'sample': if (!home()) askStart('sample'); else await sampleMailbox(); break;
     case 'clear-sample': if (!busy) { await clearSample(); view='home'; notify(); render(); focusHeading(); } break;
     case 'use-location': await useLocation(); break;
-    case 'pick-station': startPicker=true; render(); $('start-line')?.focus(); break;
+    case 'pick-station': startPicker=true; render(); (setupOpen ? $('setup-line') : $('start-line'))?.focus(); break;
     case 'use-station': if (useStation($('start-line').value,$('start-station').value)) { notify(); await continueStart(); } break;
     case 'stop-reading': stopReading(); break;
-    case 'retry-page': { const p=photos.find(p => p.id === id); if (!p || p.status !== 'failed') break; if (reading?.active && !reading.controller.signal.aborted) { p.status='waiting'; p.error=''; p.parts.clear(); reading.queue.push(p); updateReading(); } else await readPhotos([id]); break; }
+    case 'retry-page': await retryPages([id]); break;
     case 'discard': if (!busy && !preparing) { for (const p of photos) { await photoDB('delete',p.id); if (!state.pages[p.id]) { thumbBlobs.delete(p.id); await photoDB('delete',p.id,'thumbs'); } URL.revokeObjectURL(p.url); } photos=[]; recovered=false; reading=null; render(); } break;
     case 'flyer-sheet': openSheet('flyer',id,button); break;
     case 'page-sheet': openSheet('page',id,button); break;
@@ -1024,7 +1112,7 @@ async function action(button) {
     case 'start': { if (activeOuting()) { view='walk'; render(); break; } const p=plan(); if (p?.stops.length) { newOuting(p); notify(); } break; }
     case 'here': { const o=activeOuting(); if (o && o.stopIds[currentCursor(o)] === id) await here(o,id,button); break; }
     case 'stamp-anyway': { const o=activeOuting(); if (o && o.stopIds[currentCursor(o)] === id) stamp(o,id,'self',stampMessages.get(id)?.distance ?? null); break; }
-    case 'used': { const o=activeOuting(); if (!o || !o.stamps.some(s => s.stopId === id)) break; const kind=button.dataset.kind, index=Number(button.dataset.index), entry=flyer(id)?.[kind === 'offer' ? 'offers' : 'items']?.[index]; if (!entry) break; const existing=o.used.find(u => u.flyerId === id && u.kind === kind && u.index === index); if (existing) o.used=o.used.filter(u => u !== existing); else o.used.push({flyerId:id,kind,index}); save(); render(); break; }
+    case 'used': { const o=activeOuting(); if (!o || !o.stamps.some(s => s.stopId === id)) break; const kind=button.dataset.kind, index=Number(button.dataset.index), entry=flyer(id)?.[kind === 'offer' ? 'offers' : 'items']?.[index]; if (!entry) break; const existing=o.used.find(u => u.flyerId === id && u.kind === kind && u.index === index); if (existing) o.used=o.used.filter(u => u !== existing); else o.used.push({flyerId:id,kind,index}); save(); const focus=focusKey(button); render(); restoreFocus(focus); break; }
     case 'next-stop': advance(activeOuting()); break;
     case 'skip-stop': advance(activeOuting(),true); break;
     case 'stamps': openSheet('stamps',undefined,button); break;
@@ -1032,21 +1120,21 @@ async function action(button) {
     case 'home': view=activeOuting() ? 'walk' : 'home'; render(); focusHeading(); break;
   }
 }
-function safely(task) { Promise.resolve().then(task).catch(error => { notify(error.message ?? 'Something went wrong. Try again.'); }); }
+function safely(task) { Promise.resolve().then(task).catch(error => { notify('This could not be completed. Try again.',{tone:'error'}); }); }
 document.addEventListener('click',event => { const button=event.target.closest('button'); if (button && !button.disabled && button.dataset.action) safely(() => action(button)); });
 $('settings-button').addEventListener('click',() => { setupOpen=true; renderSetup(); });
 $('stamps-button').addEventListener('click',() => openSheet('stamps',undefined,$('stamps-button')));
-document.addEventListener('change',event => { const input=event.target; if (input.name === 'theme' && input.closest('#setup-form') && ['light','dark','auto'].includes(input.value)) { state.settings.theme=input.value; applyTheme(); save(); } if (input.id === 'start-line') { startLine=input.value; startStation=''; stationOptions('start'); } else if (input.id === 'start-station') startStation=input.value; else if (input.id === 'setup-line') stationOptions('setup'); if (['photos-input','camera-input'].includes(input.id)) { const files=[...input.files].filter(f => f.type.startsWith('image/')); input.value=''; photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork); } });
+document.addEventListener('change',event => { const input=event.target; if (input.name === 'theme' && input.closest('#setup-form') && ['light','dark','auto'].includes(input.value)) { state.settings.theme=input.value; applyTheme(); save(); } if (input.id === 'start-line') { startLine=input.value; startStation=''; stationOptions('start'); } else if (input.id === 'start-station') startStation=input.value; else if (input.id === 'setup-line') stationOptions('setup'); if (['photos-input','camera-input'].includes(input.id)) { const files=[...input.files]; input.value=''; photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork); } });
 document.addEventListener('input',event => { if (event.target.id === 'history-search') { const start=event.target.selectionStart, end=event.target.selectionEnd; historyQuery=event.target.value; render(); $('history-search').focus({preventScroll:true}); $('history-search').setSelectionRange(start,end); } });
 document.addEventListener('submit',event => {
   const form=event.target;
   if (form.dataset.locate) {
     event.preventDefault(); safely(async () => {
-      const f=flyer(form.dataset.locate); if (!f || f.sample || f.bucket === 'keep') return;
+      const f=flyer(form.dataset.locate); if (!f || f.sample || f.bucket === 'keep' || offline) return;
       const data=new FormData(form), h=serverHome(), query=new URLSearchParams({q:data.get('address'),name:f.business?.name ?? ''});
       for (const phone of f.phones ?? []) query.append('phone',phone); if (h) { query.set('lat',h.lat); query.set('lon',h.lon); }
       const b=form.querySelector('button'); b.disabled=true;
-      try { const result=await api('/api/locate?'+query); if (pointValid(result.location)) { f.location=result.location; f.needsLookup=false; addressOpen.delete(f.id); save(); notify('Location found. Your walk has been updated.'); render(); await rank(); } else notify('No location found. Try the printed address or full business name.'); } finally { b.disabled=false; }
+      try { const result=await api('/api/locate?'+query); if (pointValid(result.location)) { f.location=result.location; f.needsLookup=false; addressOpen.delete(f.id); addressErrors.delete(f.id); save(); notify('Location found. Your walk has been updated.'); render(); await rank(); } else throw new Error('No location'); } catch { addressErrors.set(f.id,"Couldn't find that. Try the address printed on the flyer (住所) or the full business name."); render(); } finally { b.disabled=false; }
     });
   } else if (form.dataset.pageMove) {
     event.preventDefault(); if (busy) return;
@@ -1069,10 +1157,11 @@ document.addEventListener('submit',event => {
 });
 document.addEventListener('visibilitychange',() => { if (reading?.active) void acquireWakeLock(reading); });
 window.addEventListener('pagehide',() => { stopReading(); void releaseWakeLock(); revokeThumbs(); });
+window.addEventListener('offline',() => { offline=true; render(); });
+window.addEventListener('online',() => { offline=false; render(); notify('Back online.'); });
 applyTheme(); render(); renderSetup();
 await recoverPhotos();
-try { const response=await fetch('/station-coordinates.json'); if (!response.ok) throw new Error(); coordinates=await response.json(); render(); }
-catch { notify('Station coordinates could not be loaded. Reload to set up or plan a walk.'); }
+await loadCoordinates();
 try { const config=await api('/api/config'); $('mode').textContent=config.mode === 'mock' ? 'Demo mode' : ''; }
-catch { notify('Reading service unavailable. Try reloading.'); }
+catch { serviceUnavailable=true; render(); }
 save(); await rank();
