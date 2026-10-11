@@ -1,4 +1,4 @@
-import assert from 'node:assert/strict';
+﻿import assert from 'node:assert/strict';
 import {spawn} from 'node:child_process';
 import {once} from 'node:events';
 import {mkdir,readFile} from 'node:fs/promises';
@@ -6,687 +6,293 @@ import {chromium} from 'playwright';
 import {stations,stationsOnLine} from '../data/catalog.mjs';
 import {printedValue,savings} from '../src/mailbox.mjs';
 
-const base = 'http://127.0.0.1:4180';
-const key = 'worth-the-walk-v1';
-let server, browser, serverError, logs = '';
-const errors = [], reads = [], merges = [], ranks = [];
-const fixtures = JSON.parse(await readFile(new URL('./fixtures/tiles.json',import.meta.url),'utf8'));
-const readState = page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
-const pendingPhotos = page => page.evaluate(() => new Promise((resolve,reject) => {
-  const request=indexedDB.open('worth-the-walk-photos',1);
-  request.onerror=() => reject(request.error);
-  request.onsuccess=() => {
-    const db=request.result, transaction=db.transaction('pages','readonly'), rows=transaction.objectStore('pages').getAll();
-    transaction.oncomplete=() => { db.close(); resolve(rows.result.map(p => ({pageId:p.pageId,type:p.blob?.type,size:p.blob?.size,rotation:p.rotation,status:p.status}))); };
-    transaction.onerror=() => { db.close(); reject(transaction.error); };
-  };
-}));
-async function inViewport(locator,label) {
-  assert.ok(await locator.evaluate(el => {
-    const box=el.getBoundingClientRect(); return box.top >= 0 && box.bottom <= innerHeight && box.left >= 0 && box.right <= innerWidth;
-  }),`${label}: outside viewport`);
+// Reviewer-run acceptance test. The sandbox does not launch Edge.
+const base='http://127.0.0.1:4180', key='worth-the-walk-v1';
+const clock=new Date('2026-10-11T02:00:00Z');
+const fixture=JSON.parse(await readFile(new URL('./fixtures/tiles.json',import.meta.url),'utf8'));
+const coordinates=JSON.parse(await readFile(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
+const station=stationsOnLine(stations,'skytree')[0]; // Tobu Skytree only, never the user's home.
+const homePoint=coordinates.find(s => s.id === station.id);
+const errors=[], reads=[], merges=[], ranks=[], releases=[];
+let server,browser,serverError,logs='';
+const readState=page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
+const active=state => state.outings.find(o => o.status === 'active');
+const delay=ms => new Promise(resolve => setTimeout(resolve,ms));
+function gate() { let release; const promise=new Promise(resolve => { release=resolve; }); releases.push(release); return {promise,release}; }
+async function rows(page,store='pages') {
+  return page.evaluate(store => new Promise((resolve,reject) => {
+    const request=indexedDB.open('worth-the-walk-photos',2); request.onerror=() => reject(request.error);
+    request.onsuccess=() => { const db=request.result, tx=db.transaction(store,'readonly'), result=tx.objectStore(store).getAll();
+      tx.oncomplete=() => { db.close(); resolve(result.result.map(p => ({pageId:p.pageId,type:p.blob?.type,size:p.blob?.size,rotation:p.rotation}))); };
+      tx.onerror=() => { db.close(); reject(tx.error); };
+    };
+  }),store);
 }
 async function overflow(page,label) {
-  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),`${label}: horizontal overflow`);
+  assert.ok(await page.evaluate(() => document.documentElement.scrollWidth<=innerWidth),label+': document overflow');
+  for (const dialog of await page.locator('dialog[open]').all()) assert.ok(await dialog.evaluate(el => el.scrollWidth<=el.clientWidth),label+': sheet overflow');
 }
-async function snapshot(page,tab) {
-  await overflow(page,tab);
-  await page.screenshot({path:`.impeccable/review/chirashi-${tab}.png`,fullPage:true});
+async function bothWidths(page,label,screenshot=false) {
+  await page.setViewportSize({width:390,height:844}); await overflow(page,label+' 390');
+  if (screenshot) await page.screenshot({path:`.impeccable/review/chirashi-${label}.png`,fullPage:true});
+  await page.setViewportSize({width:1280,height:900}); await overflow(page,label+' 1280');
+  await page.setViewportSize({width:390,height:844});
 }
-async function waitForServer() {
-  for (let i = 0; i < 100; i++) {
-    if (serverError) throw serverError;
-    if (server.exitCode !== null) throw new Error(`Mock server exited: ${logs}`);
-    try { if (logs.includes('Worth the Walk? on '+base) && (await fetch(base+'/api/config')).ok) return; } catch {}
-    await new Promise(resolve => setTimeout(resolve,100));
-  }
-  throw new Error(`Mock server did not start: ${logs}`);
+async function newPhone(options={}) {
+  const context=await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation'],reducedMotion:'reduce',...options});
+  const page=await context.newPage(); page.on('pageerror',e => errors.push(e.message)); await page.clock.setFixedTime(clock); page.on('dialog',async d => { if (d.type()!=='beforeunload') errors.push('Unexpected dialog: '+d.message()); await d.accept(); });
+  page.on('request',r => { if (r.url().endsWith('/api/merge')) merges.push(r.postDataJSON()); if (r.url().endsWith('/api/rank')) ranks.push(r.postDataJSON()); });
+  return {context,page};
+}
+async function open(page) { await page.goto(base); await page.getByText('Demo mode',{exact:true}).waitFor(); }
+async function setup(page) {
+  await open(page); await page.locator('#setup[open]').waitFor();
+  await bothWidths(page,'settings');
+  assert.equal(await page.locator('#setup-weight').isVisible(),false,'weight stays under More');
+  await page.locator('#setup-line').selectOption('skytree'); await page.locator('#setup-station').selectOption(station.id);
+  await page.getByRole('button',{name:'Save',exact:true}).click(); await page.locator('#setup[open]').waitFor({state:'detached'});
+  assert.equal((await readState(page)).settings.home,station.id);
+}
+async function files(page,count) {
+  const encoded=await page.evaluate(count => Array.from({length:count},(_,i) => {
+    const canvas=document.createElement('canvas'); canvas.width=600; canvas.height=900;
+    const ctx=canvas.getContext('2d'); ctx.fillStyle='white'; ctx.fillRect(0,0,600,900);
+    ctx.fillStyle=['#174cbc','#b43822','#245c35'][i%3]; ctx.fillRect(25,25,550,140);
+    ctx.fillStyle='white'; ctx.font='30px sans-serif'; ctx.fillText('Fictional flyer '+(i+1),45,100);
+    ctx.fillStyle='#172536'; ctx.fillText('Printed trial and prices',45,240);
+    return canvas.toDataURL('image/png').split(',')[1];
+  }),count);
+  return encoded.map((data,i) => ({name:`fictional-page-${i+1}.png`,mimeType:'image/png',buffer:Buffer.from(data,'base64')}));
+}
+async function select(page,images) {
+  await page.locator('#photos-input').setInputFiles(images);
+  await page.waitForFunction(count => document.querySelectorAll('.cw-photo').length===count && !document.querySelector('[data-action=read]')?.disabled,images.length,{timeout:60000});
+}
+async function finished(page) {
+  await page.locator('#reading-card').waitFor({state:'detached',timeout:90000});
+  await page.waitForFunction(() => [...document.querySelectorAll('.cw-stop-row img')].every(i => i.complete && i.naturalWidth>0));
+}
+async function interceptRead(page,handler) {
+  await page.route('**/api/read-page',async route => {
+    const request=route.request().postDataJSON(); reads.push(request);
+    assert.ok(['page','tiles'].includes(request.mode)); assert.equal(request.tiles.length,request.mode==='page' ? 1 : 6);
+    for (const image of request.tiles) { assert.match(image,/^data:image\/jpeg;base64,/); assert.ok(Buffer.byteLength(image)<=2*1024*1024); }
+    const result=await handler(request,route);
+    if (!result) return;
+    const tiles=request.tiles.map(() => result);
+    const body=tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\r\n')+'\r\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles});
+    try { await route.fulfill({status:200,contentType:'application/x-ndjson',body}); } catch (e) { if (!page.isClosed() && !/closed|disposed|Invalid InterceptionId|already handled|aborted/i.test(e.message)) throw e; }
+  });
+}
+async function waitServer() {
+  for (let n=0;n<100;n++) { if (serverError) throw serverError; if (server.exitCode!==null) throw new Error(logs); try { if (logs.includes(base) && (await fetch(base+'/api/config')).ok) return; } catch {} await delay(100); }
+  throw new Error('Mock server did not start: '+logs);
 }
 try {
-  // Regenerate shared browser rules before importing the updated app.
-  const build=spawn(process.execPath,['scripts/build.mjs'],{cwd:new URL('..',import.meta.url),stdio:['ignore','pipe','pipe'],windowsHide:true});
-  let buildOutput='';
-  build.stdout.on('data',chunk => { buildOutput+=chunk; });build.stderr.on('data',chunk => { buildOutput+=chunk; });
-  const [buildCode]=await once(build,'exit');assert.equal(buildCode,0,buildOutput);
-  server = spawn(process.execPath,['scripts/serve.mjs','--mock'],{
-    cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4180',HOST:'127.0.0.1',MOCK_GEMMA:'1',SENTRY_DSN:''},stdio:['ignore','pipe','pipe'],windowsHide:true,
+  server=spawn(process.execPath,['scripts/serve.mjs','--mock'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4180',HOST:'127.0.0.1',MOCK_GEMMA:'1',SENTRY_DSN:''},stdio:['ignore','pipe','pipe'],windowsHide:true});
+  server.on('error',e => { serverError=e; }); server.stdout.on('data',c => { logs+=c; }); server.stderr.on('data',c => { logs+=c; });
+  await waitServer(); browser=await chromium.launch({channel:process.env.TEST_BROWSER || 'msedge'}); await mkdir('.impeccable/review',{recursive:true});
+  const {context,page}=await newPhone();
+  const last=gate(), detail=gate(), pageIndices=new Map(); let index=0, marketId, detailFinished=false;
+  const pilates=structuredClone(fixture[0]); pilates.category='fitness'; pilates.business={name:'Fictional Pilates <img src=x onerror=alert(1)>',kind:'Pilates studio'}; pilates.phones=['0120-000-666']; pilates.offers=[{kind:'discount',text_en:'Trial',text_ja:'体験',regular_yen:3300,offer_yen:1000,deadline_text:'10月31日まで'}];
+  const batch=[fixture[0],fixture[1],fixture[2],pilates,fixture[3],fixture[4],fixture[5]];
+  await interceptRead(page,async request => {
+    if (request.mode==='page') pageIndices.set(request.pageId,index++);
+    const i=pageIndices.get(request.pageId), tile=structuredClone(batch[i]);
+    if (i===0) tile.flyer_count=3;
+    if (i===6) await last.promise;
+    if (i===2 && request.mode==='page') { marketId=request.pageId; tile.items[0].price_yen=999; tile.items.push({name_en:'Misread item',name_ja:'架空誤読品',price_yen:888,conditions:[]}); }
+    if (request.mode==='tiles') { assert.equal(i,2,'only the supermarket has an adaptive detail pass'); await detail.promise; detailFinished=true; }
+    return tile;
   });
-  server.on('error',error => { serverError = error; });
-  server.stdout.on('data',chunk => { logs += chunk; });
-  server.stderr.on('data',chunk => { logs += chunk; });
-  await waitForServer();
-  browser = await chromium.launch({channel:process.env.TEST_BROWSER || 'msedge'});
-  const context = await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation']});
-  const page = await context.newPage(); page.on('pageerror',error => errors.push(error.message));
-  // Opening hours and deadlines depend on the clock; a fixed Saturday morning keeps the run repeatable.
-  await page.clock.setFixedTime(new Date('2026-10-17T10:30:00+09:00'));
-  await page.clock.setFixedTime(new Date('2026-10-11T02:00:00Z'));
-  // Arrange synthetic fixtures as separate whole pages and optional price tiles.
-  // A second batch is necessary: three single-flyer pages cannot produce six cards.
-  const fixtureOrder = [0,2,3,4,5,0];
-  let fixtureIndex = 0;
-  const pageIndices = new Map();
-  let marketId, detailStarted=false, detailFinished=false;
-  let detailBegin;
-  const detailBegun=new Promise(resolve => { detailBegin=resolve; });
-  await page.route('**/api/read-page',async route => {
-    const request = route.request().postDataJSON();
-    const index = request.mode === 'page' ? fixtureIndex++ : pageIndices.get(request.pageId);
-    if (request.mode === 'page') pageIndices.set(request.pageId,index);
-    reads.push(request);
-    assert.ok(['page','tiles'].includes(request.mode));
-    assert.equal(request.tiles.length,request.mode === 'page' ? 1 : 6,'whole page first, optional 2 × 3 or 3 × 2 tiling');
-    if (request.mode === 'tiles') {
-      assert.equal(index,1,'only the supermarket needs detail');
-      detailStarted=true;
-      detailBegin();
-      await new Promise(resolve => setTimeout(resolve,1500));
-    } else if (index === 2) await new Promise(resolve => setTimeout(resolve,1500));
-    for (const tile of request.tiles) { assert.match(tile,/^data:image\/jpeg;base64,/); assert.ok(Buffer.byteLength(tile) <= 2*1024*1024); }
-    const response = await route.fetch(); assert.equal(response.status(),200);
-    const events = (await response.text()).trim().split('\n').map(line => JSON.parse(line));
-    assert.equal(events.find(e => e.type === 'done').tiles.length,request.tiles.length);
-    const tile = structuredClone(fixtures[fixtureOrder[index]]);
-    if (index === 0) tile.flyer_count = 3;
-    if (index === 1 && request.mode === 'page') {
-      marketId=request.pageId;
-      tile.items[0].price_yen=999;
-      tile.items.push({name_ja:'架空誤読品',name_en:'Misread item',price_yen:888,conditions:[]});
-    }
-    if (index === 5) { tile.business.name = '架空テスト教室'; tile.phones = ['0120-000-666']; }
-    const tiles = request.tiles.map(() => tile);
-    // Deliberately include CRLF and an unterminated final line.
-    const body = tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\r\n')+'\r\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles});
-    await route.fulfill({status:200,contentType:'application/x-ndjson',body});
-    if (request.mode === 'tiles') detailFinished=true;
-  });
-  page.on('request',request => {
-    if (request.url().endsWith('/api/merge')) merges.push(request.postDataJSON());
-    if (request.url().endsWith('/api/rank')) ranks.push(request.postDataJSON());
-  });
-  await mkdir('.impeccable/review',{recursive:true});
-  await page.goto(base); await page.getByText('Demo mode',{exact:true}).waitFor();
-  assert.match(await page.locator('meta[name=viewport]').getAttribute('content'),/viewport-fit=cover/);
-  assert.equal((await readState(page)).settings.home,null);
-  await overflow(page,'setup');
-  await page.locator('#setup-line').selectOption('skytree');
-  const firstStation = stationsOnLine(stations,'skytree')[0];
-  await page.locator('#setup-station').selectOption(firstStation.id);
-  await page.getByRole('button',{name:'Save',exact:true}).click();
-  assert.equal((await readState(page)).settings.home,firstStation.id);
-  assert.equal((await readState(page)).settings.maxMinutes,40);
-  const pages = await page.evaluate(() => Array.from({length:3},(_,i) => {
-    const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 900;
-    const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0,0,600,900);
-    ctx.fillStyle = '#172536'; ctx.font = '36px sans-serif'; ctx.fillText(`Fictional flyer ${i+1}`,40,80);
-    ctx.font = '24px sans-serif'; ctx.fillText('Printed offer for browser test',40,160);
-    return canvas.toDataURL('image/png').split(',')[1];
-  }));
-  const files = pages.map((base64,index) => ({name:`fictional-page-${index+1}.png`,mimeType:'image/png',buffer:Buffer.from(base64,'base64')}));
-  await page.evaluate(() => {
-    window.readProgress = [];
-    new MutationObserver(() => window.readProgress.push(document.querySelector('#progress').textContent)).observe(document.querySelector('#progress'),{childList:true,subtree:true,characterData:true});
-  });
-  await page.locator('#photos-input').setInputFiles([files[0]]);
-  await page.getByRole('button',{name:'Read 1 page',exact:true}).waitFor();
-  await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
-  assert.equal(await page.locator('.cw-photo').count(),0,'a removed photo disappears immediately');
-  await page.locator('#photos-input').setInputFiles(files);
-  // A failed earlier photo step once left every later selection ignored; this wait catches that regression.
-  try { await page.waitForFunction(() => document.querySelectorAll('.cw-photo').length === 3 && !document.querySelector('[data-action=read]').disabled,null,{timeout:60000}); }
-  catch (error) { console.log('Photo selection stalled:', await page.evaluate(() => ({photos:document.querySelectorAll('.cw-photo').length, read:document.querySelector('[data-action=read]')?.outerHTML?.slice(0,200), progress:document.querySelector('#progress')?.textContent, notice:document.querySelector('#notice')?.textContent, changes:window.__changes, choose:document.querySelector('[data-action=choose-photos]')?.disabled})), 'errors', errors); throw error; }
-  assert.equal(await page.locator('.cw-photo').count(),3);
-  await page.getByRole('button',{name:'Rotate page 1'}).click();
-  await page.waitForFunction(() => document.querySelector('.cw-photo').dataset.rotation === '90' && !document.querySelector('[data-action=read]').disabled,null,{timeout:90000});
-  await page.waitForFunction(() => document.querySelector('.cw-photo img').naturalWidth > 0);
-  assert.equal(await page.locator('.cw-photo').first().getAttribute('data-rotation'),'90');
-  assert.ok(await page.locator('.cw-photo img').first().evaluate(img => img.naturalWidth > img.naturalHeight),'rotation is baked into the prepared preview');
-  const selected=await pendingPhotos(page);
-  assert.equal(selected.length,3);
-  assert.ok(selected.every(p => p.type === 'image/jpeg' && p.size > 0),'prepared JPEGs stored before reading');
-  assert.ok(await page.locator('.cw-photo img').evaluateAll(imgs => imgs.every(img => Math.max(img.naturalWidth,img.naturalHeight) <= 2048)),'whole pages fit the image limit');
-  await page.getByRole('button',{name:'Read 3 pages',exact:true}).click();
-  await page.getByRole('heading',{name:'Reading your mailbox',exact:true}).waitFor();
-  await inViewport(page.locator('#reading-heading'),'reading heading');
-  assert.ok(await page.locator('#reading-card').evaluate(el => el.getBoundingClientRect().top >= 0 && el.getBoundingClientRect().top < innerHeight));
-  assert.equal(await page.locator('progress').count(),1);
-  await page.waitForFunction(() => document.querySelector('progress')?.value > 0);
-  await page.locator('[data-flyer]').first().waitFor();
-  assert.ok(Object.values((await readState(page)).pages).length < 3,'a flyer card appears before the delayed last page finishes');
-  assert.ok(await page.locator('[data-flyer]').first().isVisible());
-  await page.getByRole('heading',{name:/架空若葉合気道場/}).waitFor();
-  await page.getByText(/This photo shows 3 flyers — take one photo per flyer for better results/).waitFor();
-  assert.equal(await page.locator('.cw-retake').first().textContent(),'Retake');
-  await page.locator('[data-reading-prices]').waitFor();
-  assert.equal(detailFinished,false,'the service card appears before supermarket details finish');
-  const serviceId=reads.find(r => pageIndices.get(r.pageId) === 0).pageId;
-  await page.waitForFunction(id => [...document.querySelectorAll('[data-reading-page]')].find(row => row.dataset.readingPage === id)?.querySelector('[data-page-status]').textContent === 'Read ✓',serviceId);
-  await detailBegun;
-  assert.equal(detailStarted,true);
-  assert.equal(await page.locator('#reading-progress').getAttribute('max'),'9','three whole reads plus six supermarket details');
-  assert.match(await page.locator(`[data-reading-page="${marketId}"] [data-page-status]`).textContent(),/read · checking prices \(\d of 6\)/);
-  const preliminaryMarket=(await readState(page)).flyers.find(f => f.pageIds.includes(marketId));
-  const preliminaryOrder=(await readState(page)).flyers.map(f => f.id);
-  await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 3,key);
-  await page.locator('#reading-card').waitFor({state:'detached'});
-  assert.equal(await page.locator('[data-bucket]').count(),4);
-  assert.match(await page.locator('#mailbox-stat').textContent(),/3 flyers → 2 worth a walk · 1 deal for home · 0 to throw away/);
-  assert.equal(await page.locator('#progress').textContent(),'');
-  assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#panel h1')),true);
-  assert.equal(await page.locator('[data-bucket=toss]').getAttribute('open'),null);
-  assert.ok(await page.evaluate(() => window.readProgress.some(p => /Read page \d\. \d of 3 pages read\./.test(p))),'polite announcements happen per page');
-  assert.deepEqual(await pendingPhotos(page),[],'completed page blobs deleted');
-  const market=(await readState(page)).flyers.find(f => f.pageIds.includes(marketId));
-  assert.equal(market.id,preliminaryMarket.id,'detail replaces the existing card');
-  assert.equal((await readState(page)).flyers.findIndex(f => f.id === market.id),preliminaryOrder.indexOf(market.id),'card stays in place');
-  assert.equal(market.items.length,3);assert.equal(market.items[0].price_yen,158);
-  assert.equal(await page.locator('[data-reading-prices]').count(),0);
-  assert.equal(reads.filter(r => r.pageId === serviceId).length,1,'service page makes exactly one read request');
-  assert.deepEqual(reads.filter(r => r.pageId === marketId).map(r => [r.mode,r.tiles.length]),[['page',1],['tiles',6]]);
-  const storedPage=(await readState(page)).pages[marketId];
-  assert.equal(storedPage.tiles.length,7);assert.equal(storedPage.detailed,true);
-  await page.locator('#photos-input').setInputFiles(files);
-  await page.getByRole('button',{name:'Read 3 pages',exact:true}).click();
-  await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 6,key);
-  await page.locator('#reading-card').waitFor({state:'detached'});
-  const sorted = await readState(page);
-  assert.equal(reads.length,7);
-  assert.equal(merges.length,7);
-  const kept = sorted.flyers.find(f => f.bucket === 'keep');
-  assert.deepEqual(Object.keys(kept).sort(),['bucket','category','id','pageIds']);
-  assert.ok(kept.pageIds.every(id => !sorted.pages[id]),'personal mail tiles discarded');
-  assert.ok(!JSON.stringify(sorted).includes('data:image/'),'no stored images');
-  assert.equal(Object.values(sorted.pages).length,5);
-  await page.locator('[data-bucket=toss]>summary').click();
-  assert.equal(await page.locator(`[data-flyer="${kept.id}"] [data-action=rate]`).count(),0);
-  for (const f of sorted.flyers.filter(f => f.bucket !== 'keep')) {
-    const label = f.bucket === 'walk' ? 1 : 0;
-    await page.locator(`[data-flyer="${f.id}"] [data-action=rate][data-label="${label}"]`).click();
-  }
-  assert.equal(ranks.length,0,'five eligible ratings do not meet the six-choice threshold');
-  // A legacy personal-mail label must never count. Add a sixth advert to exercise ranking.
-  await page.evaluate(({key,keptId}) => {
-    const state = JSON.parse(localStorage.getItem(key));
-    state.labels[keptId] = 1;
-    const extra = structuredClone(state.flyers.find(f => f.bucket === 'toss'));
-    extra.id = 'ranking-test-advert'; state.flyers.push(extra); state.labels[extra.id] = 0;
-    localStorage.setItem(key,JSON.stringify(state));
-  },{key,keptId:kept.id});
-  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
-  await page.getByText('based on your 6 choices (simple rules)',{exact:true}).waitFor();
-  assert.ok(ranks.length >= 1);
-  assert.equal(ranks.at(-1).train.length,6);
-  assert.deepEqual(new Set(ranks.at(-1).train.map(t => t.label)),new Set([0,1]));
-  assert.equal(ranks.at(-1).predict.some(f => f.id === kept.id),false);
-  await page.evaluate(key => {
-    const state = JSON.parse(localStorage.getItem(key));
-    state.flyers = state.flyers.filter(f => f.id !== 'ranking-test-advert');
-    delete state.labels['ranking-test-advert']; localStorage.setItem(key,JSON.stringify(state));
-  },key);
-  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
-  await snapshot(page,'mailbox');
-  await page.locator('[data-tab=walk]').click();
-  assert.deepEqual(errors,[],'no page errors when opening the Walk tab');
-  assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#panel h1')),true);
-  await page.getByRole('button',{name:'Plan walk',exact:true}).click();
-  let planned = (await readState(page)).outings.find(o => o.status === 'planned');
-  assert.ok(planned.stopIds.length >= 2,'plan has two nearby demo stops');
-  assert.ok(planned.minutes <= 40);
-  assert.match(await page.getByRole('link',{name:'Open walking route'}).getAttribute('href'),/travelmode=walking/);
-  assert.ok(await page.locator('.cw-route .cw-stop-reason').count() > 0);
-  await snapshot(page,'walk');
-  await page.getByRole('button',{name:'Start walk',exact:true}).click();
-  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
-  await page.locator('[data-tab=walk]').click();
-  await page.getByRole('heading',{name:'Your walk is underway.'}).waitFor();
-  assert.ok(await page.locator('[data-active-stop] .cw-stop-reason').count() > 0);
-  let saved = await readState(page), outing = saved.outings.find(o => o.status === 'active');
-  const first = saved.flyers.find(f => f.id === outing.stopIds[0]);
-  await context.setGeolocation({latitude:first.location.lat,longitude:first.location.lon,accuracy:1});
-  await page.locator(`[data-active-stop="${first.id}"] [data-action=here]`).click();
-  await page.locator(`[data-active-stop="${first.id}"] .cw-stamp.gps`).waitFor();
-  const second = saved.flyers.find(f => f.id === outing.stopIds[1]);
-  await context.setGeolocation({latitude:second.location.lat+1000/111320,longitude:second.location.lon,accuracy:1});
-  await page.locator(`[data-active-stop="${second.id}"] [data-action=here]`).click();
-  await page.getByText(/keep walking/).waitFor();
-  await page.locator(`[data-active-stop="${second.id}"] [data-action=stamp-anyway]`).click();
-  await page.locator(`[data-active-stop="${second.id}"] .cw-stamp.self`).waitFor();
-  const used = page.locator('[data-used][data-kind=offer]').first();
-  // If grocery ordering put the supermarket first, the second stamped dojo still has an offer.
-  assert.ok(await used.count());
-  const usedId = await used.getAttribute('data-used'), usedIndex = Number(await used.getAttribute('data-index'));
-  const expectedYen = printedValue(saved.flyers.find(f => f.id === usedId).offers[usedIndex]);
-  assert.ok(expectedYen > 0);
-  await used.check();
-  assert.match(await page.locator('#walk-saved').textContent(),new RegExp(`Saved ¥${expectedYen.toLocaleString('en-US')}`));
-  await page.locator('[data-tab=stamps]').click();
-  await page.getByRole('heading',{name:`Walk in progress · 2 of ${outing.stopIds.length} stops stamped`,exact:true}).waitFor();
-  await page.getByText('Finish a walk this week to start a streak',{exact:true}).waitFor();
-  assert.equal(await page.getByText('+ 0 used without a printed value',{exact:true}).count(),0);
-  await page.getByRole('button',{name:'Continue walk',exact:true}).click();
-  await page.getByRole('heading',{name:'Your walk is underway.'}).waitFor();
-  await page.locator('[data-tab=stamps]').click();
-  assert.equal(await page.locator('.cw-stamp').count(),2);
-  await page.getByText('self-reported',{exact:true}).waitFor();
-  assert.deepEqual(await page.locator('.cw-stamp').first().evaluate(el => {
-    const s = getComputedStyle(el); return [s.width,s.height,s.borderTopWidth,s.color];
-  }),['104px','104px','3px','rgb(181, 69, 8)']);
-  assert.equal(await page.locator('.cw-stamp.self').evaluate(el => getComputedStyle(el).opacity),'0.6');
-  assert.equal(await page.locator('.cw-stamp-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length),2);
-  assert.equal(await page.locator('[data-metric="places stamped"] strong').textContent(),'2');
-  assert.equal(await page.locator('[data-metric="yen saved"] strong').textContent(),'¥'+expectedYen.toLocaleString('en-US'));
-  await snapshot(page,'stamps');
-  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal((await readState(page)).outings.find(o => o.status === 'active').stamps.length,2);
-  await page.locator('[data-tab=history]').click();
-  assert.equal(await page.locator('.cw-history-item').count(),7);
-  assert.equal(await page.locator('.cw-history-item .cw-pill').first().evaluate(el => getComputedStyle(el).display),'inline-block');
-  assert.ok((await page.locator('.cw-history-item > .cw-meta').first().textContent()).includes('1 page'));
-  await snapshot(page,'history');
-  await page.locator('#history-search').fill('aikido');
-  assert.ok(await page.locator('.cw-history-item').count() >= 2);
-  await page.locator('#history-search').fill('');
-  await page.locator('.cw-history-item').first().click();
-  assert.equal(await page.locator('.cw-card').count(),1);
-  await overflow(page,'history flyer detail');
-  await page.getByRole('button',{name:'← History',exact:true}).click();
-  await page.locator('.cw-history-item').last().click();
-  assert.equal(await page.locator('.cw-stamp').count(),2);
-  await overflow(page,'history walk detail');
-  await page.locator('[data-tab=walk]').click();
-  await page.getByRole('button',{name:'Finish walk',exact:true}).click();
-  assert.equal((await readState(page)).outings.find(o => o.id === outing.id).status,'done');
-  assert.equal(await page.getByRole('button',{name:'Continue walk',exact:true}).count(),0);
-  await page.getByText('1 week in your weekly streak',{exact:true}).waitFor();
-  assert.equal(await page.locator('[data-metric="walks done"] strong').textContent(),'1');
-  assert.ok(Number(await page.locator('[data-metric="km"] strong').textContent()) > 0);
-  assert.equal(savings([{entry:saved.flyers.find(f => f.id === usedId).offers[usedIndex]}]).yen,expectedYen);
+  await setup(page);
+  assert.equal(await page.locator('[data-tab],[data-action=rate],[data-stop],[data-shopping]').count(),0);
+  const images=await files(page,7);
+  await select(page,[images[0]]); await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
+  assert.equal(await page.locator('.cw-photo').count(),0); assert.deepEqual(await rows(page),[]); assert.deepEqual(await rows(page,'thumbs'),[]);
+  await select(page,images);
+  await page.getByRole('button',{name:'Rotate page 2',exact:true}).click();
+  await page.waitForFunction(() => document.querySelectorAll('.cw-photo')[1]?.dataset.rotation==='90' && !document.querySelector('[data-action=read]').disabled);
+  assert.ok(await page.locator('.cw-photo img').nth(1).evaluate(i => i.naturalWidth>i.naturalHeight));
+  assert.equal((await rows(page)).length,7); const thumbsBefore=await rows(page,'thumbs'); assert.equal(thumbsBefore.length,7);
+  assert.ok(thumbsBefore.every(t => t.type==='image/jpeg' && t.size>0));
+  assert.ok(await page.getByRole('button',{name:'Read 7 flyers',exact:true}).evaluate(el => { const r=el.getBoundingClientRect(); return r.bottom<=innerHeight && r.top>=0; }),'read action sits above the bottom edge');
+  await bothWidths(page,'snap',true);
+  await page.getByRole('button',{name:'Read 7 flyers',exact:true}).click();
+  await page.locator('#reading-progress').waitFor(); await page.locator('.cw-stop-row').first().waitFor();
+  assert.match(await page.locator('#reading-count').textContent(),/Reading \d of 7 · about \d min left/);
+  assert.equal(await page.locator('progress').count(),1); assert.ok(Object.keys((await readState(page)).pages).length<7,'first stop appears before last page finishes');
+  await page.locator('[data-reading-prices]').waitFor(); assert.equal(detailFinished,false);
+  const preliminary=(await readState(page)).flyers.find(f => f.pageIds.includes(marketId));
+  await page.waitForFunction(() => document.querySelector('#reading-progress')?.max===13);
+  detail.release(); last.release(); await finished(page);
+  const sorted=await readState(page), market=sorted.flyers.find(f => f.pageIds.includes(marketId));
+  assert.equal(sorted.flyers.length,6); assert.equal(market.id,preliminary.id); assert.equal(market.items[0].price_yen,158); assert.equal(market.items.length,3);
+  assert.equal(sorted.pages[marketId].tiles.length,7); assert.equal(sorted.pages[marketId].detailed,true);
+  assert.deepEqual(reads.filter(r => r.pageId===marketId).map(r => [r.mode,r.tiles.length]),[['page',1],['tiles',6]]);
+  assert.ok(reads.filter(r => r.mode==='tiles').every(r => r.pageId===marketId));
+  await page.getByRole('heading',{name:'3 places worth the walk',exact:true}).waitFor();
+  assert.match(await page.locator('.cw-stop-list').textContent(),/Trial ¥1,000 \(was ¥3,300\)/);
+  assert.equal(await page.locator('.cw-stop-list img[src^="blob:"]').count(),4);
+  assert.equal(await page.locator('.cw-stop-list img[src=x]').count(),0,'model markup is escaped');
+  const keep=sorted.flyers.find(f => f.bucket==='keep'); assert.deepEqual(Object.keys(keep).sort(),['bucket','category','id','pageIds']);
+  assert.ok(keep.pageIds.every(id => !sorted.pages[id])); assert.deepEqual(await rows(page),[]);
+  await page.waitForFunction(() => new Promise(resolve => { const r=indexedDB.open('worth-the-walk-photos',2); r.onsuccess=() => { const db=r.result, tx=db.transaction('thumbs','readonly'), q=tx.objectStore('thumbs').count(); tx.oncomplete=() => { db.close(); resolve(q.result===6); }; }; }));
+  const retained=await rows(page,'thumbs'); assert.ok(keep.pageIds.every(id => !retained.some(t => t.pageId===id)));
+  assert.ok(!/data:image|blob:/.test(JSON.stringify(sorted)),'no photos or object URLs in localStorage');
+  assert.ok(await page.locator('.cw-stop-list img').evaluateAll(imgs => imgs.every(i => Math.max(i.naturalWidth,i.naturalHeight)<=480)));
+  for (const text of ['📞 1 deal to order at home','♻ 1 flyer safe to recycle','🔒 1 letter to keep']) assert.ok(await page.getByRole('button',{name:new RegExp(text)}).count());
+  for (const bucket of ['home','toss','keep']) { await page.locator(`[data-action=bucket-sheet][data-id=${bucket}]`).click(); await page.locator('#sheet[open]').waitFor(); await bothWidths(page,bucket+'-sheet'); if (bucket==='home') assert.match(await page.locator('#sheet a[href^="tel:"]').getAttribute('href'),/^tel:\d+$/); if (bucket==='keep') { assert.equal(await page.locator('#sheet img').count(),0); assert.ok(await page.getByText('Nothing from these was saved.',{exact:true}).isVisible()); } await page.getByRole('button',{name:'Close sheet',exact:true}).click(); }
+  await bothWidths(page,'answer',true);
+  const dojo=sorted.flyers.find(f => f.category==='lesson'), dojoRow=page.locator(`[data-flyer="${dojo.id}"]`);
+  await dojoRow.locator('[data-action=flyer-sheet]').click(); await page.locator('#sheet[open]').waitFor();
+  await page.getByRole('heading',{name:'How to use',exact:true}).waitFor(); assert.match(await page.locator('#sheet').textContent(),/This photo shows 3 flyers/);
+  await bothWidths(page,'flyer-sheet',true);
+  await page.locator('#sheet .cw-page-tile').first().click(); await page.getByRole('heading',{name:'This page',exact:true}).waitFor();
+  await page.keyboard.press('Escape'); await page.getByRole('heading',{name:'How to use',exact:true}).waitFor();
+  assert.equal(await page.locator('#sheet .cw-page-tile').first().evaluate(el => el===document.activeElement),true,'nested page returns focus to its flyer');
+  await page.keyboard.press('Escape'); await page.locator('#sheet[open]').waitFor({state:'detached'});
+  // A dialog fires its close event after the open attribute is removed, so focus returns a moment later.
+  await page.waitForFunction(id => document.activeElement?.matches(`[data-flyer="${id}"] [data-action=flyer-sheet]`),dojo.id,{timeout:3000});
+  const moving=dojo.pageIds[0];
+  await dojoRow.locator(`[data-action=page-sheet][data-id="${moving}"]`).click(); await page.getByRole('heading',{name:'This page',exact:true}).waitFor();
+  assert.match(await page.locator('#sheet img.cw-preview').getAttribute('src'),/^blob:/); assert.ok(await page.getByText('This page belongs to:',{exact:true}).isVisible());
+  assert.equal(await page.locator(`#sheet input[value="${keep.id}"]`).count(),0,'private mail is never a grouping target');
+  await bothWidths(page,'page-sheet',true);
+  await page.locator(`#sheet input[name=belongs][value="${market.id}"]`).check(); await page.getByRole('button',{name:'Apply',exact:true}).click(); await page.locator('#sheet[open]').waitFor({state:'detached',timeout:60000});
+  const moved=await readState(page), movedMarket=moved.flyers.find(f => f.pageIds.includes(marketId)), movedDojo=moved.flyers.find(f => f.category==='lesson');
+  assert.ok(movedMarket.pageIds.includes(moving)); assert.equal(movedMarket.pageIds.length,2); assert.equal(movedDojo.pageIds.length,1);
+  assert.equal(new Set(moved.flyers.map(f => f.id)).size,moved.flyers.length,'regrouping never duplicates flyer IDs');
+  assert.equal(await page.locator(`[data-flyer="${movedMarket.id}"] img`).count(),2,'stack updates after Apply');
+  const rejected=moved.flyers.find(f => f.category==='fitness'); await page.locator(`[data-flyer="${rejected.id}"] [data-action=not-for-me]`).click();
+  await page.locator(`[data-flyer="${rejected.id}"]`).waitFor({state:'detached'}); assert.equal((await readState(page)).labels[rejected.id],0);
+  await page.getByRole('button',{name:'Start the walk →',exact:true}).click(); await page.locator('.cw-walk-mode').waitFor();
+  await bothWidths(page,'walk',true);
+  assert.match(await page.getByRole('link',{name:'Open route in Google Maps',exact:true}).getAttribute('href'),/travelmode=walking/);
+  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.locator('.cw-walk-mode').waitFor();
+  let state=await readState(page), outing=active(state); assert.equal(outing.cursor,0); assert.equal(outing.stopIds.length,2);
+  const first=state.flyers.find(f => f.id===outing.stopIds[0]); await context.setGeolocation({latitude:first.location.lat,longitude:first.location.lon,accuracy:1});
+  await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.locator('.cw-stamp.gps').waitFor();
+  assert.equal((await readState(page)).labels[first.id],1); assert.ok(await page.getByRole('heading',{name:'Did you use it?',exact:true}).isVisible());
+  // Walk order varies with the demo locations, so pick the chip with the highest printed value (a stop may have none).
+  const chips=await page.locator('[data-action=used]').evaluateAll(els => els.map(el => ({kind:el.dataset.kind,index:Number(el.dataset.index)})));
+  assert.ok(chips.length>0,'a stamped stop always offers something to mark as used');
+  const pick=chips.map((c,i) => ({...c,i,value:printedValue(first[c.kind==='offer' ? 'offers' : 'items'][c.index])})).sort((a,b) => (b.value ?? -1)-(a.value ?? -1))[0];
+  const used=page.locator('[data-action=used]').nth(pick.i), expectedYen=pick.value ?? 0;
+  await used.click(); assert.equal(await used.getAttribute('aria-pressed'),'true'); await page.getByRole('button',{name:'Next stop →',exact:true}).click();
+  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); state=await readState(page); outing=active(state); assert.equal(outing.cursor,1); assert.equal(outing.used.length,1);
+  const second=state.flyers.find(f => f.id===outing.stopIds[1]); await context.setGeolocation({latitude:second.location.lat+650/111320,longitude:second.location.lon,accuracy:1});
+  await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.getByText(/You're \d+ m away — keep walking/).waitFor();
+  assert.equal(await page.locator('.cw-stamp').count(),0); await bothWidths(page,'far-stop');
+  await page.getByRole('button',{name:'Stamp anyway',exact:true}).click(); await page.locator('.cw-stamp.self').waitFor(); await page.getByRole('button',{name:'Next stop →',exact:true}).click();
+  await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
+  if (expectedYen>0) assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));
+  const done=(await readState(page)).outings.at(-1); assert.equal(done.status,'done'); assert.equal(done.stamps.length,2); assert.equal(savings(done.used.map(u => ({entry:state.flyers.find(f => f.id===u.flyerId)[u.kind==='offer' ? 'offers' : 'items'][u.index]}))).yen,expectedYen);
+  await bothWidths(page,'done',true); await page.locator('.cw-done').getByRole('button',{name:'Your stamps',exact:true}).click(); await page.locator('#sheet[open]').waitFor();
+  assert.equal(await page.locator('#sheet [data-stamp]').count(),2); assert.equal(await page.locator('#sheet [data-history-flyer]').count(),5);
+  await page.locator('#sheet [data-history-flyer] [data-action=flyer-sheet]').first().click(); await page.getByRole('heading',{name:'How to use',exact:true}).waitFor();
+  await page.keyboard.press('Escape'); await page.getByRole('heading',{name:'Your stamps',exact:true}).waitFor();
+  assert.equal(await page.locator('#sheet [data-history-flyer] [data-action=flyer-sheet]').first().evaluate(el => el===document.activeElement),true,'flyer returns focus to Your stamps');
+  await bothWidths(page,'stamps',true); await page.getByLabel('Search flyers',{exact:true}).fill('Pilates studio'); assert.equal(await page.locator('#sheet [data-history-flyer]').count(),1);
+  await page.keyboard.press('Escape'); await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor(); await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
+  assert.equal((await readState(page)).outings.at(-1).stamps.length,2); await page.locator('#stamps-button').click(); assert.equal(await page.locator('#sheet [data-stamp]').count(),2); await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'Back to my mailbox',exact:true}).click(); await page.locator('.cw-snap').waitFor(); await bothWidths(page,'returned-mailbox');
+  await context.close();
+  // Reload during the initial read, then resume the pending full JPEGs.
+  const recovery=await newPhone(), waitWhole=gate(), seenRecovery=new Map(); let holdWhole=true;
+  await interceptRead(recovery.page,async request => { seenRecovery.set(request.pageId,(seenRecovery.get(request.pageId) ?? 0)+1); if (holdWhole) await waitWhole.promise; return structuredClone(fixture[0]); });
+  await setup(recovery.page); await select(recovery.page,await files(recovery.page,3)); await recovery.page.getByRole('button',{name:'Read 3 flyers',exact:true}).click();
+  await recovery.page.locator('#reading-progress').waitFor(); assert.equal((await rows(recovery.page)).length,3);
+  await recovery.page.reload(); await recovery.page.getByText('Demo mode',{exact:true}).waitFor(); await recovery.page.getByText(/3 pages waiting from/).waitFor();
+  await bothWidths(recovery.page,'resume'); holdWhole=false; waitWhole.release();
+  await recovery.page.getByRole('button',{name:'Resume',exact:true}).click(); await finished(recovery.page); assert.deepEqual(await rows(recovery.page),[]);
+  assert.ok((await readState(recovery.page)).flyers.length>0); await recovery.context.close();
 
-  // A dense menu stays one deal at a glance; details are an explicit choice.
-  const mailboxContext=await browser.newContext({viewport:{width:390,height:844}});
-  const mailboxPage=await mailboxContext.newPage();mailboxPage.on('pageerror',error => errors.push(error.message));
-  await mailboxPage.clock.setFixedTime(new Date('2026-10-11T02:00:00Z'));
-  await mailboxPage.goto(base);await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
-  await mailboxPage.evaluate(key => {
-    const state=JSON.parse(localStorage.getItem(key));
-    state.settings={lineId:'skytree',home:'asakusa',maxMinutes:40,weightKg:60};
-    const items=Array.from({length:37},(_,i) => ({name_ja:`架空商品${i}`,name_en:`Item ${i}`,price_yen:100+i,regular_yen:1000+10*i,conditions:[]}));
-    const offers=[{kind:'campaign',text_en:'Mat trial',text_ja:'架空体験',regular_yen:3300,offer_yen:1000,deadline_text:'2026-10-31'},
-      {kind:'coupon',text_en:'Second coupon',discount_yen:100,deadline_text:'2026-10-25'},
-      {text_en:'Old giant coupon',discount_yen:5000,deadline_text:'2026-10-01'},
-      {text_en:'Another old coupon',discount_yen:200,deadline_text:'2026-10-02'}];
-    const advert=(id,bucket) => ({id,pageIds:[],business:{name:id,branch:'Test branch',kind:'test shop'},category:bucket === 'walk' ? 'shop' : bucket === 'home' ? 'food_delivery' : 'buying_service',bucket,summary_en:'A printed deal. '+ 'Long summary text '.repeat(12),offers:structuredClone(offers),items:structuredClone(items),deadline:'2026-10-31',location:null});
-    state.flyers=[advert('many-prices','walk'),advert('walk-two','walk'),advert('walk-three','walk'),advert('walk-four','walk'),advert('Sushi delivery','home'),advert('Buying service','toss')];
-    const delivery=state.flyers.find(f => f.bucket === 'home');
-    delivery.phones=['0120-000-111','044-870-7450'];
-    delivery.websites=['example.test','http://example.test/menu','javascript:alert(1)','data:text/html,bad','ftp://example.test'];
-    delivery.deadline='2026-12-30';
-    delivery.valid_to_text='2026-12-30';
-    delivery.offers.push(...Array.from({length:4},(_,i) => ({kind:'discount',text_en:`Extra coupon ${i}`,discount_yen:50,deadline_text:i === 0 ? '2026-02-30' : '2026-12-30'})));
-    state.flyers.find(f => f.bucket === 'toss').phones=['0120-000-999'];
-    state.pages={};state.labels={};state.outings=[];
-    localStorage.setItem(key,JSON.stringify(state));
-  },key);
-  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal(await mailboxPage.locator('#mailbox-stat').textContent(),'6 flyers → 4 worth a walk · 1 deal for home · 1 to throw away');
-  const many=mailboxPage.locator('[data-flyer=many-prices]');
-  const disclose=many.getByRole('button',{name:'Show 41 prices & offers',exact:true});
-  assert.equal(await disclose.getAttribute('aria-expanded'),'false');
-  assert.equal(await many.locator('.cw-deal-line').count(),1);
-  assert.match(await many.locator('.cw-deal-line').textContent(),/Mat trial ¥3,300 → ¥1,000 · until 31 Oct/);
-  assert.match(await many.locator('.cw-deal-line').textContent(),/📍 no location/);
-  assert.ok((await many.locator('.cw-verdict').textContent()).length <= 90);
-  assert.equal(await many.locator('.cw-entry').count(),0);
-  await disclose.click();
-  assert.equal(await many.locator('.cw-flyer-details').evaluate(details => details.firstElementChild.className),'cw-how-to-use');
-  assert.ok(await many.getByText('Show this flyer at the counter',{exact:true}).isVisible());
-  assert.equal(await many.locator('[data-action=flyer-details]').evaluate(button => document.activeElement === button),true,'disclosure keeps keyboard focus after rendering');
-  assert.equal(await many.locator('[data-item-index]').count(),5);
-  assert.equal(await many.locator('[data-item-index]').first().getAttribute('data-item-index'),'36','items sort by savings and retain their storage index');
-  assert.equal(await many.locator('[data-offer-index]').count(),2,'expired offers start hidden');
-  assert.ok(await many.getByRole('button',{name:'Show all 37',exact:true}).isVisible());
-  await many.locator('[data-shopping][data-index="36"]').check();
-  assert.ok((await readState(mailboxPage)).shoppingList.includes('many-prices:36'));
-  await many.locator('[data-action=rate][data-label="1"]').click();
-  assert.equal(await many.locator('[data-action=flyer-details]').getAttribute('aria-expanded'),'true','rating rerenders keep details open');
-  await many.getByRole('button',{name:'Show all 37',exact:true}).click();
-  assert.equal(await many.locator('[data-item-index]').count(),37);
-  await many.getByRole('button',{name:'2 expired offers',exact:true}).click();
-  assert.equal(await many.locator('[data-offer-index]').count(),4);
-  await many.getByRole('button',{name:'2 expired offers',exact:true}).click();
-  assert.equal(await many.locator('[data-offer-index]').count(),2);
-  const homeCard=mailboxPage.locator('[data-bucket=home] [data-flyer]');
-  assert.equal(await homeCard.locator('.cw-entry').count(),0);
-  const rowCall=homeCard.getByRole('link',{name:'📞 Call 0120-000-111',exact:true});
-  assert.equal(await rowCall.getAttribute('href'),'tel:0120000111');
-  assert.equal(await rowCall.evaluate(link => link.closest('button') === null),true,'call is separate from the disclosure button');
-  await rowCall.evaluate(link => link.addEventListener('click',event => { event.preventDefault();window.rowCallTapped=true; },{once:true}));
-  await rowCall.click();
-  assert.equal(await mailboxPage.evaluate(() => window.rowCallTapped),true);
-  assert.equal(await homeCard.locator('[data-action=flyer-details]').getAttribute('aria-expanded'),'false','calling does not expand the menu');
-  assert.match(await homeCard.locator('.cw-mail-row').textContent(),/Sushi delivery.*Mat trial.*until 30 Dec/);
-  await homeCard.locator('[data-action=flyer-details]').click();
-  const how=homeCard.locator('.cw-how-to-use');
-  assert.equal(await homeCard.locator('.cw-flyer-details').evaluate(details => details.firstElementChild.className),'cw-how-to-use');
-  assert.ok(await how.getByRole('heading',{name:'How to use',exact:true}).isVisible());
-  assert.equal(await how.getByRole('link',{name:'📞 Call 0120-000-111',exact:true}).getAttribute('href'),'tel:0120000111');
-  assert.equal(await how.getByRole('link',{name:'📞 Call 044-870-7450',exact:true}).getAttribute('href'),'tel:0448707450');
-  assert.deepEqual(await how.getByRole('link',{name:'🌐 Order online',exact:true}).evaluateAll(links => links.map(link => link.getAttribute('href'))),['https://example.test','http://example.test/menu']);
-  assert.ok(await how.getByText("Mention or show this flyer's coupon when you order",{exact:true}).isVisible());
-  assert.ok(await how.getByText('Use by 30 Dec',{exact:true}).isVisible());
-  assert.equal(await homeCard.locator('[data-offer-index]').count(),5,'home shows at most five current offers');
-  assert.equal(await homeCard.locator('[data-item-index]').count(),0,'home menu starts closed');
-  const menu=homeCard.getByRole('button',{name:'Show menu (37)',exact:true});
-  assert.equal(await menu.getAttribute('aria-expanded'),'false');
-  await menu.click();
-  assert.equal(await homeCard.locator('[data-action=show-menu]').evaluate(button => document.activeElement === button),true,'menu disclosure keeps keyboard focus');
-  assert.equal(await homeCard.locator('[data-item-index]').count(),10);
-  assert.equal(await homeCard.getByRole('checkbox',{name:'add to my walk list',exact:true}).count(),0);
-  await homeCard.getByRole('button',{name:'Show all 37',exact:true}).click();
-  assert.equal(await homeCard.locator('[data-item-index]').count(),37);
-  assert.equal(await homeCard.locator('[data-shopping]').count(),0);
-  await homeCard.getByRole('button',{name:'Show top 10',exact:true}).click();
-  assert.equal(await homeCard.locator('[data-item-index]').count(),10);
-  await homeCard.locator('[data-action=rate][data-label="1"]').click();
-  assert.equal(await homeCard.locator('[data-action=show-menu]').getAttribute('aria-expanded'),'true','rating keeps the menu open');
-  await homeCard.getByRole('button',{name:'Hide menu',exact:true}).click();
-  assert.equal(await homeCard.locator('[data-item-index]').count(),0);
-  await mailboxPage.locator('[data-bucket=toss]>summary').click();
-  const tossCard=mailboxPage.locator('[data-bucket=toss] [data-flyer]');
-  assert.match(await tossCard.locator('.cw-mail-row').textContent(),/buying service — they come to you/);
-  await tossCard.locator('[data-action=flyer-details]').click();
-  assert.ok(await tossCard.getByText('0120-000-999 · only if you need it',{exact:true}).isVisible());
-  assert.equal(await tossCard.locator('a[href^="tel:"]').count(),0,'discardable services show a plain phone number');
-  assert.equal(await tossCard.locator('.cw-how-to-use').count(),0);
-  assert.equal(await tossCard.locator('[data-offer-index]').count(),2);
-  assert.equal(await tossCard.locator('[data-item-index], [data-shopping]').count(),0);
-  await overflow(mailboxPage,'dense mailbox');
-  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal(await many.locator('[data-action=flyer-details]').getAttribute('aria-expanded'),'false','disclosures are in memory only');
-  // Page identity comes from each saved reading, never from a retained photo.
-  await mailboxPage.evaluate(({key,tile}) => {
-    const state=JSON.parse(localStorage.getItem(key));
-    const front={...structuredClone(tile),business:{name:'架空寿司本舗',kind:'delivery'},summary_en:'Hokkaido fair coupons',category:'food_delivery',items:[]};
-    const back={...structuredClone(front),business:{name:'架空すし便 <em>Back</em>',kind:'delivery'},summary_en:null,offers:[{kind:'coupon',text_en:'Order by phone for the weekend coupon',text_ja:'週末クーポン',deadline_text:'2026-12-30'}]};
-    state.pages={'group-front':{id:'group-front',scannedAt:'2026-10-11T02:00:00Z',tiles:[null,front]},'group-back':{id:'group-back',scannedAt:'2026-10-11T02:00:00Z',tiles:[back]}};
-    state.flyers=[{...front,id:'grouped-delivery',bucket:'home',pageIds:['group-front','group-back'],deadline:'2026-12-30',location:null}];
-    state.overrides={};state.labels={};state.outings=[];state.shoppingList=[];
-    localStorage.setItem(key,JSON.stringify(state));
-  },{key,tile:fixtures[3]});
-  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal(await mailboxPage.locator('[data-flyer]').count(),1);
-  const grouped=mailboxPage.locator('[data-flyer=grouped-delivery]');
-  await grouped.locator('[data-action=flyer-details]').click();
-  await grouped.getByText('2 pages · check grouping',{exact:true}).click();
-  const grouping=grouped.locator('[data-fix]');
-  assert.ok(await grouping.getByText('Wrong grouping? Move a page to the flyer it belongs to.',{exact:true}).isVisible());
-  const frontPage=grouping.getByLabel('Page 1 — 架空寿司本舗 · Hokkaido fair coupons',{exact:true});
-  const backPage=grouping.getByLabel('Page 2 — 架空すし便 <em>Back</em> · Order by phone for the weekend coupon',{exact:true});
-  assert.equal(await frontPage.inputValue(),'keep');assert.equal(await backPage.inputValue(),'keep');
-  assert.equal(await grouping.locator('em').count(),0,'model text is escaped in page labels');
-  await backPage.selectOption({label:'Its own flyer'});
-  await grouping.getByRole('button',{name:'Apply',exact:true}).click();
-  await mailboxPage.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 2,key);
-  await mailboxPage.getByText('2 flyers → 0 worth a walk · 2 deals for home · 0 to throw away',{exact:true}).waitFor();
-  const splitState=await readState(mailboxPage);
-  assert.equal(await mailboxPage.locator('[data-bucket=home] [data-flyer]').count(),2,'Apply splits the pages into two cards');
-  assert.deepEqual(splitState.flyers.map(f => f.pageIds).sort(),[['group-back'],['group-front']]);
-  assert.deepEqual(new Set(splitState.flyers.map(f => f.business.name)),new Set(['架空寿司本舗','架空すし便 <em>Back</em>']));
-  assert.equal(Object.keys(splitState.pages).length,2,'split uses saved text readings');
-  assert.ok(!JSON.stringify(splitState).includes('data:image/'));
-  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal(await mailboxPage.locator('[data-flyer]').count(),2,'split survives reload');
-  const splitBack=splitState.flyers.find(f => f.pageIds.includes('group-back'));
-  const backCard=mailboxPage.locator(`[data-flyer="${splitBack.id}"]`);
-  await backCard.locator('[data-action=flyer-details]').click();
-  await backCard.getByText('1 page · check grouping',{exact:true}).click();
-  assert.equal(await backCard.locator('option').filter({hasText:'Move to: 架空寿司本舗'}).count(),1);
-  await overflow(mailboxPage,'page grouping labels');
-  const splitFront=splitState.flyers.find(f => f.pageIds.includes('group-front'));
-  await mailboxPage.evaluate(({key,id}) => {
-    const state=JSON.parse(localStorage.getItem(key));
-    state.flyers.find(f => f.id === id).pageIds.push('discarded-personal-page');
-    localStorage.setItem(key,JSON.stringify(state));
-  },{key,id:splitFront.id});
-  await mailboxPage.reload();await mailboxPage.getByText('Demo mode',{exact:true}).waitFor();
-  const missingPageCard=mailboxPage.locator(`[data-flyer="${splitFront.id}"]`);
-  await missingPageCard.locator('[data-action=flyer-details]').click();
-  await missingPageCard.getByText('2 pages · check grouping',{exact:true}).click();
-  const missingPage=missingPageCard.getByLabel('Page 2 — (not stored)',{exact:true});
-  assert.ok(await missingPage.isVisible());
-  assert.ok(await missingPage.isDisabled(),'a discarded page has no reading to regroup');
-  await mailboxContext.close();
-  // Desktop uses the same phone-first content, without stretched text or overflow.
-  await page.setViewportSize({width:1280,height:900});
-  for (const name of ['mailbox','walk','stamps','history']) { await page.locator(`[data-tab=${name}]`).click(); await overflow(page,`desktop ${name}`); }
-  // Exercise the real-phone batch and recovery separately from the six-fixture assertions above.
-  const phoneContext=await browser.newContext({viewport:{width:390,height:844}});
-  const phone=await phoneContext.newPage(); phone.on('pageerror',error => errors.push(error.message));
-  await phone.goto(base); await phone.getByText('Demo mode',{exact:true}).waitFor();
-  await phone.locator('#setup-line').selectOption('skytree');
-  await phone.locator('#setup-station').selectOption(firstStation.id);
-  await phone.getByRole('button',{name:'Save',exact:true}).click();
-  const sevenFiles=Array.from({length:7},(_,i) => ({...files[i%files.length],name:`phone-page-${i+1}.png`}));
-  await phone.locator('#photos-input').setInputFiles(sevenFiles);
-  await phone.getByRole('button',{name:'Read 7 pages',exact:true}).waitFor();
-  await phone.waitForFunction(() => !document.querySelector('[data-action=read]').disabled);
-  await phone.evaluate(() => scrollTo(0,0));
-  await inViewport(phone.getByRole('button',{name:'Read 7 pages',exact:true}),'sticky Read 7 pages');
-  assert.equal(await phone.locator('.cw-photos').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length),3);
-  const pageIds=await phone.locator('.cw-photo [data-action=rotate]').evaluateAll(buttons => buttons.map(b => b.dataset.id));
-  let inFlight=0,maxInFlight=0,blockReads=false,aborted=0;
-  const completed=new Set();
-  await phone.route('**/api/read-page',async route => {
-    const request=route.request().postDataJSON();
-    if (blockReads) {
-      aborted++;
-      await new Promise(resolve => setTimeout(resolve,500));
-      await route.abort('failed').catch(() => {}); // A navigation may already have cancelled it.
-      return;
-    }
-    inFlight++; maxInFlight=Math.max(maxInFlight,inFlight);
-    try {
-      const index=pageIds.indexOf(request.pageId);
-      await new Promise(resolve => setTimeout(resolve,index === 6 ? 1500 : 400));
-      const tile=structuredClone(merges[0].pages[0].tiles[0]);
-      tile.category='lesson';tile.items=[];
-      const group=index === 6 ? 0 : index < 0 ? 10 : index;
-      tile.business.name=`Phone test ${group}`; tile.phones=[`0120000${String(group).padStart(3,'0')}`]; tile.websites=[]; tile.address=null;
-      const tiles=request.tiles.map(() => tile);
-      await route.fulfill({status:200,contentType:'application/x-ndjson',body:tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\n')+'\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles})});
-      completed.add(request.pageId);
-    } finally { inFlight--; }
+  // A failed detail pass preserves the preliminary stop and resumes without rereading the whole page.
+  const adaptive=await newPhone(); let failDetail=true, failMerge=false, adaptiveId, wholeCalls=0, detailCalls=0;
+  await interceptRead(adaptive.page,async (request,route) => {
+    adaptiveId=request.pageId;
+    if (request.mode==='page') { wholeCalls++; const tile=structuredClone(fixture[2]); tile.items[0].price_yen=999; return tile; }
+    detailCalls++;
+    if (failDetail) { await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic detail outage'})}); return null; }
+    return structuredClone(fixture[2]);
   });
-  await phone.getByRole('button',{name:'Read 7 pages',exact:true}).click();
-  await phone.locator('#reading-card').waitFor();
-  await inViewport(phone.locator('#reading-heading'),'seven-page reading heading');
-  assert.equal(await phone.locator('#reading-progress').getAttribute('max'),'7');
-  assert.equal(await phone.locator('#reading-progress').evaluate(el => el.value),0);
-  assert.match(await phone.locator('#reading-time').textContent(),/Gemma is reading the first pages/);
-  await phone.waitForFunction(() => document.querySelector('progress')?.value > 0);
-  await phone.locator('[data-flyer]').first().waitFor();
-  assert.equal(completed.has(pageIds[6]),false,'results arrive before the last page');
-  await phone.waitForFunction(({key,id}) => JSON.parse(localStorage.getItem(key)).flyers.some(f => f.pageIds.includes(id)),{key,id:pageIds[0]});
-  const firstCardId=(await readState(phone)).flyers.find(f => f.pageIds.includes(pageIds[0])).id;
-  await phone.locator('#reading-card').waitFor({state:'detached'});
-  assert.equal(maxInFlight,3,'at most three pages read concurrently');
-  const phoneState=await readState(phone);
-  assert.equal(Object.keys(phoneState.pages).length,7);
-  assert.equal(phoneState.flyers.length,6,'later matching page replaces its previous flyer card');
-  const joined=phoneState.flyers.find(f => f.pageIds.includes(pageIds[0]));
-  assert.deepEqual(new Set(joined.pageIds),new Set([pageIds[0],pageIds[6]]));
-  assert.equal(joined.id,firstCardId,'an expanded group keeps its flyer identity');
-  assert.equal(await phone.locator(`[data-flyer="${joined.id}"]`).count(),1);
-  assert.deepEqual(await pendingPhotos(phone),[]);
+  await adaptive.page.route('**/api/merge',async route => { if (failMerge) await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic merge outage'})}); else await route.continue(); });
+  await setup(adaptive.page); await select(adaptive.page,await files(adaptive.page,1)); await adaptive.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click();
+  await adaptive.page.getByRole('button',{name:'Retry page 1',exact:true}).waitFor(); const beforeDetail=await readState(adaptive.page);
+  assert.equal(beforeDetail.pages[adaptiveId].detailPending,true); assert.equal(beforeDetail.flyers.length,1); assert.equal(beforeDetail.flyers[0].items[0].price_yen,999); assert.equal((await rows(adaptive.page)).length,1);
+  await bothWidths(adaptive.page,'detail-error'); await adaptive.page.reload(); await adaptive.page.getByText('Demo mode',{exact:true}).waitFor(); await adaptive.page.getByText(/1 pages waiting from/).waitFor();
+  failDetail=false; failMerge=true; await adaptive.page.getByRole('button',{name:'Resume',exact:true}).click(); await finished(adaptive.page);
+  assert.equal(wholeCalls,1,'successful whole-page read is not repeated on reload'); assert.equal(detailCalls,2);
+  const detailSaved=await readState(adaptive.page); assert.equal(detailSaved.pages[adaptiveId].detailed,true); assert.equal(detailSaved.pages[adaptiveId].detailPending,false); assert.equal(detailSaved.pages[adaptiveId].needsMerge,true);
+  failMerge=false; await adaptive.page.getByRole('button',{name:'Retry sorting saved readings',exact:true}).click();
+  await adaptive.page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers[0].items[0].price_yen===158,key);
+  assert.equal((await readState(adaptive.page)).flyers[0].id,beforeDetail.flyers[0].id); assert.deepEqual(await rows(adaptive.page),[]); await adaptive.context.close();
 
-  // Abort every request, then reload while workers still hold the selected batch.
-  blockReads=true;
-  await phone.locator('#photos-input').setInputFiles(files);
-  const interruptedRequest=phone.waitForRequest('**/api/read-page');
-  await phone.getByRole('button',{name:'Read 3 pages',exact:true}).click();
-  await phone.locator('#reading-card').waitFor();
-  phone.on('dialog',dialog => dialog.accept());
-  await interruptedRequest;
-  await phone.reload(); await phone.getByText('Demo mode',{exact:true}).waitFor();
-  await phone.getByRole('button',{name:'Resume reading',exact:true}).waitFor();
-  assert.ok(aborted > 0);
-  assert.match(await phone.locator('.cw-resume h2').textContent(),/3 pages waiting from/);
-  assert.match(await phone.locator('.cw-resume').textContent(),/Page 1 · Page 2 · Page 3/);
-  const recoveredPhotos=await pendingPhotos(phone);
-  assert.equal(recoveredPhotos.length,3);
-  assert.ok(recoveredPhotos.every(p => p.type === 'image/jpeg' && p.size > 0));
-  blockReads=false;
-  await phone.getByRole('button',{name:'Resume reading',exact:true}).click();
-  await phone.locator('#reading-card').waitFor({state:'detached'});
-  const resumed=await readState(phone);
-  assert.ok(recoveredPhotos.every(p => resumed.pages[p.pageId]),'every pending page is read after resuming');
-  assert.deepEqual(await pendingPhotos(phone),[],'no pending blobs after resume');
-  assert.ok(!JSON.stringify(resumed).includes('data:image/'));
-  await overflow(phone,'seven-page reading and recovery');
-  await phoneContext.close();
-  // Failed detail reads keep the whole-page card and resume only prices after reload.
-  const detailContext=await browser.newContext({viewport:{width:390,height:844}});
-  const detailPage=await detailContext.newPage();detailPage.on('pageerror',error => errors.push(error.message));
-  const adaptiveReads=[];
-  let failDetail=true,failDetailMerge=true;
-  await detailPage.route('**/api/read-page',async route => {
-    const request=route.request().postDataJSON();adaptiveReads.push(request);
-    if (request.mode === 'tiles' && failDetail) { failDetail=false;await route.abort('failed');return; }
-    const tile=structuredClone(fixtures[2]);
-    if (request.mode === 'page') tile.items[0].price_yen=999;
-    const tiles=request.tiles.map(() => tile);
-    await route.fulfill({status:200,contentType:'application/x-ndjson',body:tiles.map((tile,index) => JSON.stringify({type:'tile',index,tile})).join('\n')+'\n'+JSON.stringify({type:'done',pageId:request.pageId,tiles})});
+  // Address lookup, distant/train starts, long budgets, top-five entries, safe links and implicit TabPFN attribution.
+  const extra=await newPhone(); await setup(extra.page);
+  const hikifune=stationsOnLine(stations,'skytree').find(s => s.name==='Hikifune'); assert.ok(hikifune);
+  const hikifunePoint=coordinates.find(p => p.id===hikifune.id);
+  await extra.page.evaluate(({key,tile,market,homePoint,hikifunePoint}) => {
+    const s=JSON.parse(localStorage.getItem(key)), make=(id,base,location) => ({...structuredClone(base),id,pageIds:[id+'-page'],bucket:'walk',deadline:'2026-11-30',location});
+    const distant=make('train-stop',tile,{...hikifunePoint,source:'mock'}); distant.business={name:'Fictional Hikifune studio',kind:'Pilates studio'}; distant.offers=[{kind:'discount',text_en:'Trial',text_ja:'体験',regular_yen:3300,offer_yen:1000,deadline_text:'2026-11-30'}];
+    distant.websites=['https://example.test','javascript:alert(1)','data:text/html,bad','ftp://example.test'];
+    distant.offers.push({kind:'coupon',text_en:'Expired hidden',discount_yen:900,deadline_text:'2026-01-01'});
+    distant.items=Array.from({length:8},(_,i) => ({name_en:'Printed item '+i,name_ja:'品 '+i,regular_yen:1000+i*100,price_yen:100,conditions:[]}));
+    const missing=make('unlocated',tile,null); missing.business={name:'Fictional studio with no address',kind:'fitness studio'};
+    const near=make('near-stop',market,{lat:homePoint.lat+0.001,lon:homePoint.lon,source:'mock'}); near.business.name='Fictional market'; near.hours=null;
+    s.flyers=[distant,missing,near]; s.labels={}; s.outings=[]; localStorage.setItem(key,JSON.stringify(s));
+  },{key,tile:fixture[0],market:fixture[2],homePoint,hikifunePoint});
+  await extra.page.reload(); await extra.page.getByText('Demo mode',{exact:true}).waitFor();
+  const noLocation=extra.page.locator('[data-flyer=unlocated]'); await noLocation.getByRole('button',{name:'Add address',exact:true}).click();
+  await extra.page.route('**/api/locate?*',async route => { assert.equal(new URL(route.request().url()).searchParams.get('q'),'Fictional printed address'); await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({location:{lat:homePoint.lat+0.002,lon:homePoint.lon,source:'mock'}})}); });
+  await noLocation.getByLabel('Printed address',{exact:true}).fill('Fictional printed address'); await noLocation.getByRole('button',{name:'Find address',exact:true}).click();
+  await extra.page.getByText('Location found. Your walk has been updated.',{exact:true}).waitFor(); assert.ok((await readState(extra.page)).flyers.find(f => f.id==='unlocated').location);
+  await extra.page.locator('[data-flyer=train-stop] [data-action=flyer-sheet]').click();
+  assert.equal(await extra.page.locator('#sheet [data-item-index]').count(),5); assert.equal(await extra.page.locator('#sheet [data-item-index]').first().getAttribute('data-item-index'),'7');
+  assert.equal(await extra.page.getByText('Expired hidden',{exact:true}).count(),0); assert.equal(await extra.page.locator('#sheet a[href^="javascript:"],#sheet a[href^="data:"],#sheet a[href^="ftp:"]').count(),0);
+  await extra.page.getByRole('button',{name:'Show all',exact:true}).click(); assert.equal(await extra.page.locator('#sheet [data-item-index]').count(),8); await bothWidths(extra.page,'dense-flyer'); await extra.page.keyboard.press('Escape');
+  // Removing the nearby candidates makes the existing station-to-station train option visible.
+  for (const id of ['near-stop','unlocated']) await extra.page.locator(`[data-flyer=${id}] [data-action=not-for-me]`).click();
+  await extra.page.getByText(/Take the train to Hikifune, then walk/).waitFor();
+  const kanegafuchiPoint=coordinates.find(s => s.id==='kanegafuchi');
+  await extra.page.evaluate(({key,point}) => {
+    const s=JSON.parse(localStorage.getItem(key));
+    s.flyers.find(f => f.id==='train-stop').location={lat:point.lat,lon:point.lon,source:'mock'};
+    s.flyers.find(f => f.id==='near-stop').location={lat:point.lat+0.024,lon:point.lon,source:'mock'};
+    s.labels['near-stop']=1; s.settings.maxMinutes=40; localStorage.setItem(key,JSON.stringify(s));
+  },{key,point:kanegafuchiPoint});
+  await extra.page.reload(); await extra.page.getByText('Demo mode',{exact:true}).waitFor();
+  await extra.page.locator('.cw-dropped').waitFor(); await bothWidths(extra.page,'dropped-stops');
+  await extra.page.getByRole('button',{name:'Make it 60 min',exact:true}).click();
+  assert.equal((await readState(extra.page)).settings.maxMinutes,60);
+  await extra.page.locator('.cw-dropped').waitFor({state:'detached'});
+  await extra.page.locator('#settings-button').click(); await extra.page.getByLabel('60 min',{exact:true}).check(); await extra.page.getByRole('button',{name:'Save',exact:true}).click();
+  assert.equal((await readState(extra.page)).settings.maxMinutes,60);
+  await extra.page.locator('#settings-button').click(); await extra.page.getByLabel('90 min',{exact:true}).check(); await extra.page.getByRole('button',{name:'Save',exact:true}).click();
+  await extra.page.reload(); await extra.page.getByText('Demo mode',{exact:true}).waitFor(); assert.equal((await readState(extra.page)).settings.maxMinutes,90);
+  await extra.page.route('**/api/rank',async route => { const body=route.request().postDataJSON(); assert.equal(body.train.length,6); assert.deepEqual(new Set(body.train.map(t => t.label)),new Set([0,1])); await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({model:'tabpfn',scores:body.predict.map((f,i) => ({id:f.id,p:1-i*.1}))})}); });
+  await extra.page.evaluate(key => { const s=JSON.parse(localStorage.getItem(key)); for (let i=0;i<3;i++) { const f=structuredClone(s.flyers[0]); f.id='ranking-ad-'+i; f.bucket='toss'; s.flyers.push(f); } s.flyers.forEach((f,i) => { s.labels[f.id]=i%2; }); localStorage.setItem(key,JSON.stringify(s)); },key);
+  await extra.page.reload(); await extra.page.getByText('Ordered for you by TabPFN',{exact:true}).waitFor(); assert.equal(await extra.page.getByText(/Rate 6 flyers/).count(),0); await bothWidths(extra.page,'ranked-answer'); await extra.context.close();
+
+  // Upgrade preserves v1 pending photos; unavailable IndexedDB uses neutral tiles.
+  const upgrade=await newPhone(); await open(upgrade.page);
+  await upgrade.page.evaluate(async () => {
+    await new Promise((resolve,reject) => { const r=indexedDB.deleteDatabase('worth-the-walk-photos'); r.onsuccess=resolve; r.onerror=() => reject(r.error); });
+    await new Promise((resolve,reject) => { const r=indexedDB.open('worth-the-walk-photos',1); r.onupgradeneeded=() => r.result.createObjectStore('pages',{keyPath:'pageId'}); r.onerror=() => reject(r.error); r.onsuccess=() => { const db=r.result, tx=db.transaction('pages','readwrite'); tx.objectStore('pages').put({pageId:'v1-page',blob:new Blob(['synthetic JPEG'],{type:'image/jpeg'}),addedAt:'2026-10-11T02:00:00Z',rotation:0,status:'waiting'}); tx.oncomplete=() => { db.close(); resolve(); }; }; });
   });
-  await detailPage.route('**/api/merge',async route => {
-    if (failDetailMerge && route.request().postDataJSON().pages.some(p => p.detailed)) {
-      failDetailMerge=false;
-      await route.fulfill({status:503,contentType:'application/json',body:JSON.stringify({error:'Synthetic merge failure'})});
-    } else await route.continue();
-  });
-  await detailPage.goto(base);await detailPage.getByText('Demo mode',{exact:true}).waitFor();
-  await detailPage.locator('#setup-line').selectOption('skytree');await detailPage.locator('#setup-station').selectOption(firstStation.id);
-  await detailPage.getByRole('button',{name:'Save',exact:true}).click();
-  await detailPage.locator('#photos-input').setInputFiles([files[0]]);
-  await detailPage.getByRole('button',{name:'Read 1 page',exact:true}).click();
-  await detailPage.getByRole('button',{name:'Retry page 1',exact:true}).waitFor();
-  await detailPage.locator('[data-action=stop-reading]').waitFor({state:'hidden'});
-  const pendingDetailState=await readState(detailPage),detailId=adaptiveReads[0].pageId;
-  const detailFlyerId=pendingDetailState.flyers[0].id;
-  assert.equal(pendingDetailState.pages[detailId].detailPending,true);
-  assert.equal((await pendingPhotos(detailPage)).length,1,'detail failure keeps the prepared photo');
-  assert.equal(await detailPage.locator(`[data-flyer="${detailFlyerId}"]`).count(),1,'whole-page card survives detail failure');
-  await detailPage.reload();await detailPage.getByRole('button',{name:'Resume reading',exact:true}).waitFor();
-  await detailPage.getByRole('button',{name:'Resume reading',exact:true}).click();
-  await detailPage.locator('#reading-card').waitFor({state:'detached'});
-  assert.deepEqual(adaptiveReads.map(r => [r.mode,r.tiles.length]),[['page',1],['tiles',6],['tiles',6]],'resume does not repeat the whole-page call');
-  assert.deepEqual(await pendingPhotos(detailPage),[]);
-  assert.equal((await readState(detailPage)).pages[detailId].needsMerge,true);
-  await detailPage.getByRole('button',{name:'Retry sorting saved readings',exact:true}).click();
-  await detailPage.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers[0].items[0].price_yen === 158,key);
-  assert.equal((await readState(detailPage)).flyers[0].id,detailFlyerId,'merge retry retains the preliminary card identity');
-  assert.equal(adaptiveReads.length,3,'merge retries use saved readings');
-  await overflow(detailPage,'adaptive detail recovery');await detailContext.close();
-  // Walk recovery uses fictional flyers and Tobu Skytree coordinates only.
-  const walkContext=await browser.newContext({viewport:{width:390,height:844}});
-  const walkPage=await walkContext.newPage(); walkPage.on('pageerror',error => errors.push(error.message));
-  await walkPage.clock.setFixedTime(new Date('2026-10-13T10:30:00+09:00'));
-  const walkCoordinates=JSON.parse(await readFile(new URL('../data/station-coordinates.json',import.meta.url),'utf8'));
-  const remoteStation=walkCoordinates.find(s => s.id === 'kanegafuchi');
-  const remoteLocation={lat:remoteStation.lat,lon:remoteStation.lon,source:'gsi'};
-  await walkPage.goto(base); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
-  await walkPage.evaluate(({key,location}) => {
-    const state=JSON.parse(localStorage.getItem(key));
-    state.settings={lineId:'skytree',home:'asakusa',maxMinutes:40,weightKg:60};
-    const advert=(id,name,extra={}) => ({id,pageIds:[],category:'cleaning',bucket:'walk',business:{name},summary_en:'Printed cleaning offer',offers:[{text_en:'Printed offer',discount_yen:100}],items:[],location:null,deadline:null,hours:null,...extra});
-    state.flyers=[advert('unlocated','Fictional walk shop'),advert('cleaner','Cleaner <img src=x onerror=alert(1)>',{offers:[],items:[{name_en:'Suit jacket',price_yen:596,conditions:[]},{name_en:'Jacket',price_yen:596,regular_yen:1193,conditions:[]}]}),
-      advert('expired','Expired shop',{location,deadline:'2026-10-12'}),advert('closed','Closed shop',{location,hours:'00:00-00:01'}),advert('disliked','Disliked shop',{location})];
-    state.labels={disliked:0}; state.outings=[];
-    localStorage.setItem(key,JSON.stringify(state));
-  },{key,location:remoteLocation});
-  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
-  await walkPage.locator('[data-flyer=cleaner] [data-action=flyer-details]').click();
-  await walkPage.locator('[data-shopping=cleaner][data-index="0"]').check();
-  await walkPage.locator('[data-shopping=cleaner][data-index="1"]').check();
-  await walkPage.locator('[data-tab=walk]').click();
-  const unlocated=walkPage.locator('[data-stop-choice=unlocated]');
-  await unlocated.getByText('No location yet',{exact:true}).waitFor();
-  assert.equal(await unlocated.getByLabel('Type the address').count(),1);
-  assert.equal(await unlocated.getByRole('link',{name:'Find on Google Maps'}).getAttribute('href'),'https://www.google.com/maps/search/?api=1&query=Fictional%20walk%20shop');
-  const cleaner=walkPage.locator('[data-stop-choice=cleaner]');
-  assert.match(await cleaner.textContent(),/Suit jacket ¥596 · Jacket ¥596/);
-  assert.equal(await cleaner.locator('img').count(),0,'model text is escaped');
-  for (const [id,label] of [['expired','Expired'],['closed',"Closed when you'd arrive"],['disliked','You said 👎']]) {
-    const row=walkPage.locator(`[data-stop-choice=${id}]`);
-    await row.getByText(label,{exact:true}).waitFor();
-    assert.equal(await row.locator('[data-stop]').isChecked(),false);
-    assert.equal(await row.locator('[data-stop]').isEnabled(),true);
-    assert.match(await row.getAttribute('class'),/cw-stop-warning/);
-  }
-  const locateQueries=[];
-  await walkPage.route('**/api/locate?*',async route => {
-    const query=new URL(route.request().url()).searchParams; locateQueries.push(Object.fromEntries(query));
-    await route.fulfill({status:200,contentType:'application/json',body:JSON.stringify({location:remoteLocation})});
-  });
-  await unlocated.getByLabel('Type the address').fill('Fictional address 1');
-  await unlocated.getByRole('button',{name:'Find address',exact:true}).click();
-  await walkPage.locator('.cw-plan h2').filter({hasText:'Take the train to Kanegafuchi, then walk'}).waitFor();
-  assert.equal(locateQueries[0].q,'Fictional address 1');
-  assert.equal(locateQueries[0].name,'Fictional walk shop');
-  assert.ok(Number.isFinite(Number(locateQueries[0].lat)) && Number.isFinite(Number(locateQueries[0].lon)));
-  assert.deepEqual((await readState(walkPage)).flyers.find(f => f.id === 'unlocated').location,remoteLocation);
-  assert.match(await unlocated.textContent(),/km · ~\d+ min each way/);
-  await cleaner.getByLabel('Type the address').fill('Fictional address 2');
-  await cleaner.getByRole('button',{name:'Find address',exact:true}).click();
-  await walkPage.locator('.cw-route').getByText('Suit jacket ¥596 · Jacket ¥596',{exact:true}).waitFor();
-  await walkPage.getByRole('button',{name:'Plan walk',exact:true}).click();
-  assert.ok((await readState(walkPage)).outings.find(o => o.status === 'planned').stopIds.includes('cleaner'),'item-only flyer is a stop');
-  // Move the cleaner far enough off the rail corridor that the 40-minute route
-  // drops it, but extending to 60 minutes includes both selected stops.
-  await walkPage.evaluate(key => {
-    const state=JSON.parse(localStorage.getItem(key)); state.flyers.find(f => f.id === 'cleaner').location.lat+=0.024;
-    localStorage.setItem(key,JSON.stringify(state));
-  },key);
-  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
-  await walkPage.locator('[data-tab=walk]').click();
-  await walkPage.getByRole('heading',{name:"Didn't fit in 40 min",exact:true}).waitFor();
-  assert.match(await walkPage.locator('.cw-dropped').textContent(),/Cleaner <img/);
-  await walkPage.getByRole('button',{name:'Make it 60 min',exact:true}).click();
-  await walkPage.getByText('Walk re-planned for up to 60 min.',{exact:true}).waitFor();
-  assert.equal((await readState(walkPage)).settings.maxMinutes,60);
-  const expanded=(await readState(walkPage)).outings.find(o => o.status === 'planned');
-  assert.ok(expanded.stopIds.includes('unlocated') && expanded.stopIds.includes('cleaner'));
-  assert.ok(expanded.minutes<=60);
-  assert.equal(await walkPage.locator('.cw-dropped').count(),0);
-  await walkPage.getByRole('button',{name:'Start walk',exact:true}).click();
-  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
-  await walkPage.locator('[data-tab=walk]').click();
-  await walkPage.locator('[data-active-stop=cleaner]').getByText('Suit jacket ¥596 · Jacket ¥596',{exact:true}).waitFor();
-  await walkPage.locator('#settings-button').click();
-  await walkPage.getByLabel('90 min',{exact:true}).check();
-  await walkPage.getByRole('button',{name:'Save',exact:true}).click();
-  await walkPage.reload(); await walkPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal((await readState(walkPage)).settings.maxMinutes,90,'90-minute option survives reload');
-  await overflow(walkPage,'walk location and train recovery');
-  await walkContext.close();
-  const empty = await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation']});
-  const freshPage = await empty.newPage(); freshPage.on('pageerror',error => errors.push(error.message));
-  await freshPage.goto(base); await freshPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal((await readState(freshPage)).flyers.length,0); assert.equal((await readState(freshPage)).settings.home,null);
-  assert.equal(await freshPage.locator('#setup-station').inputValue(),'');
-  await overflow(freshPage,'new context');
-  await freshPage.evaluate(key => localStorage.setItem(key,'{corrupt'),key);
-  await freshPage.reload(); await freshPage.getByText('Demo mode',{exact:true}).waitFor();
-  assert.equal((await readState(freshPage)).flyers.length,0);
-  await freshPage.goto(base+'/shops.html'); await freshPage.locator('.store').first().waitFor();
-  assert.equal(await freshPage.title(),'Station Points — shops by station');
-  assert.equal(await freshPage.getByRole('link',{name:'← Worth the Walk?',exact:true}).getAttribute('href'),'/');
-  assert.deepEqual(errors,[],'no browser page errors');
-  console.log(`Chirashi browser: PASS · 6 flyers · 2 stamps · ¥${expectedYen.toLocaleString('en-US')} saved · adaptive whole-page reads, delayed price details, card replacement, detail and merge recovery, persistence, privacy, 4 tabs, 1280px, sticky seven-page reading, incremental merge, reload recovery, walk address lookup, train starts and longer walks verified.`);
-  console.log('Screenshots: .impeccable/review/chirashi-{mailbox,walk,stamps,history}.png');
+  await upgrade.page.reload(); await upgrade.page.getByText('Demo mode',{exact:true}).waitFor(); assert.equal((await rows(upgrade.page)).length,1); assert.deepEqual(await rows(upgrade.page,'thumbs'),[]); await upgrade.context.close();
+  const unavailable=await newPhone(); await unavailable.page.addInitScript(() => Object.defineProperty(window,'indexedDB',{get() { throw new Error('Synthetic unavailable storage'); }}));
+  await setup(unavailable.page); await interceptRead(unavailable.page,async () => structuredClone(fixture[0])); await select(unavailable.page,await files(unavailable.page,1)); await unavailable.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click(); await finished(unavailable.page);
+  assert.equal(await unavailable.page.locator('.cw-stop-row img').count(),0); assert.equal(await unavailable.page.locator('.cw-stop-row .cw-placeholder').count(),1); await bothWidths(unavailable.page,'placeholder-answer'); await unavailable.context.close();
+
+  const empty=await newPhone(); await open(empty.page); assert.equal((await readState(empty.page)).flyers.length,0); assert.equal((await readState(empty.page)).settings.home,null); assert.equal(await empty.page.locator('#setup-station').inputValue(),''); await bothWidths(empty.page,'empty-app');
+  await empty.page.evaluate(key => localStorage.setItem(key,'{corrupt'),key); await empty.page.reload(); await empty.page.getByText('Demo mode',{exact:true}).waitFor(); assert.equal((await readState(empty.page)).flyers.length,0); await empty.context.close();
+  assert.deepEqual(errors,[],'no page errors across all screens and reload paths');
+  console.log('Chirashi browser: PASS · snap → answer → walk · visual grouping · implicit labels · GPS/self stamps · printed savings · thumbnails/privacy · separate contexts · adaptive reading/merge recovery · train starts · 60/90 min · focus/escaping · 390/1280px.');
+  console.log('Screenshots: .impeccable/review/chirashi-{snap,answer,flyer-sheet,page-sheet,walk,done,stamps}.png');
 } finally {
+  for (const release of releases) release();
   await browser?.close();
-  if (server?.pid && server.exitCode === null) {
-    const exited = once(server,'exit'); server.kill();
-    await Promise.race([exited,new Promise(resolve => setTimeout(resolve,5000))]);
-  }
+  if (server?.pid && server.exitCode===null) { const exited=once(server,'exit'); server.kill(); await Promise.race([exited,delay(5000)]); }
 }

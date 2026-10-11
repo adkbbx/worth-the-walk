@@ -56,19 +56,44 @@ Manual retry of the same locate logic for a user-typed address or name → `{loc
 Request: `{train: [{row: number[], label: 0|1}], predict: [{id, row: number[]}]}`; rows follow `FEATURES` in `src/mailbox.mjs` (numbers only).
 Response: `{model: 'tabpfn'|'rules', scores: [{id, p}]}`. TabPFN is used when `PRIOR_LABS_MCP_TOKEN` is set, `train` has ≥ 6 rows and both labels; otherwise `rules` (p from a fixed heuristic).
 
-## Phone storage (`localStorage['worth-the-walk-v1']`, saved after every change)
+## Phone UI and storage
+
+The phone has one flow: snap → answer → walk. No tabs, ratings, stop checkboxes or separate planning step. The header opens Settings and Your stamps. Settings is a native dialog on first run and from the gear; it saves line, home station and 20/40/60/90-minute length. Weight is under More.
+
+Snap shows camera/photo inputs, a horizontal prepared-page strip with rotate/remove targets and a fixed Read N flyers action. A compact progress bar uses page counts and an estimated remaining time; underlying progress still accounts for whole-page and selected detail calls. Stops appear incrementally before reading finishes. Stop aborts the existing workers. Pending-page recovery offers Resume and Discard after reload.
+
+The answer automatically uses eligible ranked candidates, with recognizable page stacks, English kind first, business name, best printed deal and walking/deadline information. Missing locations have inline address lookup. Not for me hides a stop and records label 0; a stamp records label 1. Six non-private labels with both classes still trigger the existing rank API. Only a returned TabPFN model adds the muted ordering attribution. The existing planner automatically computes the summary, train starts and dropped stops; 60/90-minute actions extend the budget. One optional grocery toggle and Start the walk complete the answer. Home deals, recycling and private letters open three collapsed sheet rows. Private letters expose only their count.
+
+Native flyer/page/stamps dialogs preserve focus on close or Escape. A nested sheet returns to its parent and restores its scroll position and invoking control. Flyer details contain instructions, five current offers, five items sorted by printed saving, Show all, and the multi-flyer warning. The page sheet shows the page preview and its own reading, then thumbnail radio choices for the current flyer, any other non-private flyer, or a separate flyer. Apply writes overrides and uses the existing serialized re-merge. Matching existing flyer IDs requires equal page membership, not merely equal page counts, so moving a page cannot reuse another flyer's ID by accident.
+
+Walk mode replaces home content and displays one stop at a time, the remaining Maps route and a single GPS reading for I'm here. A distant reading offers keep walking or Stamp anyway. Verified and self-reported stamps retain their existing solid/outline distinction. The arrival animation is instant with reduced motion. Used-offer/item chips store source indices and count only printed values through the existing savings function. Next or Skip saves the cursor; the final stop completes the walk and opens its summary. Reload restores an active walk or the latest completed summary. Your stamps combines non-zero totals, stamps, past walks and searchable non-private flyers. Distance, steps and kcal remain estimates.
+
+### Text state (localStorage['worth-the-walk-v1'])
+
+Saved after every change; the version-1 text contract remains readable:
+
 ```
 { version: 1,
   settings: {lineId, home: stationId|null, maxMinutes: 40, weightKg: 60},
-  pages:    {[pageId]: {id, scannedAt, tiles: (Tile|null)[], detailed?, detailPending?, needsMerge?}}, // deleted for personal mail
-  overrides:{[pageId]: groupLabel},                                  // manual move / split / merge
-  flyers:   [Flyer],                                                 // storable() output only
-  labels:   {[flyerId]: 1|0},                                        // 👍 / 👎
-  outings:  [{id, createdAt, start, end, stopIds, meters, minutes, status: 'planned'|'active'|'done',
+  pages:    {[pageId]: {id, scannedAt, tiles: (Tile|null)[], detailed?, detailPending?, needsMerge?}},
+  overrides:{[pageId]: groupLabel},
+  flyers:   [Flyer], // storable() only; private mail has only id/pageIds/bucket/category
+  labels:   {[flyerId]: 1|0}, // stamped / Not for me; no explicit ratings
+  outings:  [{id, createdAt, start, end, stopIds, meters, minutes, mode,
+              status: 'planned'|'active'|'done', cursor: 0, skipped: [stopId],
               stamps: [{stopId, at, kind: 'gps'|'self', distance}],
               used:   [{flyerId, kind: 'offer'|'item', index}]}] }
 ```
-Pending prepared JPEG blobs, rotation and status live in the phone's IndexedDB `worth-the-walk-photos` until required readings are saved. No images enter localStorage, server storage or logs. No accounts.
+
+Personal mail deletes page readings and overrides. No image data, Blob or object URL is written to localStorage. Legacy shopping-list controls are removed.
+
+### Phone-only photos (IndexedDB)
+
+Database worth-the-walk-photos is version 2. Its upgrade preserves pages (keyPath pageId) and creates thumbs (keyPath pageId). pages retains prepared JPEG blobs, rotation/status and addedAt until all required readings save successfully. It continues to support reload and partial-detail recovery.
+
+After crop/rotation, the phone also creates a JPEG thumbnail, long side at most 480 px, quality 0.7. thumbs stores {pageId, blob}. Full prepared photos are deleted after reading; thumbnails stay for visual identification, grouping and history. When a flyer is personal mail (keep), its thumbnails are deleted immediately from memory and IndexedDB; startup also cleans any private thumbnails left after an interrupted session. Removing an unread selected page or discarding it deletes its thumbnail. With IndexedDB unavailable, displays use a neutral placeholder and reading uses the existing memory fallback.
+
+Thumbnail Blobs load from IndexedDB into memory and get display-only object URLs. Every re-render, including search, and pagehide revokes them. There are no external image assets, accounts or server image storage. The footer states: "Photos stay on this phone. They're only sent to be read." Mock mode adds tiny Demo mode footer text.
 
 ## Model prompts (agent/prompts.mjs)
 - **Page:** one whole-page image → the same compact JSON schema and printed-text rules as `Tile`. Read business identity, category, headline phones, address and main offer. Describe an unreadable dense price list in the summary so the code can request close-ups; omit unreadable items. Omit empty keys.

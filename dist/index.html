@@ -15,22 +15,17 @@
   <a class="skip" href="#content">Skip to app</a>
   <header class="cw-header"><div class="cw-header-inner">
     <a class="cw-brand" href="/">Worth the Walk?<span lang="ja">チラシを、さんぽに。</span></a>
+    <button id="stamps-button" type="button" aria-label="Your stamps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16v4H4zM7 17v-4h10v4M10 13V7a3 3 0 1 1 4 0v6"/></svg></button>
     <button id="settings-button" type="button" aria-label="Settings">⚙</button>
-    <span id="mode" class="cw-mode">Checking reading mode…</span>
   </div></header>
   <main class="cw-main" id="content" tabindex="-1">
     <p id="progress" class="cw-meta" role="status" aria-live="polite"></p>
     <p id="notice" class="cw-notice" role="status" aria-live="polite"></p>
-    <section id="setup" hidden aria-labelledby="setup-heading"></section>
     <section id="panel" aria-label="Mailbox"></section>
   </main>
-  <footer class="cw-footer">Photos stay on this phone until they're read, then they're deleted. Nothing is stored on the server.</footer>
-  <nav class="cw-tabs" aria-label="App tabs"><div class="cw-tabs-inner">
-    <button type="button" data-tab="mailbox" aria-current="page"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 6 9 7 9-7"/></svg>Mailbox</button>
-    <button type="button" data-tab="walk"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="14" cy="4" r="2"/><path d="m8 21 3-6 1-6 5 4h4M5 12l4-3h3m0 6 4 6"/></svg>Walk</button>
-    <button type="button" data-tab="stamps"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 17h16v4H4zM7 17v-4h10v4M10 13V7a3 3 0 1 1 4 0v6"/></svg>Stamps</button>
-    <button type="button" data-tab="history"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2 7M3 5v6h6m3-5v6l4 2"/></svg>History</button>
-  </div></nav>
+  <footer class="cw-footer">Photos stay on this phone. They're only sent to be read.<small id="mode"></small></footer>
+  <dialog id="setup" class="cw-sheet" aria-labelledby="setup-heading"></dialog>
+  <dialog id="sheet" class="cw-sheet" aria-labelledby="sheet-heading"></dialog>
   <noscript><p class="fatal">Enable JavaScript to read flyers and plan a walk.</p></noscript>
   <script type="module" src="/chirashi.mjs"></script>
 </body>

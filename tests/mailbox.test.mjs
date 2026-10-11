@@ -102,49 +102,6 @@ test('browser resumes saved whole-page readings with only a detail request',asyn
   assert.deepEqual(h.requests.map(r=>[r.mode,r.tiles.length]),[['tiles',6]]);
   assert.equal(h.state.pages.p.detailPending,false);assert.equal(h.state.flyers[0].business.name,'架空市場');
 });
-
-// Run the actual card renderer as well as the reading path in this browser-free suite.
-function cardHarness(f) {
-  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
-  const date=value=>new Intl.DateTimeFormat('en-GB',{day:'numeric',month:'short',year:'numeric',timeZone:'Asia/Tokyo'}).format(new Date(value+'T12:00:00+09:00'));
-  const sandbox={state:{pages:{p:{scannedAt:'2026-10-11',tiles:[{flyer_count:3}]}},flyers:[f],labels:{}},
-    reading:null,busy:false,scores:new Map(),shoppingList:new Set(),openFlyers:new Set(),allItems:new Set(),expiredOffers:new Set(),
-    printedValue,parseDeadline,groupPages,japanToday:()=> '2026-10-11',scanDate:()=> '2026-10-11',
-    expired:f=>Boolean(f.deadline && f.deadline<'2026-10-11'),formatDate:date,shortDate:value=>date(value).replace(/ \d{4}$/,'')};
-  const declarations=['escape','plural','money'].map(name=>source.match(new RegExp('const '+name+' = [^\\r\\n]+'))[0]).join('\n');
-  const code=source.slice(source.indexOf('function rating('),source.indexOf('function renderMailbox('));
-  const renderer=runInNewContext(declarations+'\n'+code+'\n({flyerCard,entryList,bestDeal})',sandbox);
-  return {...sandbox,...renderer};
-}
-test('mailbox cards disclose five sorted prices, preserve indexes and escape model text',()=>{
-  const f={...tile({category:'shop',business:{name:'Shop <img src=x>',kind:'test shop'},summary_en:'Summary '.repeat(20),
-    offers:[{text_ja:'体験',text_en:'Mat trial for ¥1,000',regular_yen:3300,offer_yen:1000,deadline_text:'2026-10-31'},
-      {text_ja:'旧割引',text_en:'Old offer',discount_yen:5000,deadline_text:'2026-10-01'}],
-    items:Array.from({length:37},(_,i)=>({name_ja:'商品'+i,name_en:'Item '+i,price_yen:100,regular_yen:100+i}))}),id:'f-p',pageIds:['p'],bucket:'walk',deadline:'2026-10-31'};
-  const before=JSON.stringify(f),h=cardHarness(f),collapsed=h.flyerCard(f);
-  assert.equal((collapsed.match(/class="cw-deal-line"/g) ?? []).length,1);
-  assert.match(collapsed,/Mat trial ¥3,300 → ¥1,000 · until 31 Oct/);
-  assert.match(collapsed,/Show 39 prices &amp; offers/);assert.doesNotMatch(collapsed,/data-item-index|data-offer-index/);
-  assert.match(collapsed,/This photo shows 3 flyers/);assert.match(collapsed,/cw-retake/);
-  assert.match(collapsed,/Shop &lt;img src=x&gt;/);assert.doesNotMatch(collapsed,/<img/);
-  assert.ok(collapsed.match(/class="cw-verdict">([^<]*)/)[1].length<=90);
-  h.openFlyers.add(f.id);
-  const expanded=h.flyerCard(f);
-  assert.deepEqual([...expanded.matchAll(/data-item-index="(\d+)"/g)].map(m=>Number(m[1])),[36,35,34,33,32]);
-  assert.match(expanded,/Show all 37/);assert.match(expanded,/1 expired offer/);assert.doesNotMatch(expanded,/Old offer/);
-  assert.match(expanded,/data-shopping="f-p" data-index="36"/);
-  assert.ok(expanded.indexOf('data-offer-index')<expanded.indexOf('data-item-index'));
-  h.allItems.add(f.id);h.expiredOffers.add(f.id);
-  const all=h.flyerCard(f);
-  assert.equal((all.match(/data-item-index=/g) ?? []).length,37);assert.match(all,/Old offer/);
-  assert.equal(JSON.stringify(f),before,'rendering never reorders stored data');
-  for(const bucket of ['home','toss']) {
-    const other={...f,bucket},html=h.flyerCard(other);
-    assert.doesNotMatch(html,/data-shopping/);
-    if(bucket==='toss')assert.doesNotMatch(html,/data-item-index/);
-  }
-});
-
 test('exported vocabularies match the contract',()=>{
   assert.deepEqual(CATEGORIES,['lesson','fitness','cleaning','shop','supermarket','drugstore','restaurant','clinic','event','food_delivery','buying_service','junk_removal','real_estate','official_or_personal','other']);
   assert.deepEqual(OFFER_KINDS,['free_trial','discount','coupon','sale','campaign','other']);

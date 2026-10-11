@@ -1,7 +1,7 @@
-import {stations, railLines, stationsOnLine, stores, walletOptions} from '/catalog.mjs';
+import {stations, railLines, stationsOnLine, stores} from '/catalog.mjs';
 import {groupPages, storable, printedValue, savings, featureRow, parseDeadline, needsDetail} from '/mailbox.mjs';
 import {distanceMeters, neighbours, nearestStation, orderStops, planOuting, walkMinutes, estimates, mapsLink, groceryOnTheWay, openStatus} from '/walks.mjs';
-import {japanToday, storePrograms, reward, nextBonus} from '/rules.mjs';
+import {japanToday, storePrograms, reward} from '/rules.mjs';
 
 const KEY = 'worth-the-walk-v1';
 const $ = id => document.getElementById(id);
@@ -25,25 +25,26 @@ function load() {
     base.settings = {lineId:railLines.some(l => l.id === s.settings.lineId) ? s.settings.lineId : null,home:stations.some(x => x.id === s.settings.home) ? s.settings.home : null,maxMinutes:[20,40,60,90].includes(s.settings.maxMinutes) ? s.settings.maxMinutes : 40,weightKg:Number.isFinite(s.settings.weightKg) && s.settings.weightKg > 0 ? s.settings.weightKg : 60};
     base.pages = s.pages; base.overrides = s.overrides; base.flyers = s.flyers.map(storable); base.outings = s.outings;
     base.labels = Object.fromEntries(Object.entries(s.labels).filter(([,v]) => v === 0 || v === 1));
-    base.shoppingList = Array.isArray(s.shoppingList) ? s.shoppingList.filter(key => typeof key === 'string') : [];
     for (const f of base.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete base.pages[id]; delete base.overrides[id]; }
     return base;
   } catch { return fresh(); }
 }
-let state = load(), coordinates = [], tab = 'mailbox', photos = [], busy = false, setupOpen = !state.settings.home;
+let state = load(), coordinates = [], view = state.outings.some(o => o.status === 'active') ? 'walk' : state.outings.at(-1)?.status === 'done' ? 'done' : 'home', photos = [], busy = false, setupOpen = !state.settings.home;
 let scores = new Map(), rankModel = '', rankSequence = 0;
-let chosenStops = null, groceryChoice = null, shoppingList = new Set(state.shoppingList ?? []), historyQuery = '', historyDetail = null;
+let chosenStops = null, groceryChoice = null, historyQuery = '';
+let sheet = null, sheetOpener = null, setupOpener = null;
+const sheetTrail = [];
+let recentStamp = null;
+const thumbBlobs = new Map(), thumbURLs = new Map(), allItems = new Set(), addressOpen = new Set();
 let reading = null, preparing = 0, recovering = true, recovered = false, photoStorage = true, wakeLock = null;
 let photoWork = Promise.resolve();
 const stampMessages = new Map();
-// Disclosure state belongs to this visit, never to phone storage.
-const openFlyers = new Set(), allItems = new Set(), expiredOffers = new Set();
-let tossOpen = false;
+
 function notify(message = '') { $('notice').textContent = message; }
 function save() {
-  state.shoppingList = [...shoppingList];
+  delete state.shoppingList;
   state.flyers = state.flyers.map(storable);
-  for (const f of state.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; }
+  for (const f of state.flyers) if (f.bucket === 'keep') for (const id of f.pageIds) { delete state.pages[id]; delete state.overrides[id]; thumbBlobs.delete(id); void photoDB('delete',id,'thumbs'); }
   try { localStorage.setItem(KEY,JSON.stringify(state)); return true; }
   catch { notify('Phone storage is full or unavailable. Keep this page open; new changes could not be saved.'); return false; }
 }
@@ -67,10 +68,6 @@ function formatDate(value) {
 }
 const scanDate = f => state.pages[f.pageIds?.[0]]?.scannedAt?.slice(0,10) ?? japanToday();
 const sortedWalks = () => state.flyers.filter(f => f.bucket === 'walk').sort((a,b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
-function mailboxStat() {
-  const count = bucket => state.flyers.filter(f => f.bucket === bucket).length;
-  return `${state.flyers.length} ${plural(state.flyers.length,'flyer','flyers')} → ${count('walk')} worth a walk · ${count('home')} ${plural(count('home'),'deal','deals')} for home · ${count('toss')} to throw away`;
-}
 function row(f) { const h = home(); return featureRow(f,{today:japanToday(),distanceMeters:h && f.location ? distanceMeters(h,f.location) : null}); }
 function requestError(response,data) {
   const error = new Error(response.status === 429 ? `Reading limit reached for now — try again in ${Math.max(1,Math.ceil(Number(data.retryAfter || response.headers.get('Retry-After')) / 60) || 1)} min` : data.error ?? 'Request failed. Please try again.');
@@ -95,197 +92,18 @@ async function rank() {
     scores = new Map(result.scores.map(s => [s.id,s.p])); rankModel = result.model; render();
   } catch (error) { if (sequence === rankSequence) notify(error.message); }
 }
-function personalNote() {
-  const n = state.flyers.filter(f => f.bucket !== 'keep' && Object.hasOwn(state.labels,f.id)).length;
-  return rankModel ? `based on your ${n} ${plural(n,'choice','choices')} (${rankModel === 'tabpfn' ? 'TabPFN' : 'simple rules'})` : n < 6 ? 'Rate 6 flyers to personalise' : 'Choose both 👍 and 👎 to personalise';
-}
-function renderSetup() {
-  $('setup').hidden = !setupOpen;
-  if (!setupOpen) return;
-  $('setup').innerHTML = `<div class="cw-setup"><h1 id="setup-heading">Your walk starts here.</h1><p class="cw-muted">Choose the station you want to walk home to.</p><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option lang="ja" value="${escape(l.id)}">${escape(l.name)} · ${escape(l.ja)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label class="cw-check"><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-muted">Used only for the kcal estimate.</p><div class="cw-actions"><button class="cw-primary" type="submit" ${busy ? 'disabled' : ''}>Save</button>${state.settings.home ? '<button type="button" data-action="close-setup">Cancel</button>' : ''}</div></form></div>`;
-  $('setup-line').value = state.settings.lineId ?? ''; stationOptions(state.settings.home);
-  $('setup-line').addEventListener('change',() => stationOptions(null));
-  $('setup-form').addEventListener('submit',event => {
-    event.preventDefault();
-    const stationId = $('setup-station').value, point = coordinates.find(s => s.id === stationId);
-    if (!point || !Number.isFinite(point.lat) || !Number.isFinite(point.lon)) { notify('Station coordinates are unavailable. Reload to try again.'); return; }
-    state.settings = {lineId:$('setup-line').value,home:stationId,maxMinutes:Number(new FormData(event.target).get('minutes')),weightKg:Number($('setup-weight').value)};
-    save(); setupOpen = false; chosenStops = null; groceryChoice = null; notify(); renderSetup(); render(); void rank();
-  });
-}
-function stationOptions(selected) {
-  $('setup-station').innerHTML = '<option value="">Choose a station</option>' + stationsOnLine(stations,$('setup-line').value).map(s => `<option lang="ja" value="${escape(s.id)}">${escape(s.name)} · ${escape(s.ja)}</option>`).join('');
-  $('setup-station').value = selected ?? '';
-}
-function rating(f) {
-  if (f.bucket === 'keep') return '';
-  return `<div class="cw-ratings">${[1,0].map(v => `<button type="button" data-action="rate" data-id="${escape(f.id)}" data-label="${v}" aria-label="${v ? 'Interested' : 'Not interested'} in this flyer" aria-pressed="${state.labels[f.id] === v}">${v ? '👍' : '👎'}</button>`).join('')}</div>`;
-}
-function valueLine(entry) { const value = printedValue(entry); return value === null ? '' : `<p class="cw-value">worth ${money(value)} as printed</p>`; }
-// Home menus open separately from flyer details, only for this visit.
-const openMenus = new Set();
-function actionsFor(f) {
-  const actions = [];
-  for (const phone of f.phones ?? []) {
-    const digits = String(phone).normalize('NFKC').replace(/\D/g,'');
-    if (digits) actions.push({kind:'phone',text:`📞 Call ${phone}`,href:'tel:' + digits});
-  }
-  for (const website of f.websites ?? []) {
-    const text = String(website).trim();
-    try {
-      const url = new URL(/^[a-z][a-z\d+.-]*:/i.test(text) ? text : 'https://' + text.replace(/^\/\//,''));
-      if (!['http:','https:'].includes(url.protocol) || !url.hostname) continue;
-      actions.push({kind:'website',text:['food_delivery','restaurant'].includes(f.category) ? '🌐 Order online' : '🌐 Website',href:url.href.replace(/^(https?:\/\/[^/]+)\/$/,'$1')});
-    } catch { /* An unreadable printed URL is not a link. */ }
-  }
-  if ((f.offers ?? []).some(o => ['coupon','discount','campaign'].includes(o.kind))) actions.push({text:f.bucket === 'home' ? "Mention or show this flyer's coupon when you order" : 'Show this flyer at the counter'});
-  const dates = [f.deadline,f.valid_to_text,...(f.offers ?? []).map(o => o.deadline_text)].map(date => parseDeadline(date,scanDate(f))).filter(Boolean).sort();
-  if (dates.length) actions.push({text:'Use by ' + shortDate(dates.at(-1))});
-  return actions;
-}
-function howToUse(f) {
-  if (f.bucket === 'toss') return (f.phones ?? []).map(phone => `<p class="cw-muted">${escape(phone)} · only if you need it</p>`).join('');
-  const actions = actionsFor(f);
-  return actions.length ? `<div class="cw-how-to-use"><h4>How to use</h4><ul>${actions.map(action => `<li>${action.href ? `<a class="cw-link" href="${escape(action.href)}">${escape(action.text)}</a>` : escape(action.text)}</li>`).join('')}</ul></div>` : '';
-}
-function entryList(f,outing = null) {
-  const selected = (kind,index) => outing?.used?.some(u => u.flyerId === f.id && u.kind === kind && u.index === index);
-  const control = (kind,index) => outing ? `<label class="cw-check"><input type="checkbox" data-used="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(outing.id)}" ${selected(kind,index) ? 'checked' : ''}>${kind === 'offer' ? 'Used it' : 'Bought it'}</label>` : f.bucket === 'walk' && kind === 'item' ? `<label class="cw-check"><input type="checkbox" data-shopping="${escape(f.id)}" data-index="${index}" ${shoppingList.has(f.id + ':' + index) ? 'checked' : ''}>add to my walk list</label>` : '';
-  const offers = (f.offers ?? []).map((o,i) => ({o,i,deadline:offerDeadline(f,o)}));
-  const old = offers.filter(({deadline}) => deadline && deadline < japanToday());
-  const offerHtml = ({o,i,deadline}) => `<div class="cw-entry" data-offer-index="${i}"><p>${escape(o.text_en ?? 'Printed offer')}</p>${o.text_ja ? `<p lang="ja" class="cw-muted">${escape(o.text_ja)}</p>` : ''}${o.offer_yen != null ? `<p>${money(o.offer_yen)}</p>` : ''}${valueLine(o)}${deadline ? `<p class="cw-meta">${formatDate(deadline)}${deadline < japanToday() ? ' · expired' : ''}</p>` : o.deadline_text ? `<p lang="ja" class="cw-meta">${escape(o.deadline_text)}</p>` : ''}${control('offer',i)}</div>`;
-  const menu = !outing && f.bucket === 'home', limit = menu ? 10 : 5;
-  const current = offers.filter(entry => !old.includes(entry));
-  const offerRows = (menu ? current.slice(0,5) : current).map(offerHtml).join('') + (old.length ? `<button type="button" data-action="expired-offers" data-id="${escape(f.id)}" aria-expanded="${expiredOffers.has(f.id)}" aria-controls="expired-${escape(f.id)}">${old.length} expired ${plural(old.length,'offer','offers')}</button><div id="expired-${escape(f.id)}" ${expiredOffers.has(f.id) ? '' : 'hidden'}>${expiredOffers.has(f.id) ? old.map(offerHtml).join('') : ''}</div>` : '');
-  // Keep source indexes even after sorting: walk lists and used entries store them.
-  const items = f.bucket === 'toss' ? [] : (f.items ?? []).map((item,i) => ({item,i})).sort((a,b) => (printedValue(b.item) ?? -1) - (printedValue(a.item) ?? -1));
-  const visible = menu && !openMenus.has(f.id) ? [] : outing || allItems.has(f.id) ? items : items.slice(0,limit);
-  const itemRows = visible.map(({item,i}) => `<div class="cw-entry" data-item-index="${i}"><p><strong>${escape(item.name_en ?? 'Item')}</strong> <span lang="ja">${escape(item.name_ja)}</span></p><p>${money(item.price_yen)}${item.price_tax_incl_yen != null ? ` · ${money(item.price_tax_incl_yen)} incl. tax` : ''}${item.unit ? ` <span lang="ja">/ ${escape(item.unit)}</span>` : ''}</p>${item.regular_yen != null ? `<p class="cw-muted">Printed comparison: ${money(item.regular_yen)} <span lang="ja">${escape(item.regular_label)}</span></p>` : ''}${valueLine(item)}${item.conditions?.length ? `<p class="cw-muted">${escape(item.conditions.join(' · '))}</p>` : ''}${control('item',i)}</div>`).join('');
-  const itemContent = `<div id="items-${escape(f.id)}">${itemRows}</div>` + (!outing && items.length > limit ? `<button type="button" data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}" aria-controls="items-${escape(f.id)}">${allItems.has(f.id) ? 'Show top ' + limit : 'Show all ' + items.length}</button>` : '');
-  return offerRows + (menu ? items.length ? `<button type="button" data-action="show-menu" data-id="${escape(f.id)}" aria-expanded="${openMenus.has(f.id)}" aria-controls="menu-${escape(f.id)}">${openMenus.has(f.id) ? 'Hide menu' : 'Show menu (' + items.length + ')'}</button><div id="menu-${escape(f.id)}" ${openMenus.has(f.id) ? '' : 'hidden'}>${itemContent}</div>` : '' : itemContent);
-}
-const shortText = (value,limit = 90) => {
-  const text = String(value ?? '').replace(/\s+/g,' ').trim();
-  return text.length > limit ? text.slice(0,limit - 1).trimEnd() + '…' : text;
-};
-const offerDeadline = (f,o) => parseDeadline(o.deadline_text,scanDate(f)) ?? parseDeadline(f.valid_to_text,scanDate(f)) ?? parseDeadline(f.deadline,scanDate(f));
-function bestDeal(f) {
-  const offers = (f.offers ?? []).filter(o => !offerDeadline(f,o) || offerDeadline(f,o) >= japanToday());
-  const entries = [...offers,...(f.items ?? [])].filter(e => printedValue(e) !== null).sort((a,b) => printedValue(b) - printedValue(a));
-  const best = entries[0];
-  if (!best) return shortText(offers[0]?.text_en ?? 'No printed deal',90);
-  const price = best.offer_yen ?? best.price_yen ?? (best.kind === 'free_trial' ? 0 : null);
-  // Extract a short offer label before its prices, then show the numeric fields once.
-  const text = best.name_en ?? best.name_ja ?? (best.text_en ?? best.text_ja ?? '').split(/(?:normally|regular(?: price)?|now|only|for|at)?\s*[¥￥]|\d[\d,]*\s*円/i)[0].replace(/[\s→(,:;]+$/,'');
-  const label = shortText(text || 'Printed deal',45);
-  if (best.regular_yen != null && price != null && best.regular_yen > price) return `${label} ${money(best.regular_yen)} → ${money(price)}`;
-  return `${label} · ${money(printedValue(best))} off`;
-}
-function locationChip(f) {
-  if (f.location?.place?.rating != null) return '📍 ★' + f.location.place.rating;
-  if (f.address || f.location?.source === 'gsi') return '📍 printed address';
-  return f.location ? '📍 location found' : '📍 no location';
-}
-function photoWarning(f) {
-  const count = Math.max(f.flyer_count ?? 1,...f.pageIds.map(id => state.pages[id]?.tiles?.[0]?.flyer_count ?? 1));
-  return count > 1 ? `<p class="cw-photo-warning">This photo shows ${escape(count)} flyers — take one photo per flyer for better results <span class="cw-retake">Retake</span></p>` : '';
-}
-function locationLine(f) {
-  const l = f.location;
-  if (l?.source === 'gsi') return '<p class="cw-meta">📍 found from the printed address</p>';
-  if (l?.source === 'serpapi') return `<p class="cw-meta">📍 found on Google Maps${l.place?.rating != null ? ` — ★${escape(l.place.rating)} (${escape(l.place.reviews ?? 0)})` : ''}${l.place?.phoneMatches ? ' · phone matches the flyer ✓' : ''}</p>`;
-  if (l) return '<p class="cw-meta">📍 demo location near your selected station</p>';
-  return `<form data-locate="${escape(f.id)}"><label class="cw-field">No address — type one<input name="address" required maxlength="300" placeholder="Printed address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form>`;
-}
-function pageLabel(id,index) {
-  const tile = state.pages[id]?.tiles?.find(Boolean);
-  if (!tile) return `Page ${index + 1} — (not stored)`;
-  const detail = shortText(tile.summary_en || tile.offers?.[0]?.text_en,50);
-  return `Page ${index + 1} — ${tile.business?.name || 'Flyer'}${detail ? ' · ' + detail : ''}`;
-}
-function fixControl(f) {
-  if (!f.pageIds.some(id => state.pages[id])) return `<p class="cw-meta">${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')}</p>${f.pageIds.map((id,index) => `<p class="cw-muted">${escape(pageLabel(id,index))}</p>`).join('')}<p class="cw-muted">Personal text and page readings have been discarded.</p>`;
-  return `<details><summary>${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')} · check grouping</summary><form data-fix="${escape(f.id)}"><p class="cw-muted">Wrong grouping? Move a page to the flyer it belongs to.</p>${f.pageIds.map((id,index) => `<label class="cw-field"><span>${escape(pageLabel(id,index))}</span><select aria-label="${escape(pageLabel(id,index))}" name="${escape(id)}" ${state.pages[id] ? '' : 'disabled'}><option value="keep">Belongs to this flyer</option><option value="split">Its own flyer</option>${state.flyers.filter(other => other.id !== f.id && other.bucket !== 'keep').map(other => `<option value="${escape(other.id)}">Move to: ${escape(other.business?.name ?? 'another flyer')}</option>`).join('')}</select></label>`).join('')}<button type="submit" ${busy ? 'disabled' : ''}>Apply</button></form></details>`;
-}
-function pendingGroups() {
-  return groupPages(Object.values(state.pages),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
-}
-function flyerCard(f) {
-  const readingPrices = reading?.active && reading.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing');
-  if (f.bucket === 'keep') return `<article class="cw-card" data-flyer="${escape(f.id)}"><h3>Personal or official mail · keep it</h3>${fixControl(f)}<p class="cw-muted">Keep the original. Personal details are not saved.</p></article>`;
-  const name = `${escape(f.business?.name ?? 'Flyer')}${f.business?.branch ? ` <span class="cw-branch">${escape(f.business.branch)}</span>` : ''}`;
-  const reason = f.category === 'buying_service' ? 'buying service — they come to you' : f.category === 'junk_removal' ? 'removal service — only if needed' : f.category === 'real_estate' ? 'property advert' : f.comes_to_you ? 'they come to you' : 'no in-person deal';
-  const deal = `${escape(bestDeal(f))}${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}${expired(f) ? ' · expired' : ''}`;
-  const open = openFlyers.has(f.id), count = f.offers.length + f.items.length;
-  const toggle = `data-action="flyer-details" data-id="${escape(f.id)}" aria-expanded="${open}" aria-controls="details-${escape(f.id)}"`;
-  const phone = f.bucket === 'home' ? actionsFor(f).find(action => action.kind === 'phone') : null;
-  const call = phone ? `<a class="cw-link cw-row-call" href="${escape(phone.href)}" aria-label="${escape(phone.text)}">📞 Call</a>` : '';
-  const head = f.bucket === 'walk' ? `<div class="cw-card-head"><h3><span lang="ja">${name}</span> <span class="cw-kind">· ${escape(f.business?.kind ?? f.category.replaceAll('_',' '))}</span></h3>${rating(f)}</div><p class="cw-verdict">${escape(shortText(f.summary_en))}</p><p class="cw-deal-line"><span class="cw-best-deal">${deal}</span> <span class="cw-location-chip">· ${escape(locationChip(f))}</span></p><button type="button" class="cw-disclosure" ${toggle}>${open ? 'Hide' : 'Show'} ${count === 1 ? '1 detail' : count+' prices &amp; offers'}</button>` : `<div class="cw-card-head"><button type="button" class="cw-mail-row" ${toggle}><strong lang="ja">${name}</strong> · ${f.bucket === 'toss' ? escape(reason) : `<span class="cw-deal-line">${deal}</span>`}</button>${call}${rating(f)}</div>`;
-  const details = open ? howToUse(f) + entryList(f) + (f.bucket === 'walk' ? locationLine(f) : '') + (f.bucket !== 'toss' ? fixControl(f) : '') : '';
-  return `<article class="cw-card${f.bucket === 'walk' ? '' : ' cw-compact'}" data-flyer="${escape(f.id)}">${head}${readingPrices ? '<p class="cw-meta" data-reading-prices role="status">Reading prices…</p>' : ''}${photoWarning(f)}<div class="cw-flyer-details" id="details-${escape(f.id)}" ${open ? '' : 'hidden'}>${details}</div></article>`;
-}
-function renderMailbox() {
-  const bucket = key => {
-    const list = key === 'walk' ? sortedWalks() : state.flyers.filter(f => f.bucket === key);
-    const heading = `${titles[key]} <span class="cw-count">${list.length}</span>`;
-    const content = list.length ? list.map(flyerCard).join('') : '<p class="cw-muted">No flyers here yet.</p>';
-    return key === 'toss' ? `<details class="cw-bucket" data-bucket="toss" ${tossOpen ? 'open' : ''}><summary>${heading}</summary>${content}</details>` : `<section class="cw-bucket" data-bucket="${key}"><h2>${heading}</h2>${content}</section>`;
-  };
-  return `${reading ? readingCard() : ''}<h1>Your mailbox, sorted.</h1><p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p>${recovered && photos.length && !reading ? resumeCard() : ''}${!reading ? addPagesCard() : ''}<p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}`;
-}
-function addPagesCard() {
-  const disabled = busy || preparing || recovering;
-  const rotateIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 10a8 8 0 1 1 2 8M4 4v6h6"/></svg>';
-  const removeIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>';
-  return `<div class="cw-scan"><h2>Add today's pages</h2><div class="cw-actions"><button type="button" data-action="take-photo" ${disabled ? 'disabled' : ''}>Take photo</button><button type="button" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose photos</button></div><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden><div class="cw-photos">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><div class="cw-photo-preview"><img src="${escape(p.url)}" alt="Page ${i + 1} preview"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i + 1}" ${disabled ? 'disabled' : ''}>${rotateIcon}</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i + 1}" ${disabled ? 'disabled' : ''}>${removeIcon}</button></div><p class="cw-meta">Page ${i+1}</p></div>`).join('')}</div>${preparing ? '<p class="cw-muted">Preparing cropped previews…</p>' : ''}${photos.length ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'page','pages')}</button></div>` : '<p class="cw-muted">Each photo is one page. Rotate it before reading.</p>'}${!photoStorage ? '<p class="cw-muted">Keep this screen open until reading finishes.</p>' : ''}</div>`;
-}
-function resumeCard() {
-  const time = new Intl.DateTimeFormat(undefined,{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
-  return `<div class="cw-resume"><h2>${photos.length} ${plural(photos.length,'page','pages')} waiting from ${escape(time)}</h2><p class="cw-muted">${photos.map((_,i) => `Page ${i+1}`).join(' · ')}. Your photos are still on this phone.</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume reading</button><button data-action="discard">Discard</button></div></div>`;
-}
-function pageStatus(p) {
-  return p.status === 'read' ? 'Read ✓' : p.status === 'failed' ? 'Failed' : p.status === 'detailing' ? `read · checking prices (${Math.min(6,p.parts.size+1)} of 6)` : p.status === 'reading' ? 'Reading page' : 'Waiting';
-}
-function readingCard() {
-  const r = reading;
-  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1">Reading your mailbox</h2><div class="cw-reading-activity" ${!r.active ? 'hidden' : ''}><span class="cw-activity" aria-hidden="true"></span><span>Gemma is reading your pages…</span></div><label for="reading-progress" id="reading-count"></label><progress id="reading-progress" max="${r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0)}" value="0"></progress><p id="reading-time" class="cw-meta"></p><p id="reading-message">${escape(r.message)}</p><p class="cw-muted">Keep this screen open. Photos stay on this phone until they're read.</p><button data-action="stop-reading" ${!r.active ? 'hidden' : ''}>Stop reading</button><ul class="cw-reading-pages">${r.batch.map((p,i) => `<li data-reading-page="${escape(p.id)}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div><strong>Page ${i+1}</strong><span data-page-status>${pageStatus(p)}</span><span class="cw-meta" data-page-error>${escape(p.error)}</span></div><button data-action="retry-page" data-id="${escape(p.id)}" aria-label="Retry page ${i+1}" ${p.status !== 'failed' ? 'hidden' : ''}>Retry</button></li>`).join('')}</ul>${!photoStorage ? '<p class="cw-muted">Keep this screen open until reading finishes.</p>' : ''}${!r.active && photos.length ? '<button data-action="resume">Resume reading</button>' : ''}</section>`;
-}
-function updateReading() {
-  if (!reading || !$('reading-progress')) return;
-  const r = reading, count = r.batch.reduce((n,p) => n+(p.wholeRead ? 1 : 0)+p.parts.size,0), total = r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0);
-  $('reading-progress').max = total;
-  $('reading-progress').value = count;
-  $('reading-count').textContent = `${count} of ${total} calls read`;
-  const seconds = Math.floor((performance.now()-r.started)/1000);
-  const elapsed = seconds < 60 ? `${seconds} s elapsed` : `${Math.floor(seconds/60)} min ${seconds%60} s elapsed`;
-  const average = r.durations.reduce((n,d) => n+d,0) / r.durations.length;
-  const lanes = Math.min(3,r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status)).length) || 1;
-  const remaining = Math.max(1,Math.ceil(average*(total-count)/lanes/60000));
-  $('reading-time').textContent = `${elapsed} · ${!r.active ? 'Reading paused' : !count ? 'Gemma is reading the first pages… usually 15–20 s' : count === total ? 'Sorting your flyers…' : `about ${remaining} min left`}`;
-  $('reading-message').textContent = r.message;
-  for (const row of $('reading-card').querySelectorAll('[data-reading-page]')) {
-    const p = r.batch.find(p => p.id === row.dataset.readingPage);
-    row.querySelector('[data-page-status]').textContent = pageStatus(p);
-    row.querySelector('[data-page-error]').textContent = p.error ?? '';
-    row.querySelector('button').hidden = p.status !== 'failed';
-  }
-  for (const badge of $('panel').querySelectorAll('[data-reading-prices]')) {
-    const f=flyer(badge.closest('[data-flyer]').dataset.flyer);
-    badge.hidden=!r.active || !r.batch.some(p => f?.pageIds.includes(p.id) && p.status === 'detailing');
-  }
-}
 
-// Only prepared JPEG Blobs live in IndexedDB. localStorage contains extracted text only.
-async function photoDB(method,value) {
+// Prepared photos and retained thumbnails live in IndexedDB, never localStorage.
+async function photoDB(method,value,store = 'pages') {
   let db;
   try {
     if (!photoStorage) return method === 'getAll' ? [] : false;
     db = await new Promise((resolve,reject) => {
-      const request = indexedDB.open('worth-the-walk-photos',1);
+      const request = indexedDB.open('worth-the-walk-photos',2);
       let expired=false;
       const fail = error => { expired=true; clearTimeout(timer); reject(error); };
       const timer = setTimeout(() => fail(new Error('Photo storage unavailable')),3000);
-      request.onupgradeneeded = () => { try { if (!request.result.objectStoreNames.contains('pages')) request.result.createObjectStore('pages',{keyPath:'pageId'}); } catch (error) { fail(error); } };
+      request.onupgradeneeded = () => { try { if (!request.result.objectStoreNames.contains('pages')) request.result.createObjectStore('pages',{keyPath:'pageId'}); if (!request.result.objectStoreNames.contains('thumbs')) request.result.createObjectStore('thumbs',{keyPath:'pageId'}); } catch (error) { fail(error); } };
       request.onerror = () => fail(request.error);
       request.onblocked = () => fail(new Error('Photo storage blocked'));
       request.onsuccess = () => {
@@ -295,9 +113,9 @@ async function photoDB(method,value) {
     });
     return await new Promise((resolve,reject) => {
       setTimeout(() => reject(new Error('Photo storage timed out')),3000);
-      const transaction = db.transaction('pages',method === 'getAll' ? 'readonly' : 'readwrite');
-      const request = transaction.objectStore('pages')[method](...(value === undefined ? [] : [value]));
-      transaction.oncomplete = () => resolve(method === 'getAll' ? request.result : true);
+      const transaction = db.transaction(store,['getAll','get'].includes(method) ? 'readonly' : 'readwrite');
+      const request = transaction.objectStore(store)[method](...(value === undefined ? [] : [value]));
+      transaction.oncomplete = () => resolve(['getAll','get'].includes(method) ? request.result : true);
       transaction.onabort = transaction.onerror = () => reject(transaction.error ?? new Error('Photo storage failed'));
       request.onerror = () => reject(request.error);
     });
@@ -310,6 +128,11 @@ async function photoDB(method,value) {
 const storePhoto = p => photoDB('put',{pageId:p.id,blob:p.blob,addedAt:p.addedAt,rotation:p.rotation,status:p.status});
 async function recoverPhotos() {
   try {
+    const thumbs = await photoDB('getAll',undefined,'thumbs');
+    for (const t of thumbs) if (t.blob instanceof Blob) {
+      if (state.flyers.some(f => f.bucket === 'keep' && f.pageIds.includes(t.pageId))) await photoDB('delete',t.pageId,'thumbs');
+      else thumbBlobs.set(t.pageId,t.blob);
+    }
     const pending = await photoDB('getAll');
     for (const p of pending.filter(p => record(p) && typeof p.pageId === 'string' && typeof p.addedAt === 'string').sort((a,b) => a.addedAt.localeCompare(b.addedAt))) {
       if ((state.pages[p.pageId] && !state.pages[p.pageId].detailPending) || state.flyers.some(f => f.bucket === 'keep' && f.pageIds.includes(p.pageId))) { await photoDB('delete',p.pageId); continue; }
@@ -365,6 +188,12 @@ async function preparePhoto(photo) {
     const page=document.createElement('canvas'); page.width=Math.max(1,Math.round(cropW*scale)); page.height=Math.max(1,Math.round(cropH*scale));
     draw(page.getContext('2d'),scale,box.left*width,box.top*height);
     const blob=await jpeg(page);
+    const thumb=document.createElement('canvas'), thumbScale=Math.min(1,480/Math.max(page.width,page.height));
+    thumb.width=Math.max(1,Math.round(page.width*thumbScale)); thumb.height=Math.max(1,Math.round(page.height*thumbScale));
+    thumb.getContext('2d').drawImage(page,0,0,thumb.width,thumb.height);
+    const thumbnail=await new Promise((resolve,reject) => thumb.toBlob(b => b ? resolve(b) : reject(new Error('Could not prepare preview.')),'image/jpeg',.7));
+    if (await photoDB('put',{pageId:photo.id,blob:thumbnail},'thumbs')) thumbBlobs.set(photo.id,thumbnail);
+    thumb.width=thumb.height=0;
     if (photo.url) URL.revokeObjectURL(photo.url);
     photo.blob=blob; photo.url=URL.createObjectURL(blob);
     page.width=page.height=sample.width=sample.height=0;
@@ -491,7 +320,7 @@ async function mergeGroups(affected = null,signal) {
     const group = selected[i];
     if (!reading?.active) $('progress').textContent = `Sorting flyer ${i+1} of ${selected.length}…`;
     const oldFlyers = state.flyers.filter(f => f.pageIds.some(id => group.pageIds.includes(id)));
-    const old = oldFlyers.find(f => f.pageIds.length === group.pageIds.length) ?? oldFlyers.find(f => f.pageIds.every(id => group.pageIds.includes(id)));
+    const old = oldFlyers.find(f => f.pageIds.length === group.pageIds.length && f.pageIds.every(id => group.pageIds.includes(id))) ?? oldFlyers.find(f => f.pageIds.every(id => group.pageIds.includes(id)));
     // Stage each replacement before removing any old flyer, so a failed merge is retryable.
     const result = await api('/api/merge',{flyerId:old?.id ?? group.id,pages:group.pageIds.map(id => ({id,detailed:Boolean(state.pages[id].detailed),tiles:state.pages[id].tiles})),scanDate:japanToday(),home:home()},signal);
     signal?.throwIfAborted();
@@ -513,7 +342,7 @@ async function mergeGroups(affected = null,signal) {
       if (index >= 0) { used.flyerId = stored.id; used.index = index; }
       else outing.used = outing.used.filter(u => u !== used);
     }
-    save(); chosenStops = null; groceryChoice = null; render();
+    save(); groceryChoice = null; render();
   }
   if (affected) {
     const ids=new Set(selected.flatMap(g => g.pageIds));
@@ -526,7 +355,7 @@ async function mergeGroups(affected = null,signal) {
       if (match) { used.flyerId=match.f.id; used.index=match.index; }
       else outing.used=outing.used.filter(u => u !== used);
     }
-    save(); chosenStops=null; groceryChoice=null; render();
+    save();  groceryChoice=null; render();
   }
   if (!reading?.active) { await rank(); $('progress').textContent = ''; }
 }
@@ -554,7 +383,7 @@ async function readPhotos(ids=null) {
   if (!home()) { setupOpen = true; renderSetup(); render(); notify('Choose your home station before reading.'); return; }
   if (!photos.length || busy || preparing || recovering) return;
   const batch=photos.filter(p => !ids || ids.includes(p.id)); if (!batch.length) return;
-  busy=true; recovered=false; tab='mailbox'; notify();
+  busy=true; recovered=false; view='home'; notify();
   const session={batch,queue:[...batch],controller:new AbortController(),active:true,started:performance.now(),durations:[],message:''};
   reading=session;
   for (const p of batch) { p.status='waiting'; p.parts.clear(); p.error=''; p.wholeRead=Boolean(state.pages[p.id]?.detailPending); p.detailNeeded=p.wholeRead; }
@@ -606,6 +435,7 @@ async function readPhotos(ids=null) {
     await rank();
   }
 }
+
 function arrivalStatus(f,minutes) {
   // Lessons and events print class times, not opening hours, so they never rule a stop out.
   if (['lesson','event'].includes(f.category)) return 'unknown';
@@ -614,15 +444,12 @@ function arrivalStatus(f,minutes) {
   return openStatus({hours:f.hours ?? f.location?.place?.hours},japanToday(date),Number(time[0])*60+Number(time[1]));
 }
 function candidates() {
-  return [...sortedWalks(),...state.flyers.filter(f => f.bucket !== 'walk' && f.bucket !== 'keep' && walkItems(f).length)];
-}
-function walkItems(f,o = null) {
-  return (f.items ?? []).filter((_,index) => shoppingList.has(f.id+':'+index) || o?.shoppingList?.includes(f.id+':'+index) || o?.used?.some(u => u.flyerId === f.id && u.kind === 'item' && u.index === index));
+  return sortedWalks().filter(f => !stopWarnings(f).length);
 }
 function stopWarnings(f) {
   const warnings=[];
   if (expired(f)) warnings.push('Expired');
-  if (f.location && arrivalStatus(f,walkMinutes(distanceMeters(home(),f.location))) === 'closed') warnings.push("Closed when you'd arrive");
+  if (home() && f.location && arrivalStatus(f,walkMinutes(distanceMeters(home(),f.location))) === 'closed') warnings.push("Closed when you'd arrive");
   if (state.labels[f.id] === 0) warnings.push('You said 👎');
   return warnings;
 }
@@ -666,59 +493,7 @@ function totals(o) {
   const e = estimates(o.meters,state.settings.weightKg);
   return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps · ~${e.kcal} kcal (estimates)`;
 }
-function shortDate(value) { return formatDate(value).replace(/ \d{4}$/, ''); }
-function stopReason(f,o = null) {
-  if (!f) return '';
-  const selected = walkItems(f,o);
-  let text = '';
-  if (selected.length) text = selected.map(i => `${i.name_en ?? i.name_ja ?? 'Item'} ${money(i.price_yen)}`).join(' · ');
-  else {
-    const best = [...(f.offers ?? [])].sort((a,b) => (printedValue(b) ?? -1)-(printedValue(a) ?? -1))[0];
-    if (best) { const value = printedValue(best); text = `${best.text_en ?? 'Printed offer'}${value !== null ? ` · worth ${money(value)} as printed` : ''}`; }
-    else text = f.summary_en || (f.deadline ? `until ${shortDate(f.deadline)}` : 'Worth a walk');
-  }
-  return text ? `<p class="cw-stop-reason cw-muted">${escape(text)}</p>` : '';
-}
-function routeList(o,points) {
-  let previous = o.start;
-  const rows = points.map(p => { const minutes = walkMinutes(distanceMeters(previous,p)); previous = p; return `<li><p class="cw-meta">${minutes} min walking</p><strong lang="ja">${escape(p.name)}</strong>${stopReason(flyer(p.id),o)}</li>`; });
-  rows.push(`<li><p class="cw-meta">${walkMinutes(distanceMeters(previous,o.end))} min walking</p><strong>${o.end.stationId === state.settings.home ? 'Home' : 'Train station'} · ${escape(stationName(o.end))}</strong></li>`);
-  return `<ol class="cw-route"><li><strong>${escape(stationName(o.start))} station</strong></li>${rows.join('')}</ol>`;
-}
-function mapRoute(o,points) {
-  return `<a class="cw-link" href="${escape(mapsLink(o.start,points,o.end))}" target="_blank" rel="noopener noreferrer">Open walking route</a>${points.length > 3 ? '<p class="cw-muted">route covers the first 3 stops</p>' : ''}`;
-}
-function groceryNote(s) {
-  const programs = storePrograms(s,japanToday()).map(id => walletOptions.find(p => p.id === id)?.name ?? id);
-  if (s.chain === 'mybasket' && programs.includes('WAON POINT')) return `${reward(s.chain,japanToday())}× WAON POINT today · next bonus ${formatDate(nextBonus(japanToday()).date)}. Eligible payment and item conditions apply.`;
-  return programs.length ? `${programs.join(' / ')} · check payment and item conditions in Shops.` : 'Point support unknown. Check the branch before relying on rewards.';
-}
-function stopChoice(f) {
-  const warnings=stopWarnings(f), h=home();
-  const distance=f.location ? estimates(distanceMeters(h,f.location)) : null;
-  const status=warnings.length ? warnings.join(' · ') : distance ? `${(distance.routeMeters/1000).toFixed(1)} km · ~${distance.minutes} min each way` : 'No location yet';
-  const lookup=!f.location ? `<p class="cw-meta">${warnings.length ? 'No location yet' : ''}</p><form data-locate="${escape(f.id)}"><label class="cw-field">Type the address<input name="address" required maxlength="300" placeholder="Printed address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form><a class="cw-link" href="${escape('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(f.business?.name ?? 'Flyer stop'))}" target="_blank" rel="noopener noreferrer">Find on Google Maps</a>` : '';
-  return `<div class="cw-stop-choice ${warnings.length ? 'cw-stop-warning' : ''}" data-stop-choice="${escape(f.id)}"><label class="cw-check"><input type="checkbox" data-stop="${escape(f.id)}" ${stopSelected(f) ? 'checked' : ''}><span><strong lang="ja">${escape(f.business?.name ?? 'Flyer stop')}</strong>${stopReason(f)}<span class="cw-meta">${escape(status)}</span></span></label>${lookup}</div>`;
-}
-function droppedStops(p) {
-  if (!p?.dropped.length) return '';
-  return `<section class="cw-dropped"><h3>Didn't fit in ${state.settings.maxMinutes} min</h3><ul>${p.dropped.map(s => `<li>${escape(s.name)}</li>`).join('')}</ul><div class="cw-actions">${[60,90].filter(n => n>state.settings.maxMinutes).map(n => `<button data-action="extend-walk" data-minutes="${n}">Make it ${n} min</button>`).join('')}</div></section>`;
-}
-function planTitle(p) {
-  return p.mode === 'train' ? `Take the train to ${escape(stationName(p.start))}, then walk · ${(estimates(p.meters).routeMeters/1000).toFixed(1)} km · ~${p.minutes} min` : p.start.stationId !== state.settings.home ? `Get off one stop early at ${escape(stationName(p.start))}` : 'Walk from your home station';
-}
-function renderWalk() {
-  const active = state.outings.find(o => o.status === 'active');
-  if (active) return `<h1>Your walk is underway.</h1><p class="cw-muted">${active.mode === 'train' ? planTitle(active)+'<br>' : ''}${escape(stationName(active.start))} → ${escape(stationName(active.end))}</p>${activeWalk(active)}<button class="cw-primary" data-action="finish" data-id="${escape(active.id)}">Finish walk</button>`;
-  if (!home()) return '<h1>Make room for a walk.</h1><p>Set your home station to plan a route.</p><button data-action="settings">Set up your walk</button>';
-  const list = candidates(), p = plan();
-  const suggested = p?.stops.length ? groceryOnTheWay([p.start,...p.stops,p.end],stores)[0]?.store : null;
-  return `<h1>A little walk home.</h1><p class="cw-muted">Up to ${state.settings.maxMinutes} min · home station: ${escape(stationName(home()))}</p><h2>Choose your stops</h2>${list.length ? list.map(stopChoice).join('') : '<p class="cw-muted">Read a worth-a-walk flyer or tick items for your walk list to find a stop.</p>'}${suggested ? `<div class="cw-entry"><h3>Groceries on the way</h3><p>${escape(suggested.name)}</p><p class="cw-muted">${escape(groceryNote(suggested))}</p><label class="cw-check"><input type="checkbox" data-grocery="${escape('store:'+suggested.branchId)}" ${groceryChoice ? 'checked' : ''}>Include grocery stop</label></div>` : ''}<button data-action="plan" class="cw-primary" ${!p?.stops.length ? 'disabled' : ''}>Plan walk</button>${p?.stops.length ? planCard(p) : list.length ? `<p class="cw-muted">${p?.dropped.length ? 'Try a longer walk to include your selected stops.' : 'Choose a stop above, or type its address to plan your walk.'}</p>${droppedStops(p)}` : ''}`;
-}
-function planCard(p) {
-  return `<div class="cw-plan"><h2>${planTitle(p)}</h2>${routeList(p,p.stops)}<p class="cw-meta">${totals(p)}</p>${droppedStops(p)}${mapRoute(p,p.stops)}<div class="cw-actions"><button class="cw-primary" data-action="start">Start walk</button></div></div>`;
-}
-const usedEntries = (outings = state.outings) => outings.flatMap(o => o.used.map(u => ({entry:flyer(u.flyerId)?.[u.kind === 'offer' ? 'offers' : 'items']?.[u.index]})));
+
 function icon(category) {
   const path = ['supermarket','drugstore','shop'].includes(category) ? '<path d="m3 8 2-5h14l2 5M4 9v12h16V9M9 21v-7h6v7M3 8c0 4 6 4 6 0 0 4 6 4 6 0 0 4 6 4 6 0"/>' : ['restaurant','food_delivery'].includes(category) ? '<path d="M5 3v6m3-6v6M3 3v6a3 3 0 0 0 6 0M6 12v9M18 3v18m0-18c-4 2-4 9 0 9"/>' : ['clinic','cleaning'].includes(category) ? '<path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z"/>' : ['lesson','fitness'].includes(category) ? '<circle cx="14" cy="4" r="2"/><path d="m6 21 5-7 1-6 5 5h4M3 12l5-4h4m-1 6 5 7"/>' : '<path d="m12 3 3 6 6 1-4 5 1 6-6-3-6 3 1-6-4-5 6-1z"/>';
   return `<svg viewBox="0 0 24 24" aria-hidden="true">${path}</svg>`;
@@ -730,16 +505,12 @@ function stampCard(stamp) {
   const angle = [...id].reduce((hash,c) => (hash * 31 + c.charCodeAt(0)) >>> 0,0) % 17 - 8;
   return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}"><span class="cw-stamp ${stamp.kind === 'gps' ? 'gps' : 'self'}" style="--stamp-angle:${angle}deg" aria-label="${stamp.kind === 'gps' ? 'GPS verified solid stamp' : 'Self-reported outline stamp'}">${icon(p?.category)}<span class="cw-stamp-name" lang="ja">${escape(p?.name ?? 'Stamped place')}</span></span><p class="cw-meta">${formatDate(stamp.at)}</p><p class="cw-meta">${stamp.kind === 'gps' ? 'GPS verified' : 'self-reported'}</p></div>`;
 }
-function activeWalk(o) {
-  const amount = savings(usedEntries([o])), points = o.stopIds.map(stop).filter(Boolean);
-  return `<p class="cw-meta">${totals(o)}</p>${mapRoute(o,points)}<p id="walk-saved" class="cw-value" aria-live="polite">Saved ${money(amount.yen)} · printed on the flyer</p>${o.stopIds.map(id => {
-    const p = stop(id), stamped = o.stamps.find(s => s.stopId === id), message = stampMessages.get(id);
-    return `<div class="cw-stop" data-active-stop="${escape(id)}"><h2 lang="ja">${escape(p?.name ?? 'Flyer stop')}</h2>${stopReason(p?.flyer,o)}${stamped ? stampCard(stamped) + (p?.flyer ? entryList(p.flyer,o) : '') : `<div class="cw-actions"><button data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}">I'm here</button></div>${message ? `<p class="cw-muted">${escape(message.text)}</p><button data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}`}</div>`;
-  }).join('')}`;
-}
 function stamp(o,id,kind,distance = null) {
   if (o.status !== 'active' || o.stamps.some(s => s.stopId === id)) return;
-  o.stamps.push({stopId:id,at:now(),kind,distance}); stampMessages.delete(id); save(); render();
+  o.stamps.push({stopId:id,at:now(),kind,distance});
+  if (flyer(id)?.bucket !== 'keep' && flyer(id)) state.labels[id]=1;
+  recentStamp=id;
+  stampMessages.delete(id); save(); render(); requestAnimationFrame(() => { recentStamp=null; }); void rank();
 }
 async function here(o,id,button) {
   const p = stop(id); if (!p) { notify('This stop no longer has a location.'); return; }
@@ -752,186 +523,286 @@ async function here(o,id,button) {
   } catch { stamp(o,id,'self'); notify('Location unavailable. Added a self-reported outline stamp.'); }
   finally { button.disabled = false; }
 }
-// ISO-week keys use their Monday date, including weeks across a year boundary.
-function isoMonday(date) {
-  const d = new Date(japanToday(new Date(date))+'T12:00:00Z');
-  d.setUTCDate(d.getUTCDate()-((d.getUTCDay()+6)%7)); return d.toISOString().slice(0,10);
+
+function shortDate(value) { return formatDate(value).replace(/ \d{4}$/, ''); }
+const shortText = (value,limit = 90) => { const text=String(value ?? '').replace(/\s+/g,' ').trim(); return text.length > limit ? text.slice(0,limit-1).trimEnd()+'…' : text; };
+const offerDeadline = (f,o) => parseDeadline(o.deadline_text,scanDate(f)) ?? parseDeadline(f.valid_to_text,scanDate(f)) ?? parseDeadline(f.deadline,scanDate(f));
+const currentOffers = f => (f.offers ?? []).map((entry,index) => ({entry,index,kind:'offer'})).filter(({entry}) => !offerDeadline(f,entry) || offerDeadline(f,entry) >= japanToday());
+const priceItems = f => (f.items ?? []).map((entry,index) => ({entry,index,kind:'item'})).sort((a,b) => (printedValue(b.entry) ?? -1)-(printedValue(a.entry) ?? -1));
+const usedEntries = (outings = state.outings) => outings.flatMap(o => o.used.map(u => ({entry:flyer(u.flyerId)?.[u.kind === 'offer' ? 'offers' : 'items']?.[u.index]})));
+const hasJapanese = value => /[\u3040-\u30ff\u3400-\u9fff]/u.test(String(value ?? ''));
+const modelText = value => `<span${hasJapanese(value) ? ' lang="ja"' : ''}>${escape(value)}</span>`;
+function flyerTitle(f) {
+  const kind=f.business?.kind ?? f.category.replaceAll('_',' '), name=f.business?.name;
+  return `${modelText(kind)}${name ? ` · <span${hasJapanese(name) ? ' lang="ja" class="cw-ja"' : ''}>${escape(name)}</span>` : ''}`;
 }
-function streak() {
-  const weeks = new Set(state.outings.filter(o => o.status === 'done').map(o => isoMonday(o.stamps.at(-1)?.at ?? o.createdAt)));
-  let monday = isoMonday(now()), count = 0;
-  const previous = value => { const d = new Date(value+'T12:00:00Z'); d.setUTCDate(d.getUTCDate()-7); return d.toISOString().slice(0,10); };
-  if (!weeks.has(monday)) monday = previous(monday);
-  while (weeks.has(monday)) { count++; monday = previous(monday); }
-  return count;
+function bestDeal(f) {
+  const offers=currentOffers(f).map(o => o.entry), entries=[...offers,...(f.items ?? [])].filter(e => printedValue(e) !== null).sort((a,b) => printedValue(b)-printedValue(a));
+  const best=entries[0];
+  if (!best) return shortText(offers[0]?.text_en ?? 'No printed deal');
+  const price=best.offer_yen ?? best.price_yen ?? (best.kind === 'free_trial' ? 0 : null);
+  // Cut the English text before its first amount and drop dangling filler ("Free trial, normally" → "Free trial").
+  const label=shortText(best.name_en ?? (best.text_en ?? '').split(/(?:normally|regular(?: price)?|now|only|for|at)?\s*[¥￥]|\d[\d,]*\s*(?:円|yen)/i)[0]
+    .replace(/[\s→(,:;]+$/,'').replace(/[,\s]*\b(?:normally|usually|regular(?: price)?|now|only|for|at|from)$/i,'').replace(/[\s,]+$/,''),45) || 'Printed deal';
+  if (best.regular_yen != null && price != null && best.regular_yen > price) return price === 0 ? `${label}${/free/i.test(label) ? '' : ' · free'} (usually ${money(best.regular_yen)})` : `${label} ${money(price)} (was ${money(best.regular_yen)})`;
+  return `${label} · ${money(printedValue(best))} off`;
 }
-function renderStamps() {
-  const active = state.outings.find(o => o.status === 'active'), weeks = streak();
-  const done = state.outings.filter(o => o.status === 'done'), allStamps = state.outings.flatMap(o => o.stamps);
-  const distance = done.reduce((sum,o) => sum+o.meters,0), e = estimates(distance,state.settings.weightKg), amount = savings(usedEntries());
-  const stats = [[done.length,'walks done'],[allStamps.length,'places stamped'],[(e.routeMeters/1000).toFixed(1),'km'],[e.steps.toLocaleString('en-US'),'steps'],[e.kcal,'kcal'],[money(amount.yen),'yen saved']];
-  return `<h1>Every stop adds up.</h1>${active ? `<div class="cw-scan"><h2>Walk in progress · ${active.stamps.length} of ${active.stopIds.length} ${plural(active.stopIds.length,'stop','stops')} stamped</h2><button class="cw-primary" data-action="continue-walk">Continue walk</button></div>` : ''}<div class="cw-stats">${stats.map(([n,label]) => `<div class="cw-stat" data-metric="${label}"><strong>${n}</strong><span>${label === 'walks done' ? plural(done.length,'walk done','walks done') : label}</span></div>`).join('')}</div><p class="cw-muted">Distance, steps and kcal are estimates from planned routes for completed walks.</p>${amount.uncounted ? `<p class="cw-meta">+ ${amount.uncounted} used without a printed value</p>` : ''}<p class="cw-meta">${weeks ? `${weeks} ${plural(weeks,'week','weeks')} in your weekly streak` : 'Finish a walk this week to start a streak'}</p><h2>Your stamps</h2>${allStamps.length ? `<div class="cw-stamp-grid">${allStamps.map(stampCard).join('')}</div>` : '<p class="cw-muted">Start a walk and check in at your first stop.</p>'}`;
+function revokeThumbs() { for (const url of thumbURLs.values()) URL.revokeObjectURL(url); thumbURLs.clear(); }
+function thumbnail(id,large = false) {
+  const privatePage=state.flyers.some(f => f.bucket === 'keep' && f.pageIds.includes(id));
+  const blob=privatePage ? null : thumbBlobs.get(id);
+  if (!blob) return `<span class="cw-thumb cw-placeholder${large ? ' cw-preview' : ''}" role="img" aria-label="Page preview unavailable">▧</span>`;
+  if (!thumbURLs.has(id)) thumbURLs.set(id,URL.createObjectURL(blob));
+  return `<img class="cw-thumb${large ? ' cw-preview' : ''}" src="${escape(thumbURLs.get(id))}" alt="${large ? 'Page preview' : 'Flyer page preview'}">`;
 }
-function newestFlyers() {
-  // Appending scan batches preserves order even for private markers, which have no date field.
-  return [...state.flyers].reverse();
+function stack(f,interactive = true) {
+  if (!f || f.bucket === 'keep') return '';
+  return `<span class="cw-stack">${f.pageIds.slice(0,3).map((id,i) => interactive ? `<button type="button" class="cw-thumb-button" style="--tile:${i}" data-action="page-sheet" data-id="${escape(id)}" aria-label="Open page ${f.pageIds.indexOf(id)+1} of ${escape(f.business?.name ?? 'flyer')}">${thumbnail(id)}</button>` : `<span class="cw-thumb-button" style="--tile:${i}">${thumbnail(id)}</span>`).join('')}</span>`;
 }
-function renderHistory() {
-  if (historyDetail) {
-    const f = flyer(historyDetail), o = state.outings.find(x => x.id === historyDetail);
-    return `<button data-action="history-back">← History</button>${f ? flyerCard(f) : o ? `<h1>Walk · ${formatDate(o.createdAt)}</h1><p class="cw-meta">${escape(o.status)} · ${totals(o)}</p>${routeList(o,o.stopIds.map(stop).filter(Boolean))}${mapRoute(o,o.stopIds.map(stop).filter(Boolean))}<div class="cw-stamp-grid">${o.stamps.map(stampCard).join('')}</div><p class="cw-value">Saved ${money(savings(usedEntries([o])).yen)} · printed on the flyer</p>` : ''}`;
+function pageStatus(p) { return p.status === 'read' ? 'Read' : p.status === 'failed' ? 'Failed' : p.status === 'detailing' ? 'Reading prices' : p.status === 'reading' ? 'Reading' : 'Waiting'; }
+function pendingGroups() { return groupPages(Object.values(state.pages),state.overrides).some(g => g.pageIds.some(id => state.pages[id]?.needsMerge) || !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id)))); }
+function addPagesCard() {
+  const disabled=busy || preparing || recovering;
+  return `<section class="cw-snap" aria-label="Photograph flyers"><h1>One good reason<br>to go outside.</h1><p class="cw-muted">Your mailbox, turned into a little walk.</p><button class="${state.flyers.length ? 'cw-secondary' : 'cw-primary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>📷 Photograph your flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>` : ''}<p class="cw-tip">One photo per page, flat, in good light.</p>${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${disabled ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button></div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
+}
+function resumeCard() {
+  const time=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
+  return `<div class="cw-resume"><p>${photos.length} pages waiting from ${escape(time)}</p><div class="cw-actions"><button class="cw-primary" data-action="resume">Resume</button><button class="cw-text" data-action="discard">Discard</button></div></div>`;
+}
+function readingCard() {
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p id="reading-message" class="cw-meta">${escape(reading.message)}</p>${reading.batch.filter(p => p.status === 'failed').map(p => `<div class="cw-actions"><p class="cw-meta">${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}">Retry page ${reading.batch.indexOf(p)+1}</button></div>`).join('')}${!reading.active && photos.length ? '<div class="cw-actions"><button data-action="resume">Resume</button><button data-action="discard">Discard</button></div>' : ''}</section>`;
+}
+function updateReading() {
+  if (!reading || !$('reading-progress')) return;
+  const r=reading, calls=r.batch.reduce((n,p) => n+(p.wholeRead ? 1 : 0)+p.parts.size,0), total=r.batch.reduce((n,p) => n+1+(p.detailNeeded ? 6 : 0),0);
+  const done=r.batch.filter(p => p.status === 'read').length, lanes=Math.min(3,r.batch.filter(p => ['waiting','reading','detailing'].includes(p.status)).length) || 1;
+  const average=r.durations.reduce((n,d) => n+d,0)/(r.durations.length || 1);
+  const remaining=Math.max(1,Math.ceil((average || 15000)*(total-calls)/lanes/60000));
+  $('reading-progress').max=total; $('reading-progress').value=calls;
+  $('reading-count').textContent=r.active ? `Reading ${Math.min(done+1,r.batch.length)} of ${r.batch.length} · about ${remaining} min left` : `${done} pages read · paused`;
+  $('reading-message').textContent=r.message;
+  for (const badge of document.querySelectorAll('[data-reading-prices]')) { const f=flyer(badge.dataset.readingPrices); badge.hidden=!r.active || !r.batch.some(p => f?.pageIds.includes(p.id) && p.status === 'detailing'); }
+}
+function locateControl(f) {
+  return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form>` : '';
+}
+function stopRow(f) {
+  const h=home(), location=f.location && h ? `${walkMinutes(distanceMeters(h,f.location))} min away${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : 'No location yet';
+  return `<article class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-deal">${modelText(bestDeal(f))}</span><span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me" title="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</article>`;
+}
+function routeSummary(p) { const e=estimates(p.meters,state.settings.weightKg); return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps`; }
+function walkSummary(p) {
+  if (!p || !p.stops.length && !p.dropped?.length) return '';
+  const base=planWithoutGrocery(), suggested=base?.stops.length ? groceryOnTheWay([base.start,...base.stops,base.end],stores)[0]?.store : null;
+  const grocery=suggested ? `+ Grocery stop: ${suggested.name}${storePrograms(suggested,japanToday()).includes('waon') ? ` · ${reward(suggested.chain,japanToday())}× WAON today` : ''}` : '';
+  return `<section class="cw-walk-summary" aria-label="Walk summary">${p.stops.length ? `<p>${p.start.stationId !== state.settings.home ? `Take the train to ${escape(stationName(p.start))}, then walk · ` : ''}${routeSummary(p)}</p>` : ''}${p.dropped?.length ? `<div class="cw-dropped"><p class="cw-muted">${p.dropped.length} ${plural(p.dropped.length,'stop','stops')} didn't fit in ${state.settings.maxMinutes} min: ${modelText(p.dropped.map(s => s.name).join(', '))}</p><div class="cw-actions">${[60,90].filter(n => n>state.settings.maxMinutes).map(n => `<button data-action="extend-walk" data-minutes="${n}">Make it ${n} min</button>`).join('')}</div></div>` : ''}${suggested ? `<button class="cw-grocery cw-text" data-action="grocery" data-id="${escape('store:'+suggested.branchId)}" aria-pressed="${Boolean(groceryChoice)}">${modelText(grocery)}</button>` : ''}${p.stops.length ? '<button class="cw-primary cw-wide" data-action="start">Start the walk →</button>' : ''}</section>`;
+}
+function planWithoutGrocery() { const choice=groceryChoice; groceryChoice=null; try { return plan(); } finally { groceryChoice=choice; } }
+function collapsedRows() {
+  const count=bucket => state.flyers.filter(f => f.bucket === bucket).length;
+  return `<div class="cw-collapsed"><button data-action="bucket-sheet" data-id="home">📞 ${count('home')} ${plural(count('home'),'deal','deals')} to order at home <span aria-hidden="true">›</span></button><button data-action="bucket-sheet" data-id="toss">♻ ${count('toss')} ${plural(count('toss'),'flyer','flyers')} safe to recycle <span aria-hidden="true">›</span></button><button data-action="bucket-sheet" data-id="keep">🔒 ${count('keep')} ${plural(count('keep'),'letter','letters')} to keep <span aria-hidden="true">›</span></button></div>`;
+}
+function renderHome() {
+  const list=candidates(), p=plan();
+  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><h2 id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'Nothing worth a walk this time'}</h2>${!list.length ? `<p class="cw-muted">${state.flyers.some(f => f.bucket === 'walk') ? 'The walk offers are expired, closed, or marked Not for me.' : 'These pages have no in-person deals to walk to.'}</p>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}<div class="cw-stop-list">${list.map(stopRow).join('')}</div>${walkSummary(p)}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}${collapsedRows()}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
+  return addPagesCard()+answer;
+}
+function actionsFor(f) {
+  const actions=[];
+  for (const phone of f.phones ?? []) { const digits=String(phone).normalize('NFKC').replace(/\D/g,''); if (digits) actions.push({kind:'phone',text:`Call ${phone}`,href:'tel:'+digits}); }
+  for (const website of f.websites ?? []) {
+    try { const text=String(website).trim(), url=new URL(/^[a-z][a-z\d+.-]*:/i.test(text) ? text : 'https://'+text.replace(/^\/\//,'')); if (['http:','https:'].includes(url.protocol) && url.hostname) actions.push({kind:'website',text:'Website',href:url.href}); } catch {}
   }
-  const query = historyQuery.toLowerCase();
-  const list = newestFlyers().filter(f => [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
-  return `<h1>Your saved pages &amp; walks.</h1><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name, kind or summary"></label><div id="history-results"><h2>${plural(list.length,'Flyer','Flyers')} · ${list.length}</h2>${list.map(f => `<button class="cw-history-item" data-action="history-detail" data-id="${escape(f.id)}"><strong lang="ja">${escape(f.business?.name ?? 'Personal or official mail')}</strong><span class="cw-meta"><span class="cw-pill cw-pill-${f.bucket}">${titles[f.bucket]}</span> · ${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')}${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}${expired(f) ? ' · expired' : ''}</span><span class="cw-muted">${escape(f.summary_en)}</span></button>`).join('') || '<p class="cw-muted">No saved flyers match.</p>'}<h2 style="margin-top:28px">${plural(state.outings.length,'Walk','Walks')} · ${state.outings.length}</h2>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="history-detail" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${o.stopIds.length} ${plural(o.stopIds.length,'stop','stops')} · ${(estimates(o.meters).routeMeters/1000).toFixed(1)} km · ${o.stamps.length} ${plural(o.stamps.length,'stamp','stamps')}</span></button>`).join('') || '<p class="cw-muted">Your first walk will appear here.</p>'}</div>`;
+  if ((f.offers ?? []).some(o => ['coupon','discount','campaign'].includes(o.kind))) actions.push({text:'Show this flyer at the counter'});
+  const dates=[f.deadline,f.valid_to_text,...(f.offers ?? []).map(o => o.deadline_text)].map(d => parseDeadline(d,scanDate(f))).filter(Boolean).sort();
+  if (dates.length) actions.push({text:'Use by '+shortDate(dates.at(-1))});
+  return actions;
+}
+function entryHTML(f,{entry,index,kind}) {
+  const name=kind === 'offer' ? entry.text_en ?? 'Printed offer' : entry.name_en ?? 'Printed item';
+  const ja=kind === 'offer' ? entry.text_ja : entry.name_ja, price=entry.offer_yen ?? entry.price_yen;
+  const value=printedValue(entry);
+  return `<div class="cw-entry" data-${kind}-index="${index}"><p><strong>${modelText(name)}</strong></p>${ja ? `<p class="cw-ja" lang="ja">${escape(ja)}</p>` : ''}${price != null ? `<p>${money(price)}${entry.regular_yen != null ? ` <span class="cw-meta">was ${money(entry.regular_yen)}</span>` : ''}</p>` : ''}${value !== null ? `<p class="cw-value">${money(value)} saving printed on the flyer</p>` : ''}${entry.conditions?.length ? `<p class="cw-meta">${modelText(entry.conditions.join(' · '))}</p>` : ''}${kind === 'offer' && offerDeadline(f,entry) ? `<p class="cw-meta">Use by ${shortDate(offerDeadline(f,entry))}</p>` : ''}</div>`;
+}
+function flyerSheet(f) {
+  if (!f || f.bucket === 'keep') return '<h2 id="sheet-heading">Letter to keep</h2><p>Nothing from these was saved.</p>';
+  const items=priceItems(f), count=Math.max(f.flyer_count ?? 1,...f.pageIds.map(id => state.pages[id]?.tiles?.[0]?.flyer_count ?? 1));
+  return `<div class="cw-page-strip">${f.pageIds.map((id,i) => `<button class="cw-page-tile" data-action="page-sheet" data-id="${escape(id)}" aria-label="Open page ${i+1}">${thumbnail(id)}</button>`).join('')}</div><h2 id="sheet-heading">${flyerTitle(f)}</h2>${count>1 ? `<p class="cw-warning">This photo shows ${escape(count)} flyers. One photo per flyer gives a better reading.</p>` : ''}<section class="cw-how"><h3>How to use</h3>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>${currentOffers(f).slice(0,5).map(e => entryHTML(f,e)).join('')}${(allItems.has(f.id) ? items : items.slice(0,5)).map(e => entryHTML(f,e)).join('')}${items.length>5 ? `<button data-action="all-items" data-id="${escape(f.id)}" aria-expanded="${allItems.has(f.id)}">${allItems.has(f.id) ? 'Show top 5' : 'Show all'}</button>` : ''}<button class="cw-wide" data-action="not-for-me" data-id="${escape(f.id)}">Not for me</button>`;
+}
+function pageSheet(id) {
+  const owner=state.flyers.find(f => f.bucket !== 'keep' && f.pageIds.includes(id)), page=state.pages[id], readingText=page?.tiles?.find(Boolean)?.summary_en;
+  if (!owner || !page) return '<h2 id="sheet-heading">Page unavailable</h2>';
+  const option=(value,f,label,checked) => `<label class="cw-group-option"><input type="radio" name="belongs" value="${escape(value)}" ${checked ? 'checked' : ''}>${f ? stack(f,false) : '<span class="cw-placeholder cw-own-page" aria-hidden="true">▧</span>'}<span>${f && value !== owner.id ? flyerTitle(f) : modelText(label)}</span></label>`;
+  return `<h2 id="sheet-heading">This page</h2>${thumbnail(id,true)}<p class="cw-page-reading cw-meta">${modelText(shortText(readingText || 'No one-line reading available',150))}</p><form data-page-move="${escape(id)}"><fieldset><legend>This page belongs to:</legend>${option(owner.id,owner,'This flyer',true)}${state.flyers.filter(f => f.id !== owner.id && f.bucket !== 'keep').map(f => option(f.id,f,f.business?.name ?? 'Other flyer',false)).join('')}${option('split',null,'A flyer of its own',false)}</fieldset><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Apply</button></form>`;
+}
+function bucketSheet(bucket) {
+  const list=state.flyers.filter(f => f.bucket === bucket);
+  if (bucket === 'keep') return `<h2 id="sheet-heading">${list.length} ${plural(list.length,'letter','letters')} to keep</h2><p>Nothing from these was saved.</p>`;
+  return `<h2 id="sheet-heading">${list.length} ${bucket === 'home' ? 'deals to order at home' : 'flyers safe to recycle'}</h2>${list.map(f => { const phone=actionsFor(f).find(a => a.kind === 'phone'); return `<article class="cw-secondary-row">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-meta">${modelText(bucket === 'home' ? bestDeal(f) : f.comes_to_you ? 'They come to you' : ['buying_service','junk_removal'].includes(f.category) ? 'Only if you need the service' : f.category === 'real_estate' ? 'Property advert' : 'No in-person deal')}</span></button>${bucket === 'home' && phone ? `<a class="cw-link" href="${escape(phone.href)}">Call</a>` : ''}</article>`; }).join('')}`;
+}
+function stampsContent() {
+  const done=state.outings.filter(o => o.status === 'done'), stamps=state.outings.flatMap(o => o.stamps), meters=done.reduce((n,o) => n+o.meters,0), e=estimates(meters,state.settings.weightKg), yen=savings(usedEntries()).yen;
+  const stats=[[done.length,'walks'],[stamps.length,'places'],[meters ? (e.routeMeters/1000).toFixed(1) : 0,'km'],[e.steps,'steps'],[e.kcal,'kcal estimates'],[yen ? money(yen) : 0,'saved, printed']].filter(([n]) => Boolean(Number(n) || typeof n === 'string' && n.startsWith('¥')));
+  return `<h2 id="sheet-heading">Your stamps</h2>${stats.length ? `<div class="cw-stats">${stats.map(([n,label]) => `<div><strong>${escape(n)}</strong><span>${label}</span></div>`).join('')}</div>` : ''}${stamps.length ? `<div class="cw-stamp-grid">${stamps.map(stampCard).join('')}</div>` : '<p class="cw-muted">Your first walk starts with a flyer.</p>'}${state.outings.length ? `<h3>Past walks</h3>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="past-walk" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${routeSummary(o)} · ${money(savings(usedEntries([o])).yen)} saved</span></button>`).join('')}` : ''}<h3>All flyers</h3><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name or kind"></label><div id="history-results">${historyResults()}</div>`;
+}
+function historyResults() {
+  const query=historyQuery.toLowerCase(), list=[...state.flyers].reverse().filter(f => f.bucket !== 'keep' && [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
+  return list.map(f => `<article class="cw-secondary-row" data-history-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong><span class="cw-meta">${formatDate(scanDate(f))}${expired(f) ? ' · expired' : ''}</span></button></article>`).join('') || '<p class="cw-muted">No saved flyers match.</p>';
+}
+function activeOuting() { return state.outings.find(o => o.status === 'active'); }
+function currentCursor(o) { return Number.isInteger(o.cursor) && o.cursor >= 0 ? Math.min(o.cursor,o.stopIds.length) : 0; }
+function walkScreen(o) {
+  if (!o) { view='home'; return renderHome(); }
+  const cursor=currentCursor(o), id=o.stopIds[cursor], p=stop(id), f=p?.flyer, stamped=o.stamps.find(s => s.stopId === id), message=stampMessages.get(id);
+  if (cursor>=o.stopIds.length) return doneScreen(o);
+  const previous=cursor ? stop(o.stopIds[cursor-1]) ?? o.start : o.start;
+  const minutes=p ? walkMinutes(distanceMeters(previous,p)) : 0;
+  const remaining=o.stopIds.slice(cursor).map(stop).filter(Boolean);
+  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><p class="cw-meta">Stop ${cursor+1} of ${o.stopIds.length} · ${minutes} min walk</p>${f ? stack(f) : ''}<h1>${f ? flyerTitle(f) : modelText(p?.name ?? 'Stop unavailable')}</h1>${f ? `<p class="cw-deal">${modelText(bestDeal(f))}</p>` : ''}${stamped ? `<div class="cw-stamp-arrival${recentStamp === id ? ' is-new' : ''}">${stampCard(stamped)}</div>${f ? usedChips(f,o) : ''}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<a class="cw-link" href="${escape(mapsLink(previous,remaining,o.end))}" target="_blank" rel="noopener noreferrer">Open route in Google Maps</a><button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here</button>${message ? `<p class="cw-warning" role="status">${escape(message.text)}</p><button class="cw-wide" data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}</section>`;
+}
+function usedChips(f,o) {
+  // Printed savings first; otherwise let people still mark the offer they used (it counts as used, no printed value).
+  const printed=[...currentOffers(f),...priceItems(f)].filter(({entry}) => printedValue(entry) !== null), entries=(printed.length ? printed : currentOffers(f)).slice(0,6);
+  if (!entries.length) return '';
+  return `<section class="cw-used"><h2>Did you use it?</h2><div class="cw-chips">${entries.map(({entry,index,kind}) => { const used=o.used.some(u => u.flyerId === f.id && u.kind === kind && u.index === index); return `<button data-action="used" data-id="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(o.id)}" aria-pressed="${used}">${used ? '✓ ' : ''}${modelText(entry.text_en ?? entry.name_en ?? 'Printed offer')}${printedValue(entry) !== null ? ' · '+money(printedValue(entry)) : ''}</button>`; }).join('') || '<p class="cw-meta">No printed saving to count.</p>'}</div></section>`;
+}
+function doneScreen(o=state.outings.at(-1)) {
+  if (!o) return renderHome();
+  return `<section class="cw-done"><h1>Walk done</h1><p class="cw-done-summary">${routeSummary(o)} · <strong>${money(savings(usedEntries([o])).yen)} saved</strong> (printed on the flyers)</p><div class="cw-stamp-grid">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">Your stamps</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button></section>`;
+}
+function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
+function restoreFocus(key) {
+  const root=$('setup').open ? $('setup') : $('sheet').open ? $('sheet') : document;
+  const target=key?.elementId ? $(key.elementId) : [...root.querySelectorAll('[data-action]')].find(el => el.dataset.action === key?.action && el.dataset.id === key?.id && el.dataset.index === key?.index);
+  if (target && !target.disabled) target.focus({preventScroll:true}); else focusHeading();
 }
 function render() {
-  const focused = document.activeElement;
-  const focusKey = ['rate','flyer-details','show-menu','all-items','expired-offers'].includes(focused?.dataset.action) ? {action:focused.dataset.action,id:focused.dataset.id,label:focused.dataset.label} : null;
-  tossOpen = $('panel').querySelector('[data-bucket=toss]')?.open ?? tossOpen;
-  // Async results (ranking, merges) re-render the panel; keep focus on its heading instead of dropping it to <body>.
-  const headingFocused = $('panel').contains(document.activeElement) && /^H[1-3]$/.test(document.activeElement.tagName);
-  $('panel').hidden = setupOpen; $('panel').setAttribute('aria-label',tab[0].toUpperCase()+tab.slice(1));
-  $('panel').innerHTML = tab === 'mailbox' ? renderMailbox() : tab === 'walk' ? renderWalk() : tab === 'stamps' ? renderStamps() : renderHistory();
-  document.body.classList.toggle('cw-has-photos',tab === 'mailbox' && !setupOpen && photos.length > 0 && !reading);
+  const focus=focusKey(document.activeElement), focusedInSheet=$('sheet').contains(document.activeElement), locate=document.activeElement?.closest('[data-locate]');
+  const address=locate ? {id:locate.dataset.locate,value:locate.querySelector('input').value} : null;
+  revokeThumbs();
+  $('panel').setAttribute('aria-label',view === 'home' ? 'Mailbox' : view === 'walk' ? 'Walk' : 'Walk done');
+  $('panel').innerHTML=view === 'walk' ? walkScreen(activeOuting()) : view === 'done' ? doneScreen() : renderHome();
+  document.body.classList.toggle('cw-has-photos',view === 'home' && photos.length>0 && !reading && !recovered);
+  document.body.classList.toggle('cw-is-walking',view === 'walk');
+  if (sheet) renderSheet();
   updateReading();
-  if (focusKey) [...$('panel').querySelectorAll('[data-action]')].find(b => b.dataset.action === focusKey.action && b.dataset.id === focusKey.id && b.dataset.label === focusKey.label)?.focus({preventScroll:true});
-  for (const b of document.querySelectorAll('[data-tab]')) { if (b.dataset.tab === tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
-  if (headingFocused) focusHeading();
+  if (address) { const form=[...document.querySelectorAll('[data-locate]')].find(f => f.dataset.locate === address.id); if (form) { form.querySelector('input').value=address.value; form.querySelector('input').focus({preventScroll:true}); } }
+  else if (focus && (!$('setup').open || focusedInSheet)) restoreFocus(focus);
 }
-function focusHeading() {
-  const heading = (setupOpen ? $('setup') : $('panel')).querySelector('h1, h2, h3');
-  if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
+function focusHeading() { const target=$('sheet').open ? $('sheet') : $('setup').open ? $('setup') : $('panel'); const heading=target.querySelector('h1,h2'); if (heading) { heading.tabIndex=-1; heading.focus({preventScroll:true}); } }
+function openSheet(type,id,opener=document.activeElement) {
+  if (!$('sheet').open) sheetOpener=focusKey(opener);
+  else sheetTrail.push({sheet:{...sheet},opener:focusKey(opener),scrollTop:$('sheet').scrollTop});
+  sheet={type,id}; render(); if (!$('sheet').open) $('sheet').showModal(); $('sheet').scrollTop=0; focusHeading();
 }
-function changeTab(value) { tab = value; historyDetail = null; render(); focusHeading(); window.scrollTo({top:0,behavior:'instant'}); }
-function newOuting(p,status) {
-  state.outings = state.outings.filter(o => o.status !== 'planned');
-  state.outings.push({id:uid('o-'),createdAt:now(),start:p.start,end:p.end,stopIds:p.stops.map(s => s.id),meters:p.meters,minutes:p.minutes,mode:p.mode,shoppingList:[...shoppingList],status,stamps:[],used:[]}); save(); render();
+function renderSheet() {
+  const body=sheet.type === 'flyer' ? flyerSheet(flyer(sheet.id)) : sheet.type === 'page' ? pageSheet(sheet.id) : sheet.type === 'bucket' ? bucketSheet(sheet.id) : sheet.type === 'past' ? pastWalkSheet(sheet.id) : stampsContent();
+  $('sheet').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-sheet" aria-label="Close sheet">✕</button></div>${body}`;
 }
+function pastWalkSheet(id) { const o=state.outings.find(o => o.id === id); return o ? `<h2 id="sheet-heading">Walk · ${formatDate(o.createdAt)}</h2><p>${totals(o)} · ${money(savings(usedEntries([o])).yen)} saved, printed</p><div class="cw-stamp-grid">${o.stamps.map(stampCard).join('')}</div>` : '<h2 id="sheet-heading">Walk unavailable</h2>'; }
+function closeSheet() {
+  const previous=sheetTrail.pop();
+  if (previous) { sheet=previous.sheet; render(); $('sheet').scrollTop=previous.scrollTop; restoreFocus(previous.opener); }
+  else $('sheet').close();
+}
+$('sheet').addEventListener('cancel',event => { if (sheetTrail.length) { event.preventDefault(); closeSheet(); } });
+$('sheet').addEventListener('close',() => { sheet=null; sheetTrail.length=0; render(); restoreFocus(sheetOpener); sheetOpener=null; });
+function renderSetup() {
+  if (!setupOpen) { if ($('setup').open) $('setup').close(); return; }
+  $('setup').innerHTML=`<div class="cw-sheet-top">${state.settings.home ? '<button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button>' : ''}</div><h2 id="setup-heading">Your walk starts here.</h2><form id="setup-form"><label class="cw-field">Train line<select id="setup-line" required><option value="">Choose a line</option>${railLines.map(l => `<option value="${escape(l.id)}">${escape(l.name)}</option>`).join('')}</select></label><label class="cw-field">Home station<select id="setup-station" required><option value="">Choose a station</option></select></label><fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>`;
+  $('setup-line').value=state.settings.lineId ?? ''; stationOptions(state.settings.home);
+  $('setup-line').addEventListener('change',() => stationOptions(null));
+  $('setup-form').addEventListener('submit',event => {
+    event.preventDefault(); const stationId=$('setup-station').value, point=coordinates.find(s => s.id === stationId);
+    if (!pointValid(point)) { notify('Station coordinates are unavailable. Reload to try again.'); return; }
+    state.settings={lineId:$('setup-line').value,home:stationId,maxMinutes:Number(new FormData(event.target).get('minutes')),weightKg:Number($('setup-weight').value)};
+    save(); groceryChoice=null; setupOpen=false; renderSetup(); notify(); render(); void rank();
+  });
+  if (!$('setup').open) { setupOpener=focusKey(document.activeElement); $('setup').showModal(); }
+}
+function stationOptions(selected) { $('setup-station').innerHTML='<option value="">Choose a station</option>'+stationsOnLine(stations,$('setup-line').value).map(s => `<option value="${escape(s.id)}">${escape(s.name)}</option>`).join(''); $('setup-station').value=selected ?? ''; }
+$('setup').addEventListener('cancel',event => { if (!state.settings.home) event.preventDefault(); });
+$('setup').addEventListener('close',() => { setupOpen=false; restoreFocus(setupOpener); setupOpener=null; });
+function newOuting(p) {
+  state.outings=state.outings.filter(o => o.status !== 'planned');
+  state.outings.push({id:uid('o-'),createdAt:now(),start:p.start,end:p.end,stopIds:p.stops.map(s => s.id),meters:p.meters,minutes:p.minutes,mode:p.mode,status:'active',cursor:0,skipped:[],stamps:[],used:[]});
+  save(); view='walk'; render(); focusHeading(); window.scrollTo({top:0,behavior:'instant'});
+}
+function advance(o,skip=false) { if (!o || o.status !== 'active') return; const cursor=currentCursor(o); if (!skip && !o.stamps.some(s => s.stopId === o.stopIds[cursor])) return; if (skip) o.skipped=[...(o.skipped ?? []),o.stopIds[cursor]]; o.cursor=cursor+1; if (o.cursor>=o.stopIds.length) { o.status='done'; view='done'; } save(); render(); focusHeading(); window.scrollTo({top:0,behavior:'instant'}); }
 async function action(button) {
-  const id = button.dataset.id;
+  const id=button.dataset.id;
   switch (button.dataset.action) {
-    case 'flyer-details':
-    case 'show-menu':
-    case 'all-items':
-    case 'expired-offers': {
-      const set = button.dataset.action === 'flyer-details' ? openFlyers : button.dataset.action === 'show-menu' ? openMenus : button.dataset.action === 'all-items' ? allItems : expiredOffers;
-      if (set.has(id)) set.delete(id); else set.add(id);
-      render(); break;
-    }
-    case 'settings': setupOpen = true; renderSetup(); render(); break;
-    case 'close-setup': setupOpen = false; renderSetup(); render(); break;
     case 'take-photo': $('camera-input').click(); break;
     case 'choose-photos': $('photos-input').click(); break;
-    case 'rotate': if (!busy && !preparing) {
-      const p = photos.find(p => p.id === id); if (!p) break;
-      preparing++; p.rotation = (p.rotation+90)%360; render();
-      try { await preparePhoto(p); } finally { preparing--; render(); }
-    } break;
-    case 'remove-photo': if (!busy && !preparing) {
-      const p = photos.find(p => p.id === id); if (!p) break;
-      // Update the screen first; the stored copy is deleted in the background so a slow delete never blocks new photos.
-      URL.revokeObjectURL(p.url); photos = photos.filter(p => p.id !== id); render();
-      photoDB('delete',id).catch(() => {});
-    } break;
-    case 'read': await readPhotos(); break;
-    case 'resume': await readPhotos(); break;
+    case 'rotate': if (!busy && !preparing) { const p=photos.find(p => p.id === id); if (!p) break; preparing++; p.rotation=(p.rotation+90)%360; render(); try { await preparePhoto(p); } finally { preparing--; render(); } } break;
+    case 'remove-photo': if (!busy && !preparing) { const p=photos.find(p => p.id === id); if (!p) break; URL.revokeObjectURL(p.url); photos=photos.filter(p => p.id !== id); thumbBlobs.delete(id); render(); await Promise.all([photoDB('delete',id),photoDB('delete',id,'thumbs')]); } break;
+    case 'read': case 'resume': await readPhotos(); break;
     case 'stop-reading': stopReading(); break;
-    case 'retry-page': {
-      const p=photos.find(p => p.id === id); if (!p || p.status !== 'failed') break;
-      if (reading?.active && !reading.controller.signal.aborted) {
-        p.status='waiting'; p.error=''; p.parts.clear(); reading.queue.push(p); updateReading();
-      } else await readPhotos([id]);
-      break;
-    }
-    case 'discard': if (!busy && !preparing) {
-      for (const p of photos) { await photoDB('delete',p.id); URL.revokeObjectURL(p.url); }
-      photos=[]; recovered=false; reading=null; render();
-    } break;
-    case 'continue-walk': changeTab('walk'); break;
-    case 'rate': if (flyer(id)?.bucket === 'keep') break; state.labels[id] = Number(button.dataset.label); save(); render(); await rank(); break;
-    case 'merge-retry': if (!busy) { busy = true; render(); try { await mergeGroups(); } finally { busy = false; render(); } } break;
-    case 'plan': { const p = plan(); if (p?.stops.length) { newOuting(p,'planned'); notify('Walk planned. Start when you are ready.'); } break; }
-    case 'extend-walk': {
-      const minutes=Number(button.dataset.minutes); if (![60,90].includes(minutes)) break;
-      state.settings.maxMinutes=minutes; save();
-      const p=plan(); if (p?.stops.length) newOuting(p,'planned'); else render();
-      notify(`Walk re-planned for up to ${minutes} min.`); break;
-    }
-    case 'start': { if (state.outings.some(o => o.status === 'active')) break; const p = plan(); if (p?.stops.length) { newOuting(p,'active'); notify(); } break; }
-    case 'here': { const o = state.outings.find(o => o.id === button.dataset.outing); if (o?.status === 'active') await here(o,id,button); break; }
-    case 'stamp-anyway': { const o = state.outings.find(o => o.id === button.dataset.outing); if (o) stamp(o,id,'self',stampMessages.get(id)?.distance ?? null); break; }
-    case 'finish': { const o = state.outings.find(o => o.id === id); if (o) { o.status = 'done'; save(); notify('Walk finished. Your stamps are saved.'); changeTab('stamps'); } break; }
-    case 'history-detail': historyDetail = id; render(); focusHeading(); break;
-    case 'history-back': historyDetail = null; render(); focusHeading(); break;
+    case 'retry-page': { const p=photos.find(p => p.id === id); if (!p || p.status !== 'failed') break; if (reading?.active && !reading.controller.signal.aborted) { p.status='waiting'; p.error=''; p.parts.clear(); reading.queue.push(p); updateReading(); } else await readPhotos([id]); break; }
+    case 'discard': if (!busy && !preparing) { for (const p of photos) { await photoDB('delete',p.id); if (!state.pages[p.id]) { thumbBlobs.delete(p.id); await photoDB('delete',p.id,'thumbs'); } URL.revokeObjectURL(p.url); } photos=[]; recovered=false; reading=null; render(); } break;
+    case 'flyer-sheet': openSheet('flyer',id,button); break;
+    case 'page-sheet': openSheet('page',id,button); break;
+    case 'bucket-sheet': openSheet('bucket',id,button); break;
+    case 'close-sheet': closeSheet(); break;
+    case 'close-setup': setupOpen=false; renderSetup(); break;
+    case 'not-for-me': if (flyer(id) && flyer(id).bucket !== 'keep') { state.labels[id]=0; save(); if ($('sheet').open) closeSheet(); render(); await rank(); } break;
+    case 'all-items': if (allItems.has(id)) allItems.delete(id); else allItems.add(id); render(); break;
+    case 'add-address': addressOpen.add(id); render(); [...document.querySelectorAll('[data-locate]')].find(f => f.dataset.locate === id)?.querySelector('input').focus(); break;
+    case 'merge-retry': if (!busy) { busy=true; render(); try { await mergeGroups(); } finally { busy=false; render(); } } break;
+    case 'extend-walk': { const minutes=Number(button.dataset.minutes); if (![60,90].includes(minutes)) break; state.settings.maxMinutes=minutes; save(); render(); break; }
+    case 'grocery': groceryChoice=groceryChoice ? null : id; render(); break;
+    case 'start': { if (activeOuting()) { view='walk'; render(); break; } const p=plan(); if (p?.stops.length) { newOuting(p); notify(); } break; }
+    case 'here': { const o=activeOuting(); if (o && o.stopIds[currentCursor(o)] === id) await here(o,id,button); break; }
+    case 'stamp-anyway': { const o=activeOuting(); if (o && o.stopIds[currentCursor(o)] === id) stamp(o,id,'self',stampMessages.get(id)?.distance ?? null); break; }
+    case 'used': { const o=activeOuting(); if (!o || !o.stamps.some(s => s.stopId === id)) break; const kind=button.dataset.kind, index=Number(button.dataset.index), entry=flyer(id)?.[kind === 'offer' ? 'offers' : 'items']?.[index]; if (!entry || printedValue(entry) === null) break; const existing=o.used.find(u => u.flyerId === id && u.kind === kind && u.index === index); if (existing) o.used=o.used.filter(u => u !== existing); else o.used.push({flyerId:id,kind,index}); save(); render(); break; }
+    case 'next-stop': advance(activeOuting()); break;
+    case 'skip-stop': advance(activeOuting(),true); break;
+    case 'stamps': openSheet('stamps',undefined,button); break;
+    case 'past-walk': openSheet('past',id,button); break;
+    case 'home': view=activeOuting() ? 'walk' : 'home'; render(); focusHeading(); break;
   }
 }
-function safely(task) { Promise.resolve().then(task).catch(error => { notify(error.message ?? 'Something went wrong. Try again.'); $('progress').textContent = 'Stopped. Your saved readings are available to retry.'; }); }
-document.addEventListener('click',event => {
-  const button = event.target.closest('button'); if (!button || button.disabled) return;
-  if (button.dataset.tab) { changeTab(button.dataset.tab); return; }
-  if (button.dataset.action) safely(() => action(button));
-});
-$('settings-button').addEventListener('click',() => { setupOpen = !setupOpen || !state.settings.home; renderSetup(); render(); if (setupOpen) $('setup-line').focus(); });
-document.addEventListener('change',event => {
-  const input = event.target;
-  if (input.id === 'photos-input' || input.id === 'camera-input') {
-    const files=[...input.files].filter(file => file.type.startsWith('image/'));
-    input.value = '';
-    photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork);
-  } else if (input.dataset.stop) {
-    if (chosenStops === null) chosenStops = new Set(candidates().filter(stopSelected).map(f => f.id));
-    if (input.checked) chosenStops.add(input.dataset.stop); else chosenStops.delete(input.dataset.stop); render();
-  } else if (input.dataset.grocery) { groceryChoice = input.checked ? input.dataset.grocery : null; render(); }
-  else if (input.dataset.shopping) { const key = input.dataset.shopping+':'+input.dataset.index; if (input.checked) { shoppingList.add(key); if (chosenStops !== null) chosenStops.add(input.dataset.shopping); } else shoppingList.delete(key); save(); }
-  else if (input.dataset.used) {
-    const o = state.outings.find(o => o.id === input.dataset.outing); if (!o || o.status !== 'active') return;
-    const u = {flyerId:input.dataset.used,kind:input.dataset.kind,index:Number(input.dataset.index)};
-    o.used = o.used.filter(v => !(v.flyerId === u.flyerId && v.kind === u.kind && v.index === u.index)); if (input.checked) o.used.push(u); save();
-    $('walk-saved').textContent = `Saved ${money(savings(usedEntries([o])).yen)} · printed on the flyer`;
-  }
-});
-document.addEventListener('input',event => {
-  if (event.target.id !== 'history-search') return;
-  historyQuery = event.target.value;
-  // Replace only results, preserving the search input's focus and caret.
-  const template = document.createElement('template'); template.innerHTML = renderHistory();
-  $('history-results').replaceWith(template.content.querySelector('#history-results'));
-});
+function safely(task) { Promise.resolve().then(task).catch(error => { notify(error.message ?? 'Something went wrong. Try again.'); }); }
+document.addEventListener('click',event => { const button=event.target.closest('button'); if (button && !button.disabled && button.dataset.action) safely(() => action(button)); });
+$('settings-button').addEventListener('click',() => { setupOpen=true; renderSetup(); });
+$('stamps-button').addEventListener('click',() => openSheet('stamps',undefined,$('stamps-button')));
+document.addEventListener('change',event => { const input=event.target; if (['photos-input','camera-input'].includes(input.id)) { const files=[...input.files].filter(f => f.type.startsWith('image/')); input.value=''; photoWork=photoWork.catch(() => {}).then(() => addPhotos(files)); safely(() => photoWork); } });
+document.addEventListener('input',event => { if (event.target.id === 'history-search') { const start=event.target.selectionStart, end=event.target.selectionEnd; historyQuery=event.target.value; render(); $('history-search').focus({preventScroll:true}); $('history-search').setSelectionRange(start,end); } });
 document.addEventListener('submit',event => {
-  const form = event.target;
+  const form=event.target;
   if (form.dataset.locate) {
     event.preventDefault(); safely(async () => {
-      const f = flyer(form.dataset.locate), data = new FormData(form), h = home();
-      const query = new URLSearchParams({q:data.get('address'),name:f.business?.name ?? ''});
-      for (const phone of f.phones ?? []) query.append('phone',phone);
-      if (h) { query.set('lat',h.lat); query.set('lon',h.lon); }
-      const b = form.querySelector('button'); b.disabled = true;
-      try { const result = await api('/api/locate?'+query); if (pointValid(result.location)) { f.location = result.location; f.needsLookup = false; save(); notify('Location found. Your walk has been updated.'); render(); await rank(); } else notify('No location found. Try the printed address or the full business name.'); }
-      finally { b.disabled = false; }
+      const f=flyer(form.dataset.locate); if (!f || f.bucket === 'keep') return;
+      const data=new FormData(form), h=home(), query=new URLSearchParams({q:data.get('address'),name:f.business?.name ?? ''});
+      for (const phone of f.phones ?? []) query.append('phone',phone); if (h) { query.set('lat',h.lat); query.set('lon',h.lon); }
+      const b=form.querySelector('button'); b.disabled=true;
+      try { const result=await api('/api/locate?'+query); if (pointValid(result.location)) { f.location=result.location; f.needsLookup=false; addressOpen.delete(f.id); save(); notify('Location found. Your walk has been updated.'); render(); await rank(); } else notify('No location found. Try the printed address or full business name.'); } finally { b.disabled=false; }
     });
-  } else if (form.dataset.fix) {
+  } else if (form.dataset.pageMove) {
     event.preventDefault(); if (busy) return;
     safely(async () => {
-      const f = flyer(form.dataset.fix), changes = [...new FormData(form)].filter(([,value]) => value !== 'keep');
-      if (!changes.length) return;
-      const affected = new Set(f.pageIds);
-      for (const [,value] of changes) { const target = flyer(value); if (target) target.pageIds.forEach(id => affected.add(id)); }
-      for (const other of state.flyers) if (other.pageIds.some(id => affected.has(id))) for (const id of other.pageIds) if (state.pages[id]) state.overrides[id] = other.id;
-      for (const [id,value] of changes) state.overrides[id] = value === 'split' ? uid('split-') : value;
-      save(); busy = true; render();
-      try { await mergeGroups(affected); $('progress').textContent = ''; } finally { busy = false; render(); }
+      const pageId=form.dataset.pageMove, f=state.flyers.find(f => f.bucket !== 'keep' && f.pageIds.includes(pageId)), value=new FormData(form).get('belongs');
+      if (!f || !state.pages[pageId]) return;
+      if (value === f.id) { closeSheet(); return; }
+      const target=flyer(value); if (value !== 'split' && (!target || target.bucket === 'keep')) return;
+      const affected=new Set([...f.pageIds,...(target?.pageIds ?? [])]);
+      for (const other of state.flyers) if (other.pageIds.some(id => affected.has(id))) for (const id of other.pageIds) if (state.pages[id]) state.overrides[id]=other.id;
+      state.overrides[pageId]=value === 'split' ? uid('split-') : value;
+      save(); busy=true; render();
+      try {
+        await mergeGroups(affected);
+        for (const previous of sheetTrail) if (previous.sheet.type === 'flyer' && !flyer(previous.sheet.id)) previous.sheet.id=state.flyers.find(f => f.pageIds.includes(pageId))?.id;
+        closeSheet(); notify();
+      } finally { busy=false; render(); }
     });
   }
 });
 document.addEventListener('visibilitychange',() => { if (reading?.active) void acquireWakeLock(reading); });
-window.addEventListener('pagehide',() => { stopReading(); void releaseWakeLock(); });
-renderSetup(); render();
+window.addEventListener('pagehide',() => { stopReading(); void releaseWakeLock(); revokeThumbs(); });
+render(); renderSetup();
 await recoverPhotos();
-try {
-  const response = await fetch('/station-coordinates.json'); if (!response.ok) throw new Error();
-  coordinates = await response.json(); render();
-} catch { notify('Station coordinates could not be loaded. Reload to set up or plan a walk.'); }
-try { const config = await api('/api/config'); $('mode').textContent = config.mode === 'cloud' ? 'Gemma 4 · cloud' : config.mode === 'local' ? 'Local Gemma — check every price' : 'Demo mode'; }
-catch { $('mode').textContent = 'Reading service unavailable · try reloading'; }
+try { const response=await fetch('/station-coordinates.json'); if (!response.ok) throw new Error(); coordinates=await response.json(); render(); }
+catch { notify('Station coordinates could not be loaded. Reload to set up or plan a walk.'); }
+try { const config=await api('/api/config'); $('mode').textContent=config.mode === 'mock' ? 'Demo mode' : ''; }
+catch { notify('Reading service unavailable. Try reloading.'); }
 save(); await rank();
