@@ -21,6 +21,7 @@ The screen is the shortest part of the experience. Every view leads to the next 
 ## 2. Color Palette & Roles
 
 ### Surfaces
+- **Appearance**: Light is the default, including on dark devices. Settings stores `light`, `dark`, or `auto` under `settings.theme`; missing or invalid legacy preferences become Light. A synchronous `/theme.js` applies it before styles paint. Light and Dark set `data-theme`; Match my device removes it. Both theme-color meta tags follow a fixed preference; device mode keeps one paper colour per scheme. `--paper-light` and `--paper-dark` provide those browser colours.
 - **Desk** (`#e4e9e1`; dark `#0b0f12`): Page background around the app column.
 - **Ticket Paper** (`#f6f8f2`; dark `#151b1f`): App surface, ticket card, sheets.
 - **Paper Shade** (`#edf2ea`; dark `#1b2328`): Notch fill, pressed states, secondary surfaces.
@@ -35,7 +36,8 @@ The screen is the shortest part of the experience. Every view leads to the next 
 
 ### Flyer accents (printed money only)
 - **Price Sticker** (`#ffd400`, both themes): Background of the best-deal sticker. Text on it is always `#1b1300`.
-- **Sale Red** (`#d40b0b` on the sticker; standalone `#d40b0b` / dark `#ff5d4f`): The sale price, and "¥ saved (printed)" totals. Never for errors.
+- **Sticker ink tokens**: `--sticker-ink` (`#1b1300`), `--sticker-sale` (`#c40000`), and `--sticker-old` (`#4d3f00`) stay fixed against yellow in both themes.
+- **Sale Red** (standalone `#d40b0b` / dark `#ff5d4f`): Printed savings totals; also the Failed reading-chip status, as specified for the reading ticket.
 
 ### Walk-mode display
 - **Display Black** (`#0f1418`; dark `#05080a`): Train-door board background.
@@ -108,10 +110,28 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - **Gate (primary)**: Ticket-gate Blue, white 16px 700 text, radius 12px, padding 16px, full width; optional print-face suffix ("→ 改札", "· stamp"). One per screen.
 - **Ghost**: transparent, blue 14px 700 text, underlined, centred ("Skip this stop")
 - **Icon button**: 44px, 1px Rule border, radius 10px (header: stamps ◎, settings ⚙, close ✕)
+- All ✕ controls (stop removal, grocery removal, sheet close, photo removal) rest in Faded Ink and use Print Ink on hover or keyboard focus. The header's “Your stamps” button gains a 24px gate-blue round count badge at top-right for one or more stamps, capped at 99+. The badge is decorative; the accessible name remains exactly “Your stamps”.
 - Focus: 3px blue outline, 3px offset
 
 ### Mailbox tray
-- Three equal slots under the gate: print label (HOME / RECYCLE / KEEP), big number, one-line description ("deals to order by phone", "flyers to put out", "letter, not an ad"); a slot with 0 is hidden; tapping opens its sheet
+- Three equal slots under the gate on phone/tablet: print label (HOME / RECYCLE / KEEP), big number, description; a slot with 0 is hidden; tapping opens its sheet. All slots share Ticket Paper, Rule border, 12px × 8px padding, aligned labels and number rows, with optional thumbnails after the description.
+- At ≥960px the single tray moves into the side column below “Add more flyers” and above the stamp card. Slots become full-width rows: label and number on one baseline, description below, optional thumbnails last. There are no duplicate controls or IDs; crossing the breakpoint moves the same DOM section back under the ticket.
+
+### Selected photo cards
+- Above the horizontally scrollable strip: uppercase print “1 page ready” / “N pages ready”. Each 108px paper card has a Rule border, Photo Shadow, alternating −1.5° / +1.5° static tilt, and a print “Page N” caption beneath the preview.
+- Round 44px paper buttons overlap the top corners: rotate left, remove right. Rule borders, Faded Ink glyphs, and the shared gate-blue focus ring. Existing accessible names and photo actions stay intact.
+- While the fixed Read dock shows, `cw-has-photos` reserves 112px plus the safe-area inset below main content so the final hint clears the dock, including on desktop.
+
+### Reading ticket
+- Ticket Paper, 1px Rule border, 12px radius, Ticket Shadow, 24px top padding and 16px other padding. A repeated half-circle cutout with a Rule rim perforates the top edge using CSS only.
+- Print status (“Reading 2 of 5 · about 1 min left”) above a 4px gate-blue progress bar on a Rule track. The existing count, progress and message IDs remain.
+- One wrapping chip per batch page, keyed by `data-reading-page`: 24×32px photo preview or numbered blank, plus Waiting / Reading / Reading prices / Read ✓ / Failed. Faded Ink for waiting, gate blue for active, Green ink for Read, Sale Red for Failed. Frequent updates change status attributes and text in place. Completed preview URLs retain the existing cleanup lifecycle.
+- Stop, Retry page N, Resume and Discard preserve their existing behavior and accessible names.
+
+### Printed flyer-sheet rows
+- Bold English name first; small Japanese reference second with `lang="ja"`; a yellow sticker only when a printed saving exists.
+- One muted uppercase DotGothic16 meta line joins the available printed saving (“¥3,300 off as printed”), offer deadline (“use by 30 Nov”), and conditions with “ · ”. A price without a printed comparison stays in that same line. Model text remains escaped. The separate red savings line is removed.
+- Rows have 1px dashed Rule separators, 16px vertical padding, 4px internal gaps, and no enclosing box. Offer/item index attributes remain unchanged.
 
 ### Walk mode (train-door display)
 - Display Black panel, radius 14px, 6px Ticket-gate Blue top edge
@@ -130,24 +150,27 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Tallies: three columns with a 2px ink top rule: walks · km + steps · ¥ saved (Sale Red, "saved, printed on flyers"); hide zeros
 
 ### First visit
-- Before the first photo: a welcome with “Photograph my flyers”, “Choose from photos” and “Try a sample mailbox”, then "How it works" (three numbered steps: photograph the pile → get a ticket for today → walk and collect stamps) and an example ticket captioned "Example · sample shops", with "your station" instead of a real station and tiny printed flyers as thumbnails
-- Desktop: use one full-width column when the side has no content; steps and the example ticket sit side by side. Keep a side column for stamps and, once flyers exist, “Add more flyers”.
+- Before the first photo: a decorative 200px hero scene at the top of the welcome, before the kicker. Three small printed flyers point along a dashed gate-blue route to a miniature ticket with a yellow trial sticker and a Vermilion seal. The scene is `aria-hidden`; its unique `hero-arc` and `hero-arc-text` use the one shared `#ink` filter. The seal never animates. Fixed flyer-paper colours retain their paper appearance in both themes.
+- The welcome has “Photograph my flyers” with a 20px currentColor camera SVG, “Choose from photos” and “Try a sample mailbox”, then "How it works" and the example ticket. At 390×844 the heading, lead, camera action and photo chooser fit without scrolling. Below 360px the decorative flyers and miniature ticket narrow to preserve the gutters and seal.
+- Desktop: the welcome spans the main area and uses two equal columns separated by 32px: text and actions in a maximum 520px left column; the hero vertically centred on the right, scaled 1.35× (1.15× from 960–1100px to maintain clearance). Reserve room for the seal inside the scene. Steps and the example ticket remain side by side below. The scene exists only while the welcome is shown.
+- Photo chooser text buttons use the same maximum 520px, left-aligned column as the camera action and centre their text within it in every photo section. The inline start chooser also caps its content at 520px on desktop.
 - Ask for the walking start inline only before reading or loading the sample. Offer one location reading or line/station selects; default to 40 minutes. Settings opens only from its header button.
 - Store the GPS start on the phone to four decimal places; round all start coordinates to two decimal places for merge and locate requests. Stations from older saved states remain valid.
-- The sample mailbox has eight fictional flyers, seven drawn non-interactive previews and a clear-sample banner. It uses the real route and stamp flow, with no model calls.
+- The sample mailbox has eight fictional flyers, seven drawn non-interactive previews and a slim clear-sample strip: print label, explanatory text and Clear sample share a row when space allows and wrap on phone. Left edges align; Paper Shade background, Rule border, 10px radius, 8px × 12px padding. It uses the real route and stamp flow, with no model calls.
 - Each stage has one muted sentence naming the next action: photo selection, reading, ticket, walk and printed savings.
 
 ### Sheets
 - Bottom sheet on phones (top radius 18px), centred 560px dialog on desktop; Ticket Paper; backdrop `rgba(15,20,24,.45)`; focus returns to the opener
+- Sheet titles use Dela Gothic One 22px / 1.2 with balanced wrapping. After Walk length, Appearance offers Light / Dark / Match my device in three equal chip columns. Radio and label stack vertically to keep labels readable at 320px; each chip exceeds the 44px target minimum. Changes apply and save immediately; Save also retains the selection.
 
 ## 5. Layout Principles
 
 ### Spacing System
-- Base unit 4px; scale 4 · 6 · 8 · 10 · 12 · 14 · 16 · 24 · 32
-- Screen padding 16px × 14px; ticket padding 14px; gaps 10–14px
+- Base unit 4px; use 4 · 8 · 12 · 16 · 24 · 32 for changed gaps and padding. Existing ticket and route values outside this polish remain intact.
+- Screen padding 16px × 14px; existing ticket padding 14px; new welcome gaps 12px, reading gaps 12px, chip gaps 8px, desktop welcome gap 32px.
 
 ### Grid & Container
-- Phone: one column. Tablet (720–959px): a 480px column centred on the Desk. Desktop (≥960px): a 1120px page with two columns: the ticket, gate and tray on the left; a 380px side column with "Add more flyers" and the stamp card; use one column when that side has no content. Walk mode puts the walk's stamp slots in the side column. Sheets are 560px dialogs
+- Phone: one column. Tablet (720–959px): a 480px column centred on the Desk. Desktop (≥960px): a 1120px page with the ticket and gate on the left; a 380px side column with "Add more flyers", the mailbox tray, and the stamp card. The welcome spans the page with its own text/scene columns. Walk mode puts the walk's stamp slots in the side column. Sheets are 560px dialogs. Body uses Desk in both themes at every width; the app remains Ticket Paper.
 
 ### Whitespace Philosophy
 - **The ticket is the page.** The answer screen is one ticket, one gate, one tray. Nothing else competes.
@@ -182,7 +205,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### Don't
 - Don't add tabs, rating buttons, or stop checkboxes
-- Don't use the sticker yellow or sale red for anything except printed prices
+- Don't use sticker yellow except for printed prices; Sale Red also marks Failed reading chips, with the status word always visible
 - Don't use emoji as icons (use print-face labels and the stamp kanji)
 - Don't use `tabular-nums` on Zen Kaku Gothic New
 - Don't show the user's own station, area or addresses anywhere public
@@ -196,13 +219,13 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 |---|---|---|
 | Phone (primary) | < 720px | Single column, bottom sheets, gate full width, 16px gutters |
 | Tablet | 720–959px | 480px app column centred on the Desk; sheets as centred 560px dialogs |
-| Desktop | ≥ 960px | 1120px page; one column for the welcome, ticket + 380px side when it has content; walk stamps beside the board |
+| Desktop | ≥ 960px | 1120px page; welcome text/scene columns, ticket + 380px side with tray and stamps; walk stamps beside the board |
 
 ### Touch Targets
 - 44px minimum hit area (✕ keeps 44px even if the glyph is small); gate buttons 52px+; "I'm here" 56px
 
 ### Collapsing Strategy
-- Tray stays three slots (hides empty ones); stop names wrap to two lines, Japanese reference to one with ellipsis
+- Tray stays three slots on phone/tablet (hides empty ones), three stacked rows on desktop; stop names wrap to two lines, Japanese reference to one with ellipsis
 - Stamp card stays 3 columns; stickers wrap below the name if needed
 
 ### Image Behavior

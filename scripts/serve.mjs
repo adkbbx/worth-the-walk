@@ -9,6 +9,7 @@ import { readPageSchema, mergeSchema, rankSchema, locateSchema } from '../agent/
 loadEnv();
 const root = resolve('dist');
 const types = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
   '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 const limits = { '/api/read-page': 12 * 1024 * 1024, '/api/merge': 1024 * 1024, '/api/rank': 256 * 1024 };

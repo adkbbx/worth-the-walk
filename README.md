@@ -1,14 +1,16 @@
 # Worth the Walk?
 
-Photograph the flyers in your mailbox, read what each one is in English, and plan a walk from your home station to the places worth visiting.
+Photograph the flyers in your mailbox, read what each one is in English, and plan a walk from where you are (or a station you pick) to the places worth visiting. Each stop gives you an ink stamp.
+
+No Japanese flyers to hand? Open the app and tap **Try a sample mailbox**: eight made-up flyers, placed around your start, with no model calls.
 
 ## How it works
 
 1. Photograph the pages. Gemma 4 reads each page whole first (one call), so its card appears within seconds. Only walkable price lists (supermarkets, drugstores, cleaners, menus) get a second pass in six overlapping tiles for exact prices.
-2. Gemma 4 reads the tiles. The app groups pages from the same flyer, merges the readings, and gives each flyer a short English summary.
-3. Sort the pile into **worth a walk**, **deals to use at home**, **keep, not an ad**, and **safe to throw away**. Review the readings and correct page groups when needed.
-4. Rate the flyers you would act on. TabPFN learns from those choices; simple rules handle too few labels or a failed prediction. Plan a walk from your home station past selected places.
-5. At each stop, take one GPS reading to stamp it. Mark the offers you used. Savings count only values printed on the flyer.
+2. The app groups pages from the same flyer (shared phone number, website, or name and address), merges the readings, and gives each flyer a short English summary.
+3. The answer is a ticket: the places **worth a walk**, in order, each with its best printed price. The rest of the pile goes to a tray: **Home** (deals to use at home), **Recycle** (safe to throw away), and **Keep** (personal or official mail; nothing from it is stored). Tap a page to correct its group.
+4. The first time it needs a start, the app asks once: **Use my location** or **Pick a station**. Tap ✕ on any place you don't want. TabPFN learns from your ✕ and your stamps; simple rules take over when there are too few labels or a prediction fails.
+5. **Start the walk** turns the screen into a train-door display. At each stop, one GPS reading checked on the phone gives you an ink stamp; without GPS you get a dashed, self-reported stamp. Mark the offers you used. Savings count only values printed on the flyer.
 
 ## Why open models
 
@@ -84,7 +86,7 @@ See [the architecture contract](docs/chirashi-architecture.md), [agent runtime](
 | DigitalOcean | Serverless inference for the cloud Gemma model through an OpenAI-compatible endpoint. |
 | Mastra | Runs the `readPage` and `mergeFlyer` workflows and their agents. Its MCP client connects to Prior Labs. |
 | TabPFN, Prior Labs MCP | Uploads numeric feature rows, fits a classifier, and predicts which flyers you would act on. No business names, addresses, or flyer text go to TabPFN. |
-| SerpApi | Finds places near your home station only for worth-a-walk flyers without a usable printed address. Uses a disk cache and a search-budget guard. |
+| SerpApi | Finds places near your start only for worth-a-walk flyers without a usable printed address. Uses a disk cache and a search-budget guard. |
 | Sentry Agent Tracing | Keeps model, token, cost, and timing attributes while dropping prompts, outputs, images, and URLs with query strings. |
 | Render | Hosts the Node server and static phone app using `render.yaml`. |
 | GSI address search, 国土地理院 | Resolves printed Japanese addresses. Free, no API key; results can be at block precision. |
@@ -110,10 +112,10 @@ Only offers and items you mark as used enter the savings total. The app counts a
 
 ## Privacy rules
 
-- The browser tiles photos, sends each page once to the app server, and discards the photos after reading. The server does not save images or mailbox records. Cloud mode forwards tiles to DigitalOcean for inference.
+- The browser shrinks each photo and sends each page once to the app server (as six tiles only for price lists), and the server discards the photos after reading. The server does not save images or mailbox records. Cloud mode forwards tiles to DigitalOcean for inference.
 - Settings, extracted flyer records, labels, walks, and stamps live in the phone's localStorage. There are no accounts. Clearing browser storage removes that history.
 - Personal or official mail retains only its ID, page IDs, bucket, and category. Its extracted page readings are removed from saved state.
-- GSI receives a printed or manually entered address. SerpApi receives a business name and the location of your home station. Its server-side cache stores sanitized public place results and a budget ledger, not mail photos.
+- If you use your location as the start, it stays on the phone; the server only ever receives the start rounded to two decimals (about 1 km). GSI receives a printed or manually entered address. SerpApi receives a business name and that rounded start. Its server-side cache stores sanitized public place results and a budget ledger, not mail photos.
 - TabPFN receives numeric feature rows and labels. Sentry receives sanitized traces. GPS readings stay in the browser; the app saves stamp time, type, and distance rather than a GPS trail.
 - Opening a walking route sends the route locations to Google Maps.
 
@@ -193,7 +195,7 @@ npm run check:chirashi
 
 `npm test` runs unit, agent, and server tests offline with fixtures and injected transports. It does not call real model or lookup services.
 
-`npm run check:chirashi` uses Playwright and an installed Microsoft Edge. It starts its own mock server, uses a 390×844 phone viewport and a fixed clock, and checks scanning, grouping, privacy, ranking requests, walks, GPS and self-reported stamps, printed savings, and persistence. It also checks desktop overflow and `/shops.html`. Screenshots go to `.impeccable/review/`. Use `TEST_BROWSER=chrome` to select installed Chrome instead.
+`npm run check:chirashi` uses Playwright and an installed Microsoft Edge. It starts its own mock server, uses a 390×844 phone viewport and a fixed clock, and checks the welcome screen, the sample mailbox (no API calls), the inline start chooser, scanning, grouping, privacy (including the rounded start), ranking requests, walks, GPS and self-reported stamps, printed savings, and persistence. It also checks desktop overflow and `/shops.html`. Screenshots go to `.impeccable/review/`. Use `TEST_BROWSER=chrome` to select installed Chrome instead.
 
 ## Deploy on Render
 

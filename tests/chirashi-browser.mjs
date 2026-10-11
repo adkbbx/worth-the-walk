@@ -61,11 +61,13 @@ async function bothWidths(page,label,screenshot=false) {
   await page.setViewportSize({width:1280,height:900}); await overflow(page,label+' 1280');
   if (screenshot && !capturedScreens.has(label)) await page.screenshot({path:`.impeccable/review/chirashi-${label}-desktop.png`,fullPage:true});
   if (screenshot) capturedScreens.add(label);
+  for (const width of [320,768,960,1440]) { await page.setViewportSize({width,height:900}); await overflow(page,label+' '+width); }
   await page.setViewportSize({width:390,height:844});
 }
 async function ticketChecks(page) {
   const ticket=page.locator('.cw-ticket');
   assert.equal(await ticket.count(),1,'answer is a ticket');
+  assert.equal(await page.locator('.cw-hero-scene').count(),0,'hero disappears once flyers exist');
   const route=ticket.locator('.cw-route');
   assert.ok(await ticket.getByText("Tap ✕ on any place you don't want. Start when you're ready.",{exact:true}).isVisible(),'ticket explains the remove button');
   const rows=route.locator(':scope > .cw-route-station, :scope > .cw-route-stop');
@@ -98,9 +100,23 @@ async function welcome(page) {
   await page.locator('.cw-snap').getByRole('heading',{name:'One good reason to go outside.',exact:true}).waitFor();
   assert.ok(await page.getByRole('button',{name:'Photograph my flyers',exact:true}).isVisible());
   assert.ok(await page.getByRole('button',{name:'Try a sample mailbox',exact:true}).isVisible());
+  assert.ok(await page.locator('.cw-hero-scene').isVisible(),'welcome has the decorative scene');
+  assert.equal(await page.locator('#hero-arc').count(),1);
+  assert.equal(await page.locator('#ink').count(),1);
+  assert.equal(await page.locator('.cw-hero-seal').evaluate(el => getComputedStyle(el).animationName),'none');
+  await page.setViewportSize({width:390,height:844}); await page.evaluate(() => window.scrollTo(0,0));
+  for (const el of [page.locator('.cw-welcome h1'),page.locator('.cw-welcome-copy > .cw-muted'),page.locator('[data-action=take-photo]'),page.locator('[data-action=choose-photos]')]) {
+    assert.ok(await el.evaluate(el => { const r=el.getBoundingClientRect(); return r.top>=0 && r.bottom<=innerHeight; }),'welcome essentials fit above the fold');
+  }
   await bothWidths(page,'welcome',true);
   await page.setViewportSize({width:1280,height:900});
   assert.ok(await page.locator('.cw-home').evaluate(el => el.classList.contains('cw-home-single')),'empty side does not reserve a desktop column');
+  assert.ok(await page.locator('.cw-welcome').evaluate(el => {
+    const copy=el.querySelector('.cw-welcome-copy').getBoundingClientRect();
+    return [...el.querySelectorAll('.cw-hero-scene .cw-mini, .cw-hero-ticket, .cw-hero-seal')].every(node => {
+      const r=node.getBoundingClientRect(); return r.left>=copy.right && r.right<=innerWidth;
+    });
+  }),'desktop scene clears the text column and keeps the seal in the viewport');
   await page.setViewportSize({width:390,height:844});
 }
 async function chooseStart(page) {
@@ -115,6 +131,8 @@ async function chooseStart(page) {
 }
 async function settingsStation(page) {
   await page.locator('#settings-button').click(); await page.locator('#setup[open]').waitFor();
+  assert.ok(await page.getByRole('group',{name:'Appearance',exact:true}).isVisible());
+  await page.getByRole('group',{name:'Appearance',exact:true}).scrollIntoViewIfNeeded();
   await bothWidths(page,'settings',true);
   assert.equal(await page.locator('#setup-weight').isVisible(),false,'weight stays under More');
   await page.locator('#setup-line').selectOption('skytree'); await page.locator('#setup-station').selectOption(station.id);
@@ -160,6 +178,37 @@ try {
   server=spawn(process.execPath,['scripts/serve.mjs','--mock'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4180',HOST:'127.0.0.1',MOCK_GEMMA:'1',SENTRY_DSN:''},stdio:['ignore','pipe','pipe'],windowsHide:true});
   server.on('error',e => { serverError=e; }); server.stdout.on('data',c => { logs+=c; }); server.stderr.on('data',c => { logs+=c; });
   await waitServer(); browser=await chromium.launch({channel:process.env.TEST_BROWSER || 'msedge'}); await mkdir('.impeccable/review',{recursive:true});
+  // Appearance applies immediately, follows the device only by choice, and survives Save/reload.
+  const appearance=await newPhone({colorScheme:'dark'}); await setup(appearance.page);
+  async function themeChecks(page,scheme,attribute) {
+    assert.equal(await page.locator('html').getAttribute('data-theme'),attribute);
+    const expected=scheme === 'dark' ? 'rgb(11, 15, 18)' : 'rgb(228, 233, 225)';
+    assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).getPropertyValue('--desk').trim()),scheme === 'dark' ? '#0b0f12' : '#e4e9e1');
+    assert.equal(await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor),expected);
+    assert.equal(await page.locator('html').evaluate(el => getComputedStyle(el).colorScheme),scheme);
+  }
+  async function metaChecks(page,light,dark=light) {
+    assert.deepEqual(await page.locator('meta[name="theme-color"]').evaluateAll(els => els.map(el => el.content)),[light,dark]);
+  }
+  await themeChecks(appearance.page,'light','light'); await metaChecks(appearance.page,'#f6f8f2');
+  await appearance.page.locator('#settings-button').click(); await appearance.page.getByLabel('Dark',{exact:true}).check();
+  await themeChecks(appearance.page,'dark','dark'); await metaChecks(appearance.page,'#151b1f');
+  assert.equal((await readState(appearance.page)).settings.theme,'dark');
+  await appearance.page.reload(); await appearance.page.getByText('Demo mode',{exact:true}).waitFor();
+  await themeChecks(appearance.page,'dark','dark'); await metaChecks(appearance.page,'#151b1f');
+  await appearance.page.locator('#settings-button').click(); await appearance.page.getByLabel('Match my device',{exact:true}).check();
+  await themeChecks(appearance.page,'dark',null); await metaChecks(appearance.page,'#f6f8f2','#151b1f');
+  await appearance.page.emulateMedia({colorScheme:'light'}); await themeChecks(appearance.page,'light',null);
+  await appearance.page.getByRole('button',{name:'Save',exact:true}).click();
+  await appearance.page.reload(); await appearance.page.getByText('Demo mode',{exact:true}).waitFor();
+  assert.equal((await readState(appearance.page)).settings.theme,'auto'); await themeChecks(appearance.page,'light',null);
+  // A legacy save and an unrecognised preference both upgrade to light.
+  for (const value of [null,'unexpected']) {
+    await appearance.page.evaluate(({key,value}) => { const s=JSON.parse(localStorage.getItem(key)); if (value===null) delete s.settings.theme; else s.settings.theme=value; localStorage.setItem(key,JSON.stringify(s)); },{key,value});
+    await appearance.page.reload(); await appearance.page.getByText('Demo mode',{exact:true}).waitFor();
+    assert.equal((await readState(appearance.page)).settings.theme,'light'); await themeChecks(appearance.page,'light','light');
+  }
+  await appearance.context.close();
   const {context,page}=await newPhone();
   const last=gate(), detail=gate(), pageIndices=new Map(); let index=0, marketId, detailFinished=false;
   const pilates=structuredClone(fixture[0]); pilates.category='fitness'; pilates.business={name:'Fictional Pilates <img src=x onerror=alert(1)>',kind:'Pilates studio'}; pilates.phones=['0120-000-666']; pilates.offers=[{kind:'discount',text_en:'Trial',text_ja:'体験',regular_yen:3300,offer_yen:1000,deadline_text:'10月31日まで'}];
@@ -180,6 +229,9 @@ try {
   assert.equal(await page.locator('.cw-photo').count(),0); assert.deepEqual(await rows(page),[]); assert.deepEqual(await rows(page,'thumbs'),[]);
   await select(page,images);
   assert.ok(await page.getByText('Add every page of every flyer, then tap Read.',{exact:true}).isVisible());
+  assert.equal(await page.locator('.cw-hero-scene').count(),0,'hero disappears after selecting photos');
+  assert.ok(await page.getByText('7 pages ready',{exact:true}).isVisible());
+  assert.equal(await page.locator('.cw-photo > .cw-print').first().textContent(),'Page 1');
   await page.getByRole('button',{name:'Rotate page 2',exact:true}).click();
   await page.waitForFunction(() => document.querySelectorAll('.cw-photo')[1]?.dataset.rotation==='90' && !document.querySelector('[data-action=read]').disabled);
   assert.ok(await page.locator('.cw-photo img').nth(1).evaluate(i => i.naturalWidth>i.naturalHeight));
@@ -187,6 +239,12 @@ try {
   assert.ok(thumbsBefore.every(t => t.type==='image/jpeg' && t.size>0));
   assert.ok(await page.getByRole('button',{name:'Read 7 flyers',exact:true}).evaluate(el => { const r=el.getBoundingClientRect(); return r.bottom<=innerHeight && r.top>=0; }),'read action sits above the bottom edge');
   await bothWidths(page,'snap',true);
+  for (const width of [320,390,768,1280,1440]) {
+    await page.setViewportSize({width,height:844});
+    await page.evaluate(() => window.scrollTo(0,document.documentElement.scrollHeight));
+    assert.ok(await page.getByText('Add every page of every flyer, then tap Read.',{exact:true}).evaluate(el => el.getBoundingClientRect().bottom <= document.querySelector('.cw-read-dock').getBoundingClientRect().top),'last hint clears the read dock');
+  }
+  await page.setViewportSize({width:390,height:844});
   await page.getByRole('button',{name:'Read 7 flyers',exact:true}).click();
   await chooseStart(page);
   await page.locator('#reading-progress').waitFor(); await page.locator('.cw-stop-row').first().waitFor();
@@ -194,6 +252,13 @@ try {
   assert.match(await page.locator('#reading-count').textContent(),/Reading \d of 7 · about \d min left/);
   assert.equal(await page.locator('progress').count(),1); assert.ok(Object.keys((await readState(page)).pages).length<7,'first stop appears before last page finishes');
   await page.locator('[data-reading-prices]').waitFor(); assert.equal(detailFinished,false);
+  assert.equal(await page.locator('[data-reading-page]').count(),7);
+  assert.ok(await page.locator('[data-reading-page][data-status=detailing]').getByText('Reading prices',{exact:true}).isVisible());
+  await page.waitForFunction(key => document.querySelectorAll('[data-reading-page][data-status=read]').length===5 && Object.values(JSON.parse(localStorage.getItem(key)).pages).every(p => !p.needsMerge),key);
+  await page.evaluate(() => { window.readingChip=document.querySelector('[data-reading-page][data-status=detailing]'); });
+  await bothWidths(page,'reading',true);
+  await delay(1100);
+  assert.ok(await page.evaluate(() => window.readingChip.isConnected),'timer updates keep chip nodes in place');
   const preliminary=(await readState(page)).flyers.find(f => f.pageIds.includes(marketId));
   await page.waitForFunction(() => document.querySelector('#reading-progress')?.max===13);
   detail.release(); last.release(); await finished(page);
@@ -222,9 +287,18 @@ try {
   }
   for (const bucket of ['home','toss','keep']) { await page.locator(`[data-action=bucket-sheet][data-id=${bucket}]`).click(); await page.locator('#sheet[open]').waitFor(); await bothWidths(page,bucket+'-sheet'); if (bucket==='home') assert.match(await page.locator('#sheet a[href^="tel:"]').getAttribute('href'),/^tel:\d+$/); if (bucket==='keep') { assert.equal(await page.locator('#sheet img').count(),0); assert.ok(await page.getByText('Nothing from these was saved.',{exact:true}).isVisible()); } await page.getByRole('button',{name:'Close sheet',exact:true}).click(); }
   await bothWidths(page,'answer',true);
+  assert.equal(await page.locator('.cw-mailbox-tray').count(),1);
+  assert.ok(await page.locator('.cw-answer .cw-mailbox-tray').isVisible());
+  await page.setViewportSize({width:1280,height:900});
+  assert.ok(await page.locator('.cw-home-side .cw-mailbox-tray').isVisible());
+  assert.ok(await page.locator('.cw-home-side [data-action=choose-photos]').evaluate(el => { const primary=el.parentElement.querySelector('[data-action=take-photo]').getBoundingClientRect(), r=el.getBoundingClientRect(); return Math.abs(r.left-primary.left)<1 && Math.abs(r.width-primary.width)<1; }),'photo chooser aligns under its button');
+  await page.setViewportSize({width:390,height:844});
   const dojo=sorted.flyers.find(f => f.category==='lesson'), dojoRow=page.locator(`[data-flyer="${dojo.id}"]`);
   await dojoRow.locator('[data-action=flyer-sheet]').click(); await page.locator('#sheet[open]').waitFor();
   await page.getByRole('heading',{name:'How to use',exact:true}).waitFor(); assert.match(await page.locator('#sheet').textContent(),/This photo shows 3 flyers/);
+  assert.equal(await page.locator('#sheet .cw-value').count(),0);
+  assert.ok(await page.locator('#sheet .cw-entry .cw-meta').count()>0);
+  assert.ok(await page.locator('#sheet .cw-entry').evaluateAll(rows => rows.every(row => row.querySelectorAll('.cw-meta').length<=1 && getComputedStyle(row).borderTopStyle==='dashed')),'entries have one printed meta line and dashed rules');
   await bothWidths(page,'flyer-sheet',true);
   await page.locator('#sheet .cw-page-tile').first().click(); await page.getByRole('heading',{name:'This page',exact:true}).waitFor();
   await page.keyboard.press('Escape'); await page.getByRole('heading',{name:'How to use',exact:true}).waitFor();
@@ -258,6 +332,9 @@ try {
   const first=state.flyers.find(f => f.id===outing.stopIds[0]); await context.setGeolocation({latitude:first.location.lat,longitude:first.location.lon,accuracy:1});
   await page.getByRole('button',{name:"I'm here",exact:true}).click(); await page.locator('.cw-stamp.gps').waitFor();
   await sealChecks(page); await bothWidths(page,'stamped-stop',true);
+  assert.equal(await page.locator('#stamps-button').getAttribute('aria-label'),'Your stamps');
+  assert.equal(await page.locator('#stamps-button .cw-stamp-count').textContent(),'1');
+  assert.equal(await page.locator('#stamps-button .cw-stamp-count').getAttribute('aria-hidden'),'true');
   assert.equal((await readState(page)).labels[first.id],1); assert.ok(await page.getByRole('heading',{name:'Did you use it?',exact:true}).isVisible());
   // Walk order varies with the demo locations, so pick the chip with the highest printed value (a stop may have none).
   const chips=await page.locator('[data-action=used]').evaluateAll(els => els.map(el => ({kind:el.dataset.kind,index:Number(el.dataset.index)})));
@@ -273,6 +350,7 @@ try {
   await page.getByRole('heading',{name:'Walk done',exact:true}).waitFor();
   if (expectedYen>0) assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));
   const done=(await readState(page)).outings.at(-1); assert.equal(done.status,'done'); assert.equal(done.stamps.length,2); assert.equal(savings(done.used.map(u => ({entry:state.flyers.find(f => f.id===u.flyerId)[u.kind==='offer' ? 'offers' : 'items'][u.index]}))).yen,expectedYen);
+  assert.equal(await page.locator('#stamps-button .cw-stamp-count').textContent(),'2');
   await bothWidths(page,'done',true); await page.locator('.cw-done').getByRole('button',{name:'Your stamps',exact:true}).click(); await page.locator('#sheet[open]').waitFor();
   assert.equal(await page.locator('#sheet [data-stamp]').count(),2); assert.equal(await page.locator('#sheet [data-history-flyer]').count(),5);
   await sealChecks(page);
@@ -285,7 +363,7 @@ try {
   await page.getByRole('button',{name:'Back to my mailbox',exact:true}).click(); await page.locator('.cw-snap').waitFor(); await bothWidths(page,'returned-mailbox');
   // Use the same saved mailbox to inspect both dark screens without additional reads.
   const dark=await newPhone({colorScheme:'dark'});
-  await dark.page.addInitScript(({key,state}) => localStorage.setItem(key,JSON.stringify(state)),{key,state:{...await readState(page),outings:[]}});
+  await dark.page.addInitScript(({key,state}) => localStorage.setItem(key,JSON.stringify(state)),{key,state:{...await readState(page),settings:{...(await readState(page)).settings,theme:'dark'},outings:[]}});
   await open(dark.page); await copyThumbs(page,dark.page); await dark.page.reload(); await dark.page.getByText('Demo mode',{exact:true}).waitFor();
   assert.equal(await dark.page.locator('.cw-start, #setup[open]').count(),0,'saved station state needs no chooser');
   await dark.page.locator('.cw-ticket').waitFor(); await ticketChecks(dark.page);
@@ -440,6 +518,7 @@ try {
   assert.equal((await readState(sample.page)).outings.length,0); assert.deepEqual((await readState(sample.page)).labels,{});
   assert.equal((await rows(sample.page,'thumbs')).filter(t => t.pageId.startsWith('sample-')).length,0);
   assert.deepEqual(sampleCalls,[],'the whole sample stamp loop stays local');
+  await sample.page.locator('#settings-button').click(); await sample.page.getByLabel('Dark',{exact:true}).check(); await sample.page.keyboard.press('Escape');
   await sample.page.emulateMedia({colorScheme:'dark'}); await bothWidths(sample.page,'welcome-dark',true);
   await sample.page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
   await sample.page.getByRole('heading',{name:'4 places worth the walk',exact:true}).waitFor();
@@ -489,7 +568,7 @@ try {
   assert.ok(merges.every(m => !m.home || typeof m.home.stationId==='string' && coarse(m.home.lat) && coarse(m.home.lon)),'stations and GPS both use coarse merge coordinates');
   assert.ok(locates.every(l => coarse(l.lat) && coarse(l.lon)),'all locate start coordinates are coarse');
   console.log('Chirashi browser: PASS · welcome → inline start → sample/photo → answer → walk · visual grouping · implicit labels · GPS/self stamps · printed savings · thumbnails/privacy · separate contexts · adaptive reading/merge recovery · train starts · 60/90 min · focus/escaping · 390/1280px · GPS request privacy · sample cleanup · station compatibility.');
-  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,answer,flyer-sheet,page-sheet,walk,done,stamps}.png');
+  console.log('Screenshots: .impeccable/review/chirashi-{welcome,start-chooser,sample,snap,reading,settings,answer,flyer-sheet,page-sheet,walk,done,stamps}.png');
 } finally {
   for (const release of releases) release();
   await browser?.close();
