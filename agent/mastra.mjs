@@ -22,11 +22,11 @@ function compact(value) {
     .map(([key, item]) => [key, compact(item)]));
 }
 
-// Demo mode places each walkable flyer 300–900 m from the home station so walks can be planned offline.
+// Demo mode places each walkable flyer 250–600 m north-east of the home station, so any two fit one walk offline.
 function mockLocation(flyerId, home) {
   let hash = 0;
   for (const char of String(flyerId)) hash = (hash * 31 + char.codePointAt(0)) >>> 0;
-  const meters = 300 + hash % 600, angle = (hash % 360) * Math.PI / 180;
+  const meters = 250 + hash % 350, angle = (hash % 90) * Math.PI / 180;
   return { lat: home.lat + meters * Math.cos(angle) / 111320,
     lon: home.lon + meters * Math.sin(angle) / (111320 * Math.cos(home.lat * Math.PI / 180)),
     source: 'mock', precision: 'demo' };

@@ -9,7 +9,8 @@
     "dev:mock": "node scripts/serve.mjs --mock",
     "check": "node --test tests/rules.test.mjs tests/data.test.mjs",
     "build": "node scripts/build.mjs",
-    "check:browser": "node tests/browser.mjs"
+    "check:browser": "node tests/browser.mjs",
+    "check:chirashi": "node tests/chirashi-browser.mjs"
   },
   "devDependencies": {
     "playwright": "1.62.1"
