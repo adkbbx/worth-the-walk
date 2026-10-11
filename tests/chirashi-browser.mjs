@@ -66,6 +66,7 @@ try {
   });
   await mkdir('.impeccable/review',{recursive:true});
   await page.goto(base); await page.getByText('Demo mode',{exact:true}).waitFor();
+  assert.match(await page.locator('meta[name=viewport]').getAttribute('content'),/viewport-fit=cover/);
   assert.equal((await readState(page)).settings.home,null);
   await overflow(page,'setup');
   await page.locator('#setup-line').selectOption('skytree');
@@ -86,6 +87,9 @@ try {
     window.readProgress = [];
     new MutationObserver(() => window.readProgress.push(document.querySelector('#progress').textContent)).observe(document.querySelector('#progress'),{childList:true,subtree:true,characterData:true});
   });
+  await page.locator('#photos-input').setInputFiles([files[0]]);
+  await page.getByRole('button',{name:'Read 1 page',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
   await page.locator('#photos-input').setInputFiles(files);
   assert.equal(await page.locator('.cw-photo').count(),3);
   await page.getByRole('button',{name:'Rotate page 1'}).click();
@@ -94,7 +98,9 @@ try {
   await page.waitForFunction(key => JSON.parse(localStorage.getItem(key)).flyers.length === 3,key);
   await page.locator('[data-action=read]').waitFor({state:'detached'});
   assert.equal(await page.locator('[data-bucket]').count(),4);
-  assert.match(await page.locator('#mailbox-stat').textContent(),/3 flyers sorted → 2 outings, 1 deals, 0 safe to throw away/);
+  assert.match(await page.locator('#mailbox-stat').textContent(),/3 flyers sorted → 2 outings, 1 deal, 0 safe to throw away/);
+  assert.equal(await page.locator('#progress').textContent(),'');
+  assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#panel h1')),true);
   assert.equal(await page.locator('[data-bucket=toss]').getAttribute('open'),null);
   assert.ok(await page.evaluate(() => window.readProgress.some(p => /Reading page \d of 3 · part \d of 6/.test(p))));
   await page.locator('#photos-input').setInputFiles(files);
@@ -110,27 +116,48 @@ try {
   assert.ok(!JSON.stringify(sorted).includes('data:image/'),'no stored images');
   assert.equal(Object.values(sorted.pages).length,5);
   await page.locator('[data-bucket=toss]>summary').click();
-  for (const f of sorted.flyers) {
+  assert.equal(await page.locator(`[data-flyer="${kept.id}"] [data-action=rate]`).count(),0);
+  for (const f of sorted.flyers.filter(f => f.bucket !== 'keep')) {
     const label = f.bucket === 'walk' ? 1 : 0;
     await page.locator(`[data-flyer="${f.id}"] [data-action=rate][data-label="${label}"]`).click();
   }
+  assert.equal(ranks.length,0,'five eligible ratings do not meet the six-choice threshold');
+  // A legacy personal-mail label must never count. Add a sixth advert to exercise ranking.
+  await page.evaluate(({key,keptId}) => {
+    const state = JSON.parse(localStorage.getItem(key));
+    state.labels[keptId] = 1;
+    const extra = structuredClone(state.flyers.find(f => f.bucket === 'toss'));
+    extra.id = 'ranking-test-advert'; state.flyers.push(extra); state.labels[extra.id] = 0;
+    localStorage.setItem(key,JSON.stringify(state));
+  },{key,keptId:kept.id});
+  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
   await page.getByText('based on your 6 choices (simple rules)',{exact:true}).waitFor();
   assert.ok(ranks.length >= 1);
   assert.equal(ranks.at(-1).train.length,6);
   assert.deepEqual(new Set(ranks.at(-1).train.map(t => t.label)),new Set([0,1]));
-  await page.locator('[data-bucket=toss]>summary').click();
+  assert.equal(ranks.at(-1).predict.some(f => f.id === kept.id),false);
+  await page.evaluate(key => {
+    const state = JSON.parse(localStorage.getItem(key));
+    state.flyers = state.flyers.filter(f => f.id !== 'ranking-test-advert');
+    delete state.labels['ranking-test-advert']; localStorage.setItem(key,JSON.stringify(state));
+  },key);
+  await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
   await snapshot(page,'mailbox');
   await page.locator('[data-tab=walk]').click();
+  assert.deepEqual(errors,[],'no page errors when opening the Walk tab');
+  assert.equal(await page.evaluate(() => document.activeElement === document.querySelector('#panel h1')),true);
   await page.getByRole('button',{name:'Plan walk',exact:true}).click();
   let planned = (await readState(page)).outings.find(o => o.status === 'planned');
   assert.ok(planned.stopIds.length >= 2,'plan has two nearby demo stops');
   assert.ok(planned.minutes <= 40);
   assert.match(await page.getByRole('link',{name:'Open walking route'}).getAttribute('href'),/travelmode=walking/);
+  assert.ok(await page.locator('.cw-route .cw-stop-reason').count() > 0);
   await snapshot(page,'walk');
   await page.getByRole('button',{name:'Start walk',exact:true}).click();
   await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
   await page.locator('[data-tab=walk]').click();
   await page.getByRole('heading',{name:'Your walk is underway.'}).waitFor();
+  assert.ok(await page.locator('[data-active-stop] .cw-stop-reason').count() > 0);
   let saved = await readState(page), outing = saved.outings.find(o => o.status === 'active');
   const first = saved.flyers.find(f => f.id === outing.stopIds[0]);
   await context.setGeolocation({latitude:first.location.lat,longitude:first.location.lon,accuracy:1});
@@ -151,7 +178,19 @@ try {
   await used.check();
   assert.match(await page.locator('#walk-saved').textContent(),new RegExp(`Saved ¥${expectedYen.toLocaleString('en-US')}`));
   await page.locator('[data-tab=stamps]').click();
+  await page.getByRole('heading',{name:`Walk in progress · 2 of ${outing.stopIds.length} stops stamped`,exact:true}).waitFor();
+  await page.getByText('Finish a walk this week to start a streak',{exact:true}).waitFor();
+  assert.equal(await page.getByText('+ 0 used without a printed value',{exact:true}).count(),0);
+  await page.getByRole('button',{name:'Continue walk',exact:true}).click();
+  await page.getByRole('heading',{name:'Your walk is underway.'}).waitFor();
+  await page.locator('[data-tab=stamps]').click();
   assert.equal(await page.locator('.cw-stamp').count(),2);
+  await page.getByText('self-reported',{exact:true}).waitFor();
+  assert.deepEqual(await page.locator('.cw-stamp').first().evaluate(el => {
+    const s = getComputedStyle(el); return [s.width,s.height,s.borderTopWidth,s.color];
+  }),['104px','104px','3px','rgb(181, 69, 8)']);
+  assert.equal(await page.locator('.cw-stamp.self').evaluate(el => getComputedStyle(el).opacity),'0.6');
+  assert.equal(await page.locator('.cw-stamp-grid').evaluate(el => getComputedStyle(el).gridTemplateColumns.split(' ').length),2);
   assert.equal(await page.locator('[data-metric="places stamped"] strong').textContent(),'2');
   assert.equal(await page.locator('[data-metric="yen saved"] strong').textContent(),'¥'+expectedYen.toLocaleString('en-US'));
   await snapshot(page,'stamps');
@@ -159,6 +198,8 @@ try {
   assert.equal((await readState(page)).outings.find(o => o.status === 'active').stamps.length,2);
   await page.locator('[data-tab=history]').click();
   assert.equal(await page.locator('.cw-history-item').count(),7);
+  assert.equal(await page.locator('.cw-history-item .cw-pill').first().evaluate(el => getComputedStyle(el).display),'inline-block');
+  assert.ok((await page.locator('.cw-history-item > .cw-meta').first().textContent()).includes('1 page'));
   await snapshot(page,'history');
   await page.locator('#history-search').fill('aikido');
   assert.ok(await page.locator('.cw-history-item').count() >= 2);
@@ -173,6 +214,8 @@ try {
   await page.locator('[data-tab=walk]').click();
   await page.getByRole('button',{name:'Finish walk',exact:true}).click();
   assert.equal((await readState(page)).outings.find(o => o.id === outing.id).status,'done');
+  assert.equal(await page.getByRole('button',{name:'Continue walk',exact:true}).count(),0);
+  await page.getByText('1 week in your weekly streak',{exact:true}).waitFor();
   assert.equal(await page.locator('[data-metric="walks done"] strong').textContent(),'1');
   assert.ok(Number(await page.locator('[data-metric="km"] strong').textContent()) > 0);
   assert.equal(savings([{entry:saved.flyers.find(f => f.id === usedId).offers[usedIndex]}]).yen,expectedYen);

@@ -6,6 +6,7 @@ import {japanToday, storePrograms, reward, nextBonus} from '/rules.mjs';
 const KEY = 'chirashi-walk-v1';
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const plural = (n, one, many) => n === 1 ? one : many;
 const money = value => '¥' + Number(value).toLocaleString('en-US');
 const uid = prefix => prefix + crypto.randomUUID();
 const now = () => new Date().toISOString();
@@ -61,7 +62,7 @@ const scanDate = f => state.pages[f.pageIds?.[0]]?.scannedAt?.slice(0,10) ?? jap
 const sortedWalks = () => state.flyers.filter(f => f.bucket === 'walk').sort((a,b) => (scores.get(b.id) ?? 0) - (scores.get(a.id) ?? 0));
 function mailboxStat() {
   const count = bucket => state.flyers.filter(f => f.bucket === bucket).length;
-  return `${state.flyers.length} flyers sorted → ${count('walk')} outings, ${count('home')} deals, ${count('toss')} safe to throw away`;
+  return `${state.flyers.length} ${plural(state.flyers.length,'flyer','flyers')} sorted → ${count('walk')} ${plural(count('walk'),'outing','outings')}, ${count('home')} ${plural(count('home'),'deal','deals')}, ${count('toss')} safe to throw away`;
 }
 function row(f) { const h = home(); return featureRow(f,{today:japanToday(),distanceMeters:h && f.location ? distanceMeters(h,f.location) : null}); }
 async function api(path, body) {
@@ -74,7 +75,7 @@ async function api(path, body) {
 }
 async function rank() {
   const sequence = ++rankSequence;
-  const train = state.flyers.filter(f => Object.hasOwn(state.labels,f.id)).map(f => ({row:row(f),label:state.labels[f.id]}));
+  const train = state.flyers.filter(f => f.bucket !== 'keep' && Object.hasOwn(state.labels,f.id)).map(f => ({row:row(f),label:state.labels[f.id]}));
   if (train.length < 6 || new Set(train.map(t => t.label)).size < 2) { scores.clear(); rankModel = ''; render(); return; }
   try {
     const result = await api('/api/rank',{train,predict:state.flyers.filter(f => f.bucket === 'walk').map(f => ({id:f.id,row:row(f)}))});
@@ -83,8 +84,8 @@ async function rank() {
   } catch (error) { if (sequence === rankSequence) notify(error.message); }
 }
 function personalNote() {
-  const n = state.flyers.filter(f => Object.hasOwn(state.labels,f.id)).length;
-  return rankModel ? `based on your ${n} choices (${rankModel === 'tabpfn' ? 'TabPFN' : 'simple rules'})` : n < 6 ? 'Rate 6 flyers to personalise' : 'Choose both 👍 and 👎 to personalise';
+  const n = state.flyers.filter(f => f.bucket !== 'keep' && Object.hasOwn(state.labels,f.id)).length;
+  return rankModel ? `based on your ${n} ${plural(n,'choice','choices')} (${rankModel === 'tabpfn' ? 'TabPFN' : 'simple rules'})` : n < 6 ? 'Rate 6 flyers to personalise' : 'Choose both 👍 and 👎 to personalise';
 }
 function renderSetup() {
   $('setup').hidden = !setupOpen;
@@ -105,11 +106,12 @@ function stationOptions(selected) {
   $('setup-station').value = selected ?? '';
 }
 function rating(f) {
+  if (f.bucket === 'keep') return '';
   return `<div class="cw-actions"><span class="cw-muted">Interested?</span>${[1,0].map(v => `<button type="button" data-action="rate" data-id="${escape(f.id)}" data-label="${v}" aria-label="${v ? 'Interested' : 'Not interested'} in this flyer" aria-pressed="${state.labels[f.id] === v}">${v ? '👍' : '👎'}</button>`).join('')}</div>`;
 }
 function valueLine(entry) { const value = printedValue(entry); return value === null ? '' : `<p class="cw-value">worth ${money(value)} as printed</p>`; }
 function entryList(f,outing = null) {
-  const selected = (kind,index) => outing?.used.some(u => u.flyerId === f.id && u.kind === kind && u.index === index);
+  const selected = (kind,index) => outing?.used?.some(u => u.flyerId === f.id && u.kind === kind && u.index === index);
   const control = (kind,index) => outing ? `<label class="cw-check"><input type="checkbox" data-used="${escape(f.id)}" data-kind="${kind}" data-index="${index}" data-outing="${escape(outing.id)}" ${selected(kind,index) ? 'checked' : ''}>${kind === 'offer' ? 'Used it' : 'Bought it'}</label>` : kind === 'item' ? `<label class="cw-check"><input type="checkbox" data-shopping="${escape(f.id)}" data-index="${index}" ${shoppingList.has(f.id + ':' + index) ? 'checked' : ''}>add to my walk list</label>` : '';
   const offers = (f.offers ?? []).map((o,i) => {
     const deadline = parseDeadline(o.deadline_text,scanDate(f));
@@ -126,8 +128,8 @@ function locationLine(f) {
   return `<form data-locate="${escape(f.id)}"><label class="cw-field">No address — type one<input name="address" required maxlength="300" placeholder="Printed address or business name"></label><button type="submit" ${busy ? 'disabled' : ''}>Find address</button></form>`;
 }
 function fixControl(f) {
-  if (!f.pageIds.some(id => state.pages[id])) return `<p class="cw-meta">${f.pageIds.length} ${f.pageIds.length === 1 ? 'page' : 'pages'}</p><p class="cw-muted">Personal text and page readings have been discarded.</p>`;
-  return `<details><summary>${f.pageIds.length} ${f.pageIds.length === 1 ? 'page' : 'pages'} · Fix pages</summary><form data-fix="${escape(f.id)}">${f.pageIds.map((id,index) => `<label class="cw-field">Page ${index + 1}<select name="${escape(id)}"><option value="keep">Keep in this flyer</option>${state.flyers.filter(other => other.id !== f.id && other.bucket !== 'keep').map(other => `<option value="${escape(other.id)}">Move to ${escape(other.business?.name ?? 'another flyer')}</option>`).join('')}<option value="split">Split into new flyer</option></select></label>`).join('')}<button type="submit" ${busy ? 'disabled' : ''}>Save pages &amp; re-read groups</button></form></details>`;
+  if (!f.pageIds.some(id => state.pages[id])) return `<p class="cw-meta">${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')}</p><p class="cw-muted">Personal text and page readings have been discarded.</p>`;
+  return `<details><summary>${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')} · Fix pages</summary><form data-fix="${escape(f.id)}">${f.pageIds.map((id,index) => `<label class="cw-field">Page ${index + 1}<select name="${escape(id)}"><option value="keep">Keep in this flyer</option>${state.flyers.filter(other => other.id !== f.id && other.bucket !== 'keep').map(other => `<option value="${escape(other.id)}">Move to ${escape(other.business?.name ?? 'another flyer')}</option>`).join('')}<option value="split">Split into new flyer</option></select></label>`).join('')}<button type="submit" ${busy ? 'disabled' : ''}>Save pages &amp; re-read groups</button></form></details>`;
 }
 function pendingGroups() {
   return groupPages(Object.values(state.pages),state.overrides).some(g => !state.flyers.some(f => f.pageIds.length === g.pageIds.length && f.pageIds.every(id => g.pageIds.includes(id))));
@@ -143,7 +145,7 @@ function renderMailbox() {
     const content = list.length ? list.map(flyerCard).join('') : '<p class="cw-muted">No flyers here yet.</p>';
     return key === 'toss' ? `<details class="cw-bucket" data-bucket="toss"><summary>${heading}</summary>${content}</details>` : `<section class="cw-bucket" data-bucket="${key}"><h2>${heading}</h2>${content}</section>`;
   };
-  return `<h1>Your mailbox, sorted.</h1><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p><div class="cw-scan"><h2>Add today's pages</h2><div class="cw-actions"><button type="button" data-action="take-photo" ${busy ? 'disabled' : ''}>Take photo</button><button type="button" data-action="choose-photos" ${busy ? 'disabled' : ''}>Choose photos</button></div><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden><div class="cw-photos">${photos.map((p,i) => `<div class="cw-photo"><div class="cw-photo-preview"><img src="${escape(p.url)}" alt="Page ${i + 1} preview" style="transform:rotate(${p.rotation}deg)"></div><div class="cw-actions"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i + 1}" ${busy ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i + 1}" ${busy ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>${photos.length ? `<div class="cw-actions"><button class="cw-primary" data-action="read" ${busy ? 'disabled' : ''}>Read ${photos.length} pages</button></div>` : '<p class="cw-muted">Each photo is one page. Rotate it before reading.</p>'}</div><p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? '<button data-action="merge-retry">Retry sorting saved readings</button>' : ''}`;
+  return `<h1>Your mailbox, sorted.</h1><p class="cw-muted">Read the flyers. Keep the useful ones. Find a reason to walk.</p><div class="cw-scan"><h2>Add today's pages</h2><div class="cw-actions"><button type="button" data-action="take-photo" ${busy ? 'disabled' : ''}>Take photo</button><button type="button" data-action="choose-photos" ${busy ? 'disabled' : ''}>Choose photos</button></div><input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden><div class="cw-photos">${photos.map((p,i) => `<div class="cw-photo"><div class="cw-photo-preview"><img src="${escape(p.url)}" alt="Page ${i + 1} preview" style="transform:rotate(${p.rotation}deg)"></div><div class="cw-actions"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i + 1}" ${busy ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i + 1}" ${busy ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div>${photos.length ? `<div class="cw-actions"><button class="cw-primary" data-action="read" ${busy ? 'disabled' : ''}>Read ${photos.length} ${plural(photos.length,'page','pages')}</button></div>` : '<p class="cw-muted">Each photo is one page. Rotate it before reading.</p>'}</div><p id="mailbox-stat" class="cw-meta">${mailboxStat()}</p><p id="personal-note" class="cw-meta">${personalNote()}</p>${Object.keys(titles).map(bucket).join('')}${pendingGroups() ? '<button data-action="merge-retry">Retry sorting saved readings</button>' : ''}`;
 }
 
 // Files, bitmaps and image data URLs stay transient. State keeps extracted text only.
@@ -233,7 +235,7 @@ async function mergeGroups(affected = null) {
     if (match) { used.flyerId = match.f.id; used.index = match.index; }
     else outing.used = outing.used.filter(u => u !== used);
   }
-  save(); chosenStops = null; groceryChoice = null; await rank();
+  save(); chosenStops = null; groceryChoice = null; await rank(); $('progress').textContent = '';
 }
 async function readPhotos() {
   if (!home()) { setupOpen = true; renderSetup(); render(); notify('Choose your home station before reading.'); return; }
@@ -248,8 +250,8 @@ async function readPhotos() {
     photos = photos.filter(p => !success.has(p.id));
     if (success.size) await mergeGroups();
     if (failures.length) notify(failures.join(' '));
-    $('progress').textContent = success.size ? `Read ${success.size} pages. ${mailboxStat()}` : 'No pages read. Try again.';
-  } finally { busy = false; render(); }
+    $('progress').textContent = success.size ? '' : 'No pages read. Try again.';
+  } finally { busy = false; render(); focusHeading(); }
 }
 function arrivalStatus(f,minutes) {
   // Lessons and events print class times, not opening hours, so they never rule a stop out.
@@ -283,13 +285,22 @@ function totals(o) {
   const e = estimates(o.meters,state.settings.weightKg);
   return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps · ~${e.kcal} kcal (estimates)`;
 }
-function shoppingNote(f) {
-  const selected = (f?.items ?? []).filter((_,index) => shoppingList.has(f.id+':'+index));
-  return selected.length ? `<p class="cw-muted">On your walk list: ${selected.map(i => `${escape(i.name_en ?? 'Item')} <span lang="ja">${escape(i.name_ja)}</span>`).join(' · ')}</p>` : '';
+function shortDate(value) { return formatDate(value).replace(/ \d{4}$/, ''); }
+function stopReason(f,o = null) {
+  if (!f) return '';
+  const selected = (f.items ?? []).filter((_,index) => shoppingList.has(f.id+':'+index) || o?.used?.some(u => u.flyerId === f.id && u.kind === 'item' && u.index === index));
+  let text = '';
+  if (f.category === 'supermarket' && selected.length) text = selected.map(i => `${i.name_en ?? i.name_ja ?? 'Item'} ${money(i.price_yen)}`).join(' · ');
+  else {
+    const best = [...(f.offers ?? [])].sort((a,b) => (printedValue(b) ?? -1)-(printedValue(a) ?? -1))[0];
+    if (best) { const value = printedValue(best); text = `${best.text_en ?? 'Printed offer'}${value !== null ? ` · worth ${money(value)} as printed` : ''}`; }
+    else if (f.deadline) text = `until ${shortDate(f.deadline)}`;
+  }
+  return text ? `<p class="cw-stop-reason cw-muted">${escape(text)}</p>` : '';
 }
 function routeList(o,points) {
   let previous = o.start;
-  const rows = points.map(p => { const minutes = walkMinutes(distanceMeters(previous,p)); previous = p; return `<li><p class="cw-meta">${minutes} min walking</p><strong lang="ja">${escape(p.name)}</strong>${shoppingNote(flyer(p.id))}</li>`; });
+  const rows = points.map(p => { const minutes = walkMinutes(distanceMeters(previous,p)); previous = p; return `<li><p class="cw-meta">${minutes} min walking</p><strong lang="ja">${escape(p.name)}</strong>${stopReason(flyer(p.id),o)}</li>`; });
   rows.push(`<li><p class="cw-meta">${walkMinutes(distanceMeters(previous,o.end))} min walking</p><strong>Home · ${escape(stationName(o.end))}</strong></li>`);
   return `<ol class="cw-route"><li><strong>${escape(stationName(o.start))} station</strong></li>${rows.join('')}</ol>`;
 }
@@ -310,7 +321,7 @@ function renderWalk() {
   return `<h1>A little walk home.</h1><p class="cw-muted">Finish at ${escape(stationName(home()))} · up to ${state.settings.maxMinutes} min</p><h2>Choose your stops</h2>${list.length ? list.map(f => `<label class="cw-check"><input type="checkbox" data-stop="${escape(f.id)}" ${chosenStops === null || chosenStops.has(f.id) ? 'checked' : ''}><span lang="ja">${escape(f.business?.name)}</span></label>`).join('') : '<p class="cw-muted">Read a flyer with a location to find a stop. Expired, closed and 👎 places are left out.</p>'}${suggested ? `<div class="cw-entry"><h3>Groceries on the way</h3><p>${escape(suggested.name)}</p><p class="cw-muted">${escape(groceryNote(suggested))}</p><label class="cw-check"><input type="checkbox" data-grocery="${escape('store:'+suggested.branchId)}" ${groceryChoice ? 'checked' : ''}>Include grocery stop</label></div>` : ''}<button data-action="plan" class="cw-primary" ${!list.length ? 'disabled' : ''}>Plan walk</button>${p?.stops.length ? planCard(p) : list.length ? '<p class="cw-muted">No selected stops fit this walk length. Change your stops or choose a longer walk in Settings.</p>' : ''}`;
 }
 function planCard(p) {
-  return `<div class="cw-plan"><h2>${p.start.stationId !== state.settings.home ? `Get off one stop early at ${escape(stationName(p.start))}` : 'Walk from your home station'}</h2>${routeList(p,p.stops)}<p class="cw-meta">${totals(p)}</p>${p.dropped.length ? `<p class="cw-muted">${p.dropped.length} stops left out to fit your time.</p>` : ''}${mapRoute(p,p.stops)}<div class="cw-actions"><button class="cw-primary" data-action="start">Start walk</button></div></div>`;
+  return `<div class="cw-plan"><h2>${p.start.stationId !== state.settings.home ? `Get off one stop early at ${escape(stationName(p.start))}` : 'Walk from your home station'}</h2>${routeList(p,p.stops)}<p class="cw-meta">${totals(p)}</p>${p.dropped.length ? `<p class="cw-muted">${p.dropped.length} ${plural(p.dropped.length,'stop','stops')} left out to fit your time.</p>` : ''}${mapRoute(p,p.stops)}<div class="cw-actions"><button class="cw-primary" data-action="start">Start walk</button></div></div>`;
 }
 const usedEntries = (outings = state.outings) => outings.flatMap(o => o.used.map(u => ({entry:flyer(u.flyerId)?.[u.kind === 'offer' ? 'offers' : 'items']?.[u.index]})));
 function icon(category) {
@@ -319,13 +330,16 @@ function icon(category) {
 }
 function stampCard(stamp) {
   const p = stop(stamp.stopId);
-  return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}"><span class="cw-stamp ${stamp.kind === 'gps' ? 'gps' : 'self'}" aria-label="${stamp.kind === 'gps' ? 'GPS verified solid stamp' : 'Self-reported outline stamp'}">${icon(p?.category)}</span><p lang="ja">${escape(p?.name ?? 'Stamped place')}</p><p class="cw-meta">${formatDate(stamp.at)}</p><p class="cw-meta">${stamp.kind === 'gps' ? 'GPS verified' : 'Self-reported'}</p></div>`;
+  // Stop and time identify each stamp without changing the storage contract.
+  const id = stamp.stopId + ':' + stamp.at;
+  const angle = [...id].reduce((hash,c) => (hash * 31 + c.charCodeAt(0)) >>> 0,0) % 17 - 8;
+  return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}"><span class="cw-stamp ${stamp.kind === 'gps' ? 'gps' : 'self'}" style="--stamp-angle:${angle}deg" aria-label="${stamp.kind === 'gps' ? 'GPS verified solid stamp' : 'Self-reported outline stamp'}">${icon(p?.category)}<span class="cw-stamp-name" lang="ja">${escape(p?.name ?? 'Stamped place')}</span></span><p class="cw-meta">${formatDate(stamp.at)}</p><p class="cw-meta">${stamp.kind === 'gps' ? 'GPS verified' : 'self-reported'}</p></div>`;
 }
 function activeWalk(o) {
   const amount = savings(usedEntries([o])), points = o.stopIds.map(stop).filter(Boolean);
   return `<p class="cw-meta">${totals(o)}</p>${mapRoute(o,points)}<p id="walk-saved" class="cw-value" aria-live="polite">Saved ${money(amount.yen)} · printed on the flyer</p>${o.stopIds.map(id => {
     const p = stop(id), stamped = o.stamps.find(s => s.stopId === id), message = stampMessages.get(id);
-    return `<div class="cw-stop" data-active-stop="${escape(id)}"><h2 lang="ja">${escape(p?.name ?? 'Flyer stop')}</h2>${shoppingNote(p?.flyer)}${stamped ? stampCard(stamped) + (p?.flyer ? entryList(p.flyer,o) : '') : `<div class="cw-actions"><button data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}">I'm here</button></div>${message ? `<p class="cw-muted">${escape(message.text)}</p><button data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}`}</div>`;
+    return `<div class="cw-stop" data-active-stop="${escape(id)}"><h2 lang="ja">${escape(p?.name ?? 'Flyer stop')}</h2>${stopReason(p?.flyer,o)}${stamped ? stampCard(stamped) + (p?.flyer ? entryList(p.flyer,o) : '') : `<div class="cw-actions"><button data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}">I'm here</button></div>${message ? `<p class="cw-muted">${escape(message.text)}</p><button data-action="stamp-anyway" data-id="${escape(id)}" data-outing="${escape(o.id)}">Stamp anyway</button>` : ''}`}</div>`;
   }).join('')}`;
 }
 function stamp(o,id,kind,distance = null) {
@@ -357,10 +371,11 @@ function streak() {
   return count;
 }
 function renderStamps() {
+  const active = state.outings.find(o => o.status === 'active'), weeks = streak();
   const done = state.outings.filter(o => o.status === 'done'), allStamps = state.outings.flatMap(o => o.stamps);
   const distance = done.reduce((sum,o) => sum+o.meters,0), e = estimates(distance,state.settings.weightKg), amount = savings(usedEntries());
   const stats = [[done.length,'walks done'],[allStamps.length,'places stamped'],[(e.routeMeters/1000).toFixed(1),'km'],[e.steps.toLocaleString('en-US'),'steps'],[e.kcal,'kcal'],[money(amount.yen),'yen saved']];
-  return `<h1>Every stop adds up.</h1><div class="cw-stats">${stats.map(([n,label]) => `<div class="cw-stat" data-metric="${label}"><strong>${n}</strong><span>${label}</span></div>`).join('')}</div><p class="cw-muted">Distance, steps and kcal are estimates from planned routes for completed walks.</p><p class="cw-meta">+ ${amount.uncounted} used without a printed value</p><p class="cw-meta">${streak()} week${streak() === 1 ? '' : 's'} in your weekly streak</p><p class="cw-meta">${mailboxStat()}</p><h2>Your stamps</h2>${allStamps.length ? `<div class="cw-stamp-grid">${allStamps.map(stampCard).join('')}</div>` : '<p class="cw-muted">Start a walk and check in at your first stop.</p>'}`;
+  return `<h1>Every stop adds up.</h1>${active ? `<div class="cw-scan"><h2>Walk in progress · ${active.stamps.length} of ${active.stopIds.length} ${plural(active.stopIds.length,'stop','stops')} stamped</h2><button class="cw-primary" data-action="continue-walk">Continue walk</button></div>` : ''}<div class="cw-stats">${stats.map(([n,label]) => `<div class="cw-stat" data-metric="${label}"><strong>${n}</strong><span>${label === 'walks done' ? plural(done.length,'walk done','walks done') : label}</span></div>`).join('')}</div><p class="cw-muted">Distance, steps and kcal are estimates from planned routes for completed walks.</p>${amount.uncounted ? `<p class="cw-meta">+ ${amount.uncounted} used without a printed value</p>` : ''}<p class="cw-meta">${weeks ? `${weeks} ${plural(weeks,'week','weeks')} in your weekly streak` : 'Finish a walk this week to start a streak'}</p><h2>Your stamps</h2>${allStamps.length ? `<div class="cw-stamp-grid">${allStamps.map(stampCard).join('')}</div>` : '<p class="cw-muted">Start a walk and check in at your first stop.</p>'}`;
 }
 function newestFlyers() {
   // Appending scan batches preserves order even for private markers, which have no date field.
@@ -373,19 +388,26 @@ function renderHistory() {
   }
   const query = historyQuery.toLowerCase();
   const list = newestFlyers().filter(f => [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));
-  return `<h1>Your saved pages &amp; walks.</h1><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name, kind or summary"></label><div id="history-results"><h2>Flyers · ${list.length}</h2>${list.map(f => `<button class="cw-history-item" data-action="history-detail" data-id="${escape(f.id)}"><strong lang="ja">${escape(f.business?.name ?? 'Personal or official mail')}</strong><span class="cw-meta"><span class="cw-pill">${titles[f.bucket]}</span>${expired(f) ? ' · expired' : ''} · ${f.pageIds.length} pages</span><span class="cw-muted">${escape(f.summary_en)}</span></button>`).join('') || '<p class="cw-muted">No saved flyers match.</p>'}<h2 style="margin-top:28px">Walks · ${state.outings.length}</h2>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="history-detail" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${o.stopIds.length} stops · ${(estimates(o.meters).routeMeters/1000).toFixed(1)} km · ${o.stamps.length} stamps</span></button>`).join('') || '<p class="cw-muted">Your first walk will appear here.</p>'}</div>`;
+  return `<h1>Your saved pages &amp; walks.</h1><label class="cw-field">Search flyers<input id="history-search" type="search" value="${escape(historyQuery)}" placeholder="Business name, kind or summary"></label><div id="history-results"><h2>${plural(list.length,'Flyer','Flyers')} · ${list.length}</h2>${list.map(f => `<button class="cw-history-item" data-action="history-detail" data-id="${escape(f.id)}"><strong lang="ja">${escape(f.business?.name ?? 'Personal or official mail')}</strong><span class="cw-meta"><span class="cw-pill cw-pill-${f.bucket}">${titles[f.bucket]}</span> · ${f.pageIds.length} ${plural(f.pageIds.length,'page','pages')}${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}${expired(f) ? ' · expired' : ''}</span><span class="cw-muted">${escape(f.summary_en)}</span></button>`).join('') || '<p class="cw-muted">No saved flyers match.</p>'}<h2 style="margin-top:28px">${plural(state.outings.length,'Walk','Walks')} · ${state.outings.length}</h2>${[...state.outings].reverse().map(o => `<button class="cw-history-item" data-action="history-detail" data-id="${escape(o.id)}"><strong>${formatDate(o.createdAt)} · ${escape(o.status)}</strong><span class="cw-meta">${o.stopIds.length} ${plural(o.stopIds.length,'stop','stops')} · ${(estimates(o.meters).routeMeters/1000).toFixed(1)} km · ${o.stamps.length} ${plural(o.stamps.length,'stamp','stamps')}</span></button>`).join('') || '<p class="cw-muted">Your first walk will appear here.</p>'}</div>`;
 }
 function render() {
   const focused = document.activeElement;
   const focusKey = focused?.dataset.action === 'rate' ? {id:focused.dataset.id,label:focused.dataset.label} : null;
   const tossOpen = $('panel').querySelector('[data-bucket=toss]')?.open;
+  // Async results (ranking, merges) re-render the panel; keep focus on its heading instead of dropping it to <body>.
+  const headingFocused = $('panel').contains(document.activeElement) && /^H[1-3]$/.test(document.activeElement.tagName);
   $('panel').hidden = setupOpen; $('panel').setAttribute('aria-label',tab[0].toUpperCase()+tab.slice(1));
   $('panel').innerHTML = tab === 'mailbox' ? renderMailbox() : tab === 'walk' ? renderWalk() : tab === 'stamps' ? renderStamps() : renderHistory();
   if (tossOpen) { const toss = $('panel').querySelector('[data-bucket=toss]'); if (toss) toss.open = true; }
   if (focusKey) [...$('panel').querySelectorAll('[data-action=rate]')].find(b => b.dataset.id === focusKey.id && b.dataset.label === focusKey.label)?.focus({preventScroll:true});
   for (const b of document.querySelectorAll('[data-tab]')) { if (b.dataset.tab === tab) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current'); }
+  if (headingFocused) focusHeading();
 }
-function changeTab(value) { tab = value; historyDetail = null; render(); $('content').focus({preventScroll:true}); window.scrollTo({top:0,behavior:'instant'}); }
+function focusHeading() {
+  const heading = (setupOpen ? $('setup') : $('panel')).querySelector('h1, h2, h3');
+  if (heading) { heading.tabIndex = -1; heading.focus({preventScroll:true}); }
+}
+function changeTab(value) { tab = value; historyDetail = null; render(); focusHeading(); window.scrollTo({top:0,behavior:'instant'}); }
 function newOuting(p,status) {
   state.outings = state.outings.filter(o => o.status !== 'planned');
   state.outings.push({id:uid('o-'),createdAt:now(),start:p.start,end:p.end,stopIds:p.stops.map(s => s.id),meters:p.meters,minutes:p.minutes,status,stamps:[],used:[]}); save(); render();
@@ -400,15 +422,16 @@ async function action(button) {
     case 'rotate': if (!busy) { const p = photos.find(p => p.id === id); p.rotation = (p.rotation+90)%360; render(); } break;
     case 'remove-photo': if (!busy) { const p = photos.find(p => p.id === id); URL.revokeObjectURL(p.url); photos = photos.filter(p => p.id !== id); render(); } break;
     case 'read': await readPhotos(); break;
-    case 'rate': state.labels[id] = Number(button.dataset.label); save(); render(); await rank(); break;
+    case 'continue-walk': changeTab('walk'); break;
+    case 'rate': if (flyer(id)?.bucket === 'keep') break; state.labels[id] = Number(button.dataset.label); save(); render(); await rank(); break;
     case 'merge-retry': if (!busy) { busy = true; render(); try { await mergeGroups(); } finally { busy = false; render(); } } break;
     case 'plan': { const p = plan(); if (p?.stops.length) { newOuting(p,'planned'); notify('Walk planned. Start when you are ready.'); } break; }
     case 'start': { if (state.outings.some(o => o.status === 'active')) break; const p = plan(); if (p?.stops.length) { newOuting(p,'active'); notify(); } break; }
     case 'here': { const o = state.outings.find(o => o.id === button.dataset.outing); if (o?.status === 'active') await here(o,id,button); break; }
     case 'stamp-anyway': { const o = state.outings.find(o => o.id === button.dataset.outing); if (o) stamp(o,id,'self',stampMessages.get(id)?.distance ?? null); break; }
     case 'finish': { const o = state.outings.find(o => o.id === id); if (o) { o.status = 'done'; save(); notify('Walk finished. Your stamps are saved.'); changeTab('stamps'); } break; }
-    case 'history-detail': historyDetail = id; render(); break;
-    case 'history-back': historyDetail = null; render(); break;
+    case 'history-detail': historyDetail = id; render(); focusHeading(); break;
+    case 'history-back': historyDetail = null; render(); focusHeading(); break;
   }
 }
 function safely(task) { Promise.resolve().then(task).catch(error => { notify(error.message ?? 'Something went wrong. Try again.'); $('progress').textContent = 'Stopped. Your saved readings are available to retry.'; }); }
@@ -464,7 +487,7 @@ document.addEventListener('submit',event => {
       for (const other of state.flyers) if (other.pageIds.some(id => affected.has(id))) for (const id of other.pageIds) if (state.pages[id]) state.overrides[id] = other.id;
       for (const [id,value] of changes) state.overrides[id] = value === 'split' ? uid('split-') : value;
       save(); busy = true; render();
-      try { await mergeGroups(affected); $('progress').textContent = 'Page groups updated.'; } finally { busy = false; render(); }
+      try { await mergeGroups(affected); $('progress').textContent = ''; } finally { busy = false; render(); }
     });
   }
 });
