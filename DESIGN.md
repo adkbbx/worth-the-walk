@@ -162,7 +162,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Done uses `.cw-ticket.cw-used-ticket`, print Today/date and No. 000N, "Walk done", and km · min · ~steps. A 20px punch near the top-right uses Desk fill with an inner Rule rim in both themes.
 - The print-face `.cw-tally` shows collected stamps, km, ~steps and ~kcal; steps and kcal explicitly say estimate. Show Sale Red "¥3,300 saved · printed on the flyers" only above zero. Route estimates come from `estimates`; savings come only from printed values.
 - A 120px vermilion seal overlaps the lower right at −9°, inset to avoid page overflow. Reuse `sealHTML`, one `#ink` filter, unique arc/textPath IDs, WORTH THE WALK arc, 済 centre and today's boxed Japan date. It is decorative (`aria-hidden="true"`) and never animates.
-- Below: this walk's stamp cards, primary "See your stamp card", text "Back to my mailbox", and a muted remaining-candidate count when they were not on this walk and have never been stamped or skipped. At ≥960px, centre the done screen in a 640px column.
+- Below: this walk's stamp cards, primary "See your stamp card", secondary "Share this walk" (only where `navigator.share` exists; shares text only — "I walked 1.6 km to 4 places from the flyers in my mailbox, and saved ¥2,300 printed on them." — plus the app URL, never shop names, places or photos), text "Back to my mailbox", and a muted remaining-candidate count when they were not on this walk and have never been stamped or skipped. At ≥960px, centre the done screen in a 640px column.
 - The savings amount and “saved” stay on one line; “printed on the flyers” uses the print face on its own line beneath, with no leading separator. Zero savings remain hidden.
 
 ### Station stamp (SVG seal)

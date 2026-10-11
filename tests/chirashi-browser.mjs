@@ -733,6 +733,14 @@ try {
   assert.equal(await page.locator('.cw-finished-seal textPath').textContent(),'WORTH THE WALK');
   assert.match(await page.locator('.cw-done .cw-tally').textContent(),/2stamps collected.*km.*~[\d,]+steps · estimate.*~\d+kcal · estimate/);
   assert.ok(await page.getByRole('button',{name:'Back to my mailbox',exact:true}).isVisible());
+  // Sharing a walk sends text only: distance, places and printed savings, never shop names or places.
+  if (await page.getByRole('button',{name:'Share this walk',exact:true}).count()) {
+    await page.evaluate(() => { window.sharedWalk=null; navigator.share=data => { window.sharedWalk=data; return Promise.resolve(); }; });
+    await page.getByRole('button',{name:'Share this walk',exact:true}).click(); await page.waitForFunction(() => window.sharedWalk);
+    const shared=await page.evaluate(() => window.sharedWalk), names=(await readState(page)).flyers.map(f => f.business?.name).filter(Boolean);
+    assert.match(shared.text,/^I walked [\d.]+ km to 2 places from the flyers in my mailbox/); assert.equal(shared.url,base+'/');
+    assert.ok(names.every(name => !shared.text.includes(name)),'shared text has no shop names');
+  }
   await sealChecks(page);
   if (expectedYen>0) {
     assert.match(await page.locator('.cw-done-summary').textContent(),new RegExp(`¥${expectedYen.toLocaleString('en-US')} saved.*printed on the flyers`));

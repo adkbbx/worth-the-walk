@@ -955,7 +955,7 @@ function doneScreen(o=state.outings.at(-1)) {
   const e=estimates(o.meters,state.settings.weightKg), yen=savings(usedEntries([o])).yen;
   const number=String(Math.max(1,state.outings.indexOf(o)+1)).padStart(4,'0');
   const more=candidates().filter(f => !o.stopIds.includes(f.id) && !state.outings.some(w => w.stamps.some(s => s.stopId === f.id) || (w.skipped ?? []).includes(f.id))).length;
-  return `<section class="cw-done"><article class="cw-ticket cw-used-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h1 class="cw-ticket-title">Walk done</h1><p class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</p></div><div class="cw-tally cw-done-tally"><div><b>${o.stamps.length}</b><span>stamps collected</span></div><div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>walk distance</span></div><div><b>~${e.steps.toLocaleString('en-US')}</b><span>steps · estimate</span></div><div><b>~${e.kcal}</b><span>kcal · estimate</span></div></div>${yen>0 ? `<p class="cw-done-summary"><strong>${money(yen)} saved</strong> <span>printed on the flyers</span></p>` : ''}${sealHTML({stopId:o.id,at:now(),kind:'gps'},{current:false,animate:false,finished:true})}</article><div class="cw-rally" aria-label="This walk's stamps">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">See your stamp card</button><button class="cw-text cw-wide" data-action="home">Back to my mailbox</button>${more ? `<p class="cw-small-note">${more} more ${plural(more,'place is','places are')} still worth the walk.</p>` : ''}</section>`;
+  return `<section class="cw-done"><article class="cw-ticket cw-used-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h1 class="cw-ticket-title">Walk done</h1><p class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</p></div><div class="cw-tally cw-done-tally"><div><b>${o.stamps.length}</b><span>stamps collected</span></div><div><b>${(e.routeMeters/1000).toFixed(1)} km</b><span>walk distance</span></div><div><b>~${e.steps.toLocaleString('en-US')}</b><span>steps · estimate</span></div><div><b>~${e.kcal}</b><span>kcal · estimate</span></div></div>${yen>0 ? `<p class="cw-done-summary"><strong>${money(yen)} saved</strong> <span>printed on the flyers</span></p>` : ''}${sealHTML({stopId:o.id,at:now(),kind:'gps'},{current:false,animate:false,finished:true})}</article><div class="cw-rally" aria-label="This walk's stamps">${o.stamps.map(stampCard).join('')}</div><button class="cw-primary cw-wide" data-action="stamps">See your stamp card</button>${typeof navigator.share === 'function' ? `<button class="cw-secondary cw-wide" data-action="share-walk" data-id="${escape(o.id)}">Share this walk</button>` : ''}<button class="cw-text cw-wide" data-action="home">Back to my mailbox</button>${more ? `<p class="cw-small-note">${more} more ${plural(more,'place is','places are')} still worth the walk.</p>` : ''}</section>`;
 }
 function focusKey(el) { return el?.dataset.action ? {action:el.dataset.action,id:el.dataset.id,kind:el.dataset.kind,index:el.dataset.index} : el?.id ? {elementId:el.id} : null; }
 function restoreFocus(key) {
@@ -1174,6 +1174,14 @@ async function action(button) {
     case 'next-stop': advance(activeOuting()); break;
     case 'skip-stop': advance(activeOuting(),true); break;
     case 'stamps': openSheet('stamps',undefined,button); break;
+    case 'share-walk': {
+      // Text only: distance, number of places and printed savings. No shop names, places or photos.
+      const o=state.outings.find(w => w.id === id); if (!o || typeof navigator.share !== 'function') break;
+      const km=(estimates(o.meters,state.settings.weightKg).routeMeters/1000).toFixed(1), yen=savings(usedEntries([o])).yen, n=o.stamps.length;
+      const text=`I walked ${km} km to ${n} ${plural(n,'place','places')} from the flyers in my mailbox${yen>0 ? `, and saved ${money(yen)} printed on them` : ''}.`;
+      try { await navigator.share({title:'Worth the Walk?',text,url:location.origin+'/'}); } catch (error) { if (error?.name !== 'AbortError') notify('Sharing is not available here.',{tone:'warn'}); }
+      break;
+    }
     case 'past-walk': openSheet('past',id,button); break;
     case 'home': view=activeOuting() ? 'walk' : 'home'; render(); focusHeading(); break;
   }
