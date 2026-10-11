@@ -7,7 +7,7 @@ import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { Observability } from '@mastra/observability';
 import { SentryExporter } from '@mastra/sentry';
 import { z } from 'zod';
-import { parseJsonLoose, normalizeTile, mergeFallback, finalizeFlyer, matchChain, storable } from '../src/mailbox.mjs';
+import { parseJsonLoose, normalizeTile, mergeFallback, finalizeFlyer, matchChain, storable, dedupeItems } from '../src/mailbox.mjs';
 import { visionModel, textModel, modelInfo } from './models.mjs';
 import { TILE_PROMPT, MERGE_PROMPT } from './prompts.mjs';
 import { createTools, rulesRank } from './tools.mjs';
@@ -170,11 +170,14 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
       let merged;
       if (!mock) {
         try {
-          const readings = pages.flatMap((page, index) => page.tiles.filter(Boolean).map(tile => ({ ...normalizeTile(tile), page: index })));
+          // Price-list items are merged by code below: rewriting 50 menu items made the model merge take ~25 s per flyer.
+          const readings = pages.flatMap((page, index) => page.tiles.filter(Boolean).map(tile => ({ ...normalizeTile(tile), items: undefined, page: index })));
           const output = await modelCall(() => flyerMerger.generate([{
             role: 'user', content: JSON.stringify(compact(readings)),
           }], { tracingContext, requestContext }));
-          if (!output.error) merged = normalizeMerged(parseJsonLoose(output.text), pages);
+          if (!output.error) merged = normalizeMerged({ ...parseJsonLoose(output.text), items: [] }, pages);
+          if (merged) merged.items = dedupeItems(pages.flatMap((page, index) => page.tiles.filter(Boolean)
+            .flatMap(tile => normalizeTile(tile).items.map(item => ({ ...item, page: index })))));
         } catch { /* Invalid or failed model merges use the existing deterministic rules. */ }
       }
       const flyer = finalizeFlyer({ ...(merged ?? mergeFallback(pages)), id: flyerId, pageIds: pages.map(page => page.id) }, scanDate, matchChain);

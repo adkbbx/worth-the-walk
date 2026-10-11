@@ -18,6 +18,21 @@ test('parseJsonLoose reads fenced and prose-wrapped JSON without throwing',()=>{
   assert.deepEqual(parseJsonLoose('```\n{"ok":true}\n```'),{ok:true});
   for(const value of ['bad','{bad}',null,{},'{"a":1} {"b":2}','[1,2]'])assert.equal(parseJsonLoose(value),null);
 });
+test('groupPages joins back pages by business name, including an added branch, unless phones disagree',()=>{
+  const groups=groupPages([
+    page('a1',{business:{name:'テスト買取'},phones:['0120-000-111']}),
+    page('a2',{business:{name:'テスト買取 青空店'}}),
+    page('b1',{business:{name:'クリーニング Test!'}}),
+    page('b2',{business:{name:'クリーニング test'},phones:['044-000-0000']}),
+    page('c1',{business:{name:'テスト塾'},phones:['0120-000-222']}),
+    page('c2',{business:{name:'テスト塾'},phones:['0120-000-333']}),
+    page('d1',{business:{name:'テス'}}),page('d2',{business:{name:'テス'}}),
+    page('e1',{business:{name:'Good!'}}),page('e2',{business:{name:'クリーニング Good!'}}),
+    page('f1',{business:{name:'青空'}}),page('f2',{business:{name:'テスト青空'}})
+  ]).map(g=>g.pageIds);
+  assert.deepEqual(groups,[['a1','a2'],['b1','b2'],['c1'],['c2'],['d1'],['d2'],['e1','e2'],['f1'],['f2']]);
+  assert.deepEqual(groupPages([page('a1',{business:{name:'テスト買取'}}),page('a2',{business:{name:'テスト買取'}})],{a2:'own'}).map(g=>g.pageIds),[['a1'],['a2']]);
+});
 test('parseJsonLoose repairs the key quoting and trailing commas a vision model produced',()=>{
   // Real Gemma output shape: a missing quote before "unit" made the whole tile unreadable.
   const raw='```json\n{"items":[{"name_ja":"テスト肉","price_yen":563,"regular_yen":579,"regular_label":"非会員・カード払価格",unit":"100g当たり"}],}\n```';
