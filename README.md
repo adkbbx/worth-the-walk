@@ -12,7 +12,7 @@ Photograph the flyers in your mailbox, read what each one is in English, and pla
 
 ## Why open models
 
-Mail photos can contain personal information. Open models let you choose where image inference runs. Cloud mode sends tiles to DigitalOcean; `LOCAL_LLM=1` switches image reading and text merging to Ollama on your computer. Local mode does not disable the optional lookup, ranking, or tracing services.
+Mail photos can contain personal information. Open models let you choose where image inference runs. Cloud mode sends tiles to DigitalOcean; `LOCAL_LLM=1` switches image reading and text merging to Ollama on your computer. Local mode alone does not turn off the optional lookup, ranking or tracing services; see "Run it on open pieces only" below.
 
 The cloud check recorded about **$0.00044 per tile** in Sentry's cost attributes. Six tiles cost roughly a quarter of a cent per flyer page. This is an observed tile-reading cost, not a fixed price or a total that includes merging and retries.
 
@@ -25,6 +25,24 @@ The model comparison matters because the smaller local model was poor at reading
 | Gemma 4 E2B through Ollama | Full page, then a tile | 0/8 on the page; 2/4 on the tile |
 
 Local mode warns you to check every price. These small checks do not establish accuracy across real mailbox flyers. Price-list pages are then read again as a 2×3 grid with 10% overlap (3×2 for landscape); on the real mailbox below, a whole-page read was enough for every service flyer (4–26 s, one call each).
+
+### Run it on open pieces only
+
+Gemma 4 (open weights, Apache 2.0) and Mastra (Apache 2.0) are the parts the app needs. Every hosted service around them is optional:
+
+| Piece | Open? | Without it |
+| --- | --- | --- |
+| DigitalOcean serverless inference | hosted service, open model | `LOCAL_LLM=1`: Gemma 4 E2B through Ollama |
+| TabPFN via Prior Labs' MCP | open-source code, hosted API | rule-based ranking |
+| SerpApi | hosted service | printed addresses only, through GSI |
+| Sentry | hosted service | no tracing |
+
+```sh
+ollama pull gemma4:e2b-it-qat
+LOCAL_LLM=1 GRADIENT_MODEL_ACCESS_KEY= PRIOR_LABS_MCP_TOKEN= SERPAPI_API_KEY= SENTRY_DSN= npm start
+```
+
+Blank values override `.env`. Only the printed address text goes out, to Japan's GSI address search. Checked on 12 Oct 2026: a supermarket page read on a laptop in 27–40 s (rough: three prices, two without a product name), a printed address located through GSI, and ranking by rules.
 
 ## Architecture
 

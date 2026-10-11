@@ -705,11 +705,11 @@ function stampsContent() {
 function whySheet() { return `<h2 id="sheet-heading">Why open models?</h2><p class="cw-print" lang="ja">オープンだから、できること</p>${whyStub()}`; }
 function whyStub() {
   return `<div class="cw-stub"><h3>Your mail is read by models anyone can run</h3><ol class="cw-reasons">
-    <li><span class="n">1</span><div><strong>You choose where your mail is read.</strong> <p>The same Gemma 4 family reads flyers on a hosted GPU or on your own laptop (<em>LOCAL_LLM=1</em>). A closed API has no run-it-at-home option.</p></div></li>
+    <li><span class="n">1</span><div><strong>You choose where your mail is read.</strong> <p>Here, photos go to Gemma 4 on DigitalOcean for a few seconds. With <em>LOCAL_LLM=1</em> the same open model family reads them on your own laptop, and they never leave it. A closed API has no run-it-at-home option.</p></div></li>
     <li><span class="n">2</span><div><strong>We could check it on real flyers.</strong> <p>With open weights we tested both sizes on the same flyers: the small model got <em>0/8</em> prices from a whole page, the large one <em>4/4</em> from a tile. That is why price lists are read tile by tile.</p></div></li>
     <li><span class="n">3</span><div><strong>It costs about half a yen a page.</strong> <p>Reading one page costs roughly <em>¥0.4</em> on serverless inference. A whole mailbox is a few yen, with no account and no subscription.</p></div></li>
-    <li><span class="n">4</span><div><strong>It learns your taste without your data.</strong> <p>TabPFN ranks flyers from your ✕ and stamps using only numbers (kind of place, distance, deal size). Names, addresses and photos never go to it.</p></div></li>
-  </ol><p class="cw-small-note">Addresses come from Japan's open GSI geocoder; photos are read and deleted; nothing is stored on a server.</p></div>`;
+    <li><span class="n">4</span><div><strong>Nothing closed is load-bearing.</strong> <p>Prior Labs runs the TabPFN ranking, SerpApi finds places with no printed address, and Sentry traces model calls. Take any key away and the app still works: simple ranking rules, Japan's free GSI geocoder, no tracing.</p></div></li>
+  </ol><p class="cw-small-note">Open at the core: Gemma 4 and Mastra, both Apache 2.0. Photos are read and deleted; nothing is stored on a server.</p></div>`;
 }
 function historyResults() {
   const query=historyQuery.toLowerCase(), list=[...state.flyers].reverse().filter(f => f.bucket !== 'keep' && [f.business?.name,f.business?.kind,f.summary_en].join(' ').toLowerCase().includes(query));

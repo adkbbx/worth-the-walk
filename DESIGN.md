@@ -213,11 +213,11 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Stamp inks: indigo "#3d3a92", green "#17784c", vermilion "#c2411c", teal "#0e6f82"
 
 ### Why open models (in-app copy, keep the figures true)
-1. **You choose where your mail is read.** The same Gemma 4 family reads flyers on a hosted GPU or on your own laptop (`LOCAL_LLM=1`). A closed API has no run-it-at-home option.
+1. **You choose where your mail is read.** Here, photos go to Gemma 4 on DigitalOcean for a few seconds. With `LOCAL_LLM=1` the same open model family reads them on your own laptop, and they never leave it. A closed API has no run-it-at-home option.
 2. **We could check it on real flyers.** With open weights we tested both sizes on the same flyers: the small model got 0/8 prices from a whole page, the large one 4/4 from a tile. That is why price lists are read tile by tile.
 3. **It costs about half a yen a page.** Reading one page costs roughly ¥0.4 on serverless inference. A whole mailbox is a few yen, with no account and no subscription.
-4. **It learns your taste without your data.** TabPFN ranks flyers from your ✕ and stamps using only numbers (kind of place, distance, deal size). Names, addresses and photos never go to it.
-Footer note: addresses come from Japan's open GSI geocoder; photos are read and deleted; nothing is stored on a server.
+4. **Nothing closed is load-bearing.** Prior Labs runs the TabPFN ranking, SerpApi finds places with no printed address, and Sentry traces model calls. Take any key away and the app still works: simple ranking rules, Japan's free GSI geocoder, no tracing.
+Footer note: Open at the core: Gemma 4 and Mastra, both Apache 2.0. Photos are read and deleted; nothing is stored on a server.
 
 ### Example Component Prompts
 - "Create the answer ticket on Ticket Paper (#f6f8f2) with a 1px Rule (#cdd7cb) border, 12px radius, faint diagonal guilloché, perforation notches at the tear line, a DotGothic16 kicker 'TODAY · 12 OCT', a Dela Gothic One title '3 places worth the walk', print meta '2.0 KM · 25 MIN · ~2,850 STEPS', a dashed tear line, then a vertical gate-blue (#1846b8) route strip from 'FROM HIKIFUNE 曳舟' to 'HOME · HIGASHI-MUKOJIMA 東向島' with three stop rows."
