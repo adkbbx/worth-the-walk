@@ -191,11 +191,23 @@ The original grocery and point-card directory remains at [`/shops.html`](dist/sh
 
 ## Accuracy on real mailbox flyers
 
-**TODO: the author will fill this table with real mailbox results.** The small model checks above and the synthetic TabPFN check are separate from this evaluation.
+One real mailbox: **7 flyers on 10 pages**, photographed on a phone (mostly sideways, on a dark floor) and sent through WhatsApp at 2048 px. Each page was cut into six tiles and read by Gemma 4 31B; the pipeline was run three times while tuning prompts. The table reports the final run on the deployed code, with notes where runs differed. Addresses and station names are deliberately left out.
 
 | flyer type | pages | business correct | category correct | address correct | offer correct |
 | --- | --- | --- | --- | --- | --- |
-| TODO | TODO | TODO | TODO | TODO | TODO |
+| Dinner delivery | 1 | ✓ | ✓ deals to use at home | no street address read | ✓ free gift for requesting info |
+| Sushi delivery (front + menu back) | 2 | front ✓ in 2 of 3 runs; back ✗ (stylised logo misread) | ✓ deals to use at home (the back page alone was once sorted as walk) | ✓ (back page) | ✓ half-price coupon, 10% off, 20% off takeout, 56 menu items |
+| Dry cleaner | 2 | ✓ | ✓ worth a walk | partial | ✓ printed before/after prices (shirts ¥297 → ¥98, slacks ¥987 → ¥326) |
+| Pilates / yoga studio | 1 | ✓ | ✓ worth a walk | station access only | ✓ trial ¥3,300 → ¥1,000, admission ¥0 |
+| Gold buyer | 2 | ✓ | ✓ safe to throw away | ✓ | ✓ contract bonus |
+| Junk removal | 1 | ✓ | ✓ safe to throw away | ✓ | ✓ free estimate |
+| Appliance pickup | 1 | ✓ | ✓ safe to throw away | none printed | ✓ free collection |
+
+- **Tiles:** 60/60 read, including sideways photos.
+- **Buckets and offers:** correct for all 7 flyers.
+- **Grouping:** 1 of 3 two-page flyers was grouped automatically (the gold buyer, by business name). The dry cleaner split once because Gemma wrote its name in katakana on one page and in English on the other; the sushi back page has no name or phone in common with its front. Both are fixed with **Fix pages → merge**.
+- **Phone numbers:** large headline numbers were missed until the prompt asked for every number; one number printed across a tile boundary is still read in two halves.
+- **Time:** reading the 10 pages took 58–177 s across runs (DigitalOcean serverless latency varies); merging took 87 s once price-list items were merged by code instead of by the model (232 s before). The app shows flyers as they finish.
 
 ## License
 
