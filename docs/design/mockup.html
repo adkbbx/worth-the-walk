@@ -1,0 +1,304 @@
+<title>Worth the Walk Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=DotGothic16&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap">
+<style>
+/* Layout: four phone screens in flow order (answer → walk → stamps → why open) on a station-ticket desk; they stack on phones. */
+:root {
+  --desk: #e4e9e1;        /* the table the tickets lie on */
+  --paper: #f6f8f2;       /* JR kippu paper, faint green */
+  --paper-2: #edf2ea;
+  --ink: #18222c;         /* printing ink */
+  --muted: #5b6a62;
+  --rule: #cdd7cb;
+  --gate: #1846b8;        /* ticket-gate blue: the one action per screen */
+  --gate-ink: #ffffff;
+  --sticker: #ffd400;     /* flyer price sticker */
+  --sale: #d40b0b;        /* flyer sale red, only on printed prices */
+  --lcd: #0f1418;         /* train-door display */
+  --lcd-ink: #f3c623;
+  --lcd-dim: #6f7a74;
+  --ink-indigo: #3d3a92; --ink-green: #17784c; --ink-vermilion: #c2411c; --ink-teal: #0e6f82;
+  --shadow: 0 1px 0 rgba(24,34,44,.06), 0 10px 24px -14px rgba(24,34,44,.35);
+  --display: "Dela Gothic One", "Zen Kaku Gothic New", "Hiragino Sans", sans-serif;
+  --body: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", system-ui, sans-serif;
+  --print: "DotGothic16", "Zen Kaku Gothic New", monospace;
+  color-scheme: light;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --desk: #0b0f12; --paper: #151b1f; --paper-2: #1b2328; --ink: #e9eee7; --muted: #9aa8a0; --rule: #2a3631;
+  --gate: #5e88ff; --gate-ink: #0b1020; --sticker: #ffd400; --sale: #ff5d4f; --lcd: #05080a; --lcd-ink: #f6cd2e; --lcd-dim: #6b7570;
+  --ink-indigo: #8f8cf0; --ink-green: #4fc28f; --ink-vermilion: #ff7a52; --ink-teal: #49b9cf;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 12px 26px -14px rgba(0,0,0,.8); color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --desk: #0b0f12; --paper: #151b1f; --paper-2: #1b2328; --ink: #e9eee7; --muted: #9aa8a0; --rule: #2a3631;
+  --gate: #5e88ff; --gate-ink: #0b1020; --sticker: #ffd400; --sale: #ff5d4f; --lcd: #05080a; --lcd-ink: #f6cd2e; --lcd-dim: #6b7570;
+  --ink-indigo: #8f8cf0; --ink-green: #4fc28f; --ink-vermilion: #ff7a52; --ink-teal: #49b9cf;
+  --shadow: 0 1px 0 rgba(0,0,0,.4), 0 12px 26px -14px rgba(0,0,0,.8); color-scheme: dark; }
+
+* { box-sizing: border-box; }
+body { background: var(--desk); color: var(--ink); font-family: var(--body); font-size: 15px; line-height: 1.55; }
+.wrap { max-width: 1240px; margin: 0 auto; padding: 32px 16px 56px; display: grid; gap: 28px; }
+.intro { max-width: 62ch; display: grid; gap: 6px; }
+.intro h1 { font-family: var(--display); font-weight: 400; font-size: clamp(26px, 4vw, 38px); line-height: 1.15; margin: 0; text-wrap: balance; letter-spacing: .01em; }
+.intro p { margin: 0; color: var(--muted); }
+.screens { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 24px; align-items: start; }
+figure { margin: 0; display: grid; gap: 10px; min-width: 0; }
+figcaption { font-family: var(--print); font-size: 13px; letter-spacing: .06em; color: var(--muted); }
+.phone { background: var(--paper-2); border-radius: 28px; padding: 14px; box-shadow: var(--shadow); border: 1px solid var(--rule); min-width: 0; }
+.screen { background: var(--paper); border-radius: 18px; overflow: hidden; display: grid; gap: 14px; padding: 16px 14px 18px; min-height: 640px; align-content: start; }
+
+/* App header */
+.brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.wordmark { font-family: var(--display); font-size: 17px; line-height: 1.1; }
+.wordmark small { display: block; font-family: var(--body); font-size: 10.5px; color: var(--muted); letter-spacing: .12em; margin-top: 3px; }
+.iconbtn { width: 36px; height: 36px; border-radius: 10px; border: 1px solid var(--rule); background: transparent; color: var(--ink); display: grid; place-items: center; font-size: 15px; }
+
+/* The ticket */
+.ticket { position: relative; background: var(--paper); border: 1px solid var(--rule); border-radius: 12px; padding: 14px 14px 12px; box-shadow: var(--shadow);
+  background-image: repeating-linear-gradient(135deg, transparent 0 7px, color-mix(in srgb, var(--ink-green) 7%, transparent) 7px 8px); }
+.ticket::before, .ticket::after { content: ""; position: absolute; top: 74px; width: 16px; height: 16px; border-radius: 50%; background: var(--paper-2); border: 1px solid var(--rule); }
+.ticket::before { left: -9px; } .ticket::after { right: -9px; }
+.ticket-head { display: grid; gap: 2px; padding-bottom: 12px; border-bottom: 1.5px dashed var(--rule); }
+.ticket-kicker { font-family: var(--print); font-size: 12px; letter-spacing: .08em; color: var(--muted); display: flex; justify-content: space-between; gap: 8px; }
+.ticket-title { font-family: var(--display); font-weight: 400; font-size: 22px; line-height: 1.2; margin: 0; text-wrap: balance; }
+.ticket-meta { font-family: var(--print); font-size: 13px; color: var(--ink); letter-spacing: .04em; }
+
+/* Route strip with stops */
+.route { list-style: none; margin: 10px 0 0; padding: 0; display: grid; }
+.route li { display: grid; grid-template-columns: 22px 1fr; gap: 10px; position: relative; }
+.route li::before { content: ""; position: absolute; left: 10px; top: 0; bottom: 0; width: 3px; background: var(--gate); opacity: .85; }
+.route li:first-child::before { top: 14px; } .route li:last-child::before { bottom: calc(100% - 14px); }
+.dot { width: 22px; height: 22px; border-radius: 50%; background: var(--paper); border: 3px solid var(--gate); position: relative; z-index: 1; margin-top: 4px; display: grid; place-items: center; font-family: var(--print); font-size: 10px; color: var(--gate); }
+.station { font-family: var(--print); font-size: 12.5px; letter-spacing: .05em; color: var(--muted); padding: 5px 0 10px; }
+.stop { display: grid; grid-template-columns: 52px 1fr auto; gap: 10px; align-items: start; padding: 4px 0 14px; min-width: 0; }
+.stop-text { min-width: 0; display: grid; gap: 3px; }
+.stop-name { font-weight: 700; font-size: 15px; line-height: 1.25; }
+.stop-name span { display: block; font-weight: 400; font-size: 11.5px; color: var(--muted); }
+.walk { font-family: var(--print); font-size: 12px; color: var(--muted); letter-spacing: .04em; }
+.x { width: 32px; height: 32px; border-radius: 8px; border: 0; background: transparent; color: var(--muted); font-size: 16px; }
+
+/* Price sticker: the one loud element */
+.sticker { justify-self: start; display: inline-flex; align-items: baseline; gap: 6px; background: var(--sticker); color: #1b1300; padding: 2px 8px 3px; border-radius: 3px; transform: rotate(-2deg); box-shadow: 1px 1px 0 rgba(0,0,0,.15); font-size: 12px; font-weight: 700; }
+.sticker b { font-family: var(--display); font-weight: 400; font-size: 18px; color: #c40000; letter-spacing: .01em; }
+.sticker s { color: #4d3f00; font-weight: 500; }
+
+/* Flyer thumbnails drawn as tiny flyers */
+.thumb { width: 46px; height: 60px; position: relative; }
+.flyer { position: absolute; inset: 0; background: #fffdf7; border: 1px solid #d9d3c4; border-radius: 2px; box-shadow: 0 2px 4px rgba(0,0,0,.18); overflow: hidden; }
+.flyer::before { content: ""; position: absolute; inset: 0 0 auto; height: 14px; background: var(--band, #d40b0b); }
+.flyer::after { content: attr(data-big); position: absolute; left: 4px; right: 4px; top: 20px; font-family: var(--display); font-size: 11px; line-height: 1; color: var(--band, #d40b0b); }
+.flyer i { position: absolute; left: 5px; right: 5px; height: 2px; background: #c9c2b2; }
+.flyer i:nth-of-type(1) { top: 38px; } .flyer i:nth-of-type(2) { top: 43px; right: 14px; } .flyer i:nth-of-type(3) { top: 48px; }
+.thumb .flyer:nth-child(1) { transform: rotate(-5deg) translate(-2px, 2px); }
+.thumb .flyer:nth-child(2) { transform: rotate(3deg); }
+
+.gate { width: 100%; border: 0; border-radius: 12px; background: var(--gate); color: var(--gate-ink); font: 700 16px/1 var(--body); padding: 16px; display: flex; justify-content: center; align-items: center; gap: 10px; }
+.gate small { font-family: var(--print); font-weight: 400; font-size: 12px; opacity: .85; }
+
+/* Sorted mailbox tray */
+.tray { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.slot { border: 1px solid var(--rule); border-radius: 10px; padding: 8px 8px 9px; display: grid; gap: 2px; background: var(--paper); }
+.slot b { font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1; }
+.slot span { font-size: 11.5px; line-height: 1.3; color: var(--muted); }
+.slot em { font-style: normal; font-family: var(--print); font-size: 11px; letter-spacing: .08em; }
+
+/* Walk mode: train door display */
+.lcd { background: var(--lcd); color: var(--lcd-ink); border-radius: 14px; padding: 14px 14px 16px; display: grid; gap: 6px; border-top: 6px solid var(--gate); }
+.lcd .next { font-family: var(--print); font-size: 13px; color: var(--lcd-dim); letter-spacing: .1em; display: flex; justify-content: space-between; }
+.lcd .name { font-family: var(--display); font-size: 26px; line-height: 1.15; color: #f6f1e4; }
+.lcd .ja { font-family: var(--print); font-size: 15px; color: var(--lcd-ink); letter-spacing: .06em; }
+.lcd .line { font-family: var(--print); font-size: 13px; color: var(--lcd-ink); letter-spacing: .06em; }
+.walk-card { display: grid; grid-template-columns: 74px 1fr; gap: 12px; align-items: center; }
+.walk-card .thumb { width: 66px; height: 86px; }
+.walk-card .flyer::after { font-size: 15px; top: 24px; }
+.walk-card .flyer::before { height: 18px; }
+.howto { border: 1px solid var(--rule); border-radius: 10px; padding: 10px 12px; display: grid; gap: 4px; font-size: 13.5px; }
+.howto strong { font-family: var(--print); font-weight: 400; font-size: 12px; letter-spacing: .08em; color: var(--muted); }
+.ghost { background: transparent; border: 0; color: var(--gate); font: 700 14px/1 var(--body); padding: 6px; justify-self: center; text-decoration: underline; text-underline-offset: 4px; }
+.maps { font-size: 13.5px; color: var(--gate); text-decoration: underline; text-underline-offset: 4px; }
+
+/* Stamp rally card */
+.rally-head { display: grid; gap: 2px; }
+.rally-head h2 { font-family: var(--display); font-weight: 400; font-size: 22px; margin: 0; }
+.rally-head p { margin: 0; font-family: var(--print); font-size: 12.5px; color: var(--muted); letter-spacing: .05em; }
+.rally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; padding: 12px; border: 1.5px solid var(--rule); border-radius: 12px; background-image: radial-gradient(color-mix(in srgb, var(--ink) 9%, transparent) 1px, transparent 1.5px); background-size: 10px 10px; }
+.spot { aspect-ratio: 1; max-width: 100%; border-radius: 50%; border: 1.5px dashed var(--rule); display: grid; place-items: center; text-align: center; font-size: 10px; color: var(--muted); padding: 6px; line-height: 1.2; }
+/* Station-stamp seal: double ring, name on an arc, big mark, boxed date, uneven ink (SVG filter #ink). */
+.spot.filled { border: 0; padding: 0; }
+.seal { width: 100%; height: 100%; color: var(--c); transform: rotate(var(--r, -6deg)); overflow: visible; }
+.seal text { fill: currentColor; }
+.seal .mark { font-family: "Dela Gothic One", "Zen Kaku Gothic New", sans-serif; font-size: 27px; }
+.seal .arc { font-family: "DotGothic16", monospace; font-size: 8.6px; letter-spacing: 1.2px; }
+.seal .date { font-family: "DotGothic16", monospace; font-size: 7.4px; }
+.seal.self { opacity: .55; }
+.seal.self .outer { stroke-dasharray: 7 4; }
+.tally { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.tally div { border-top: 2px solid var(--ink); padding-top: 6px; display: grid; }
+.tally b { font-family: var(--display); font-weight: 400; font-size: 20px; line-height: 1.1; }
+.tally b.money { color: var(--sale); }
+.tally span { font-size: 11.5px; color: var(--muted); }
+
+/* Why open: ticket stub */
+.stub { border: 1px solid var(--rule); border-radius: 12px; padding: 14px; display: grid; gap: 12px; position: relative; background: var(--paper); }
+.stub::before { content: "✂ - - - - - - - - - - - - - - - - - - - - - - -"; position: absolute; top: -10px; left: 12px; right: 12px; font-family: var(--print); font-size: 12px; color: var(--muted); background: var(--paper); white-space: nowrap; overflow: hidden; }
+.stub h2 { font-family: var(--display); font-weight: 400; font-size: 21px; margin: 4px 0 0; line-height: 1.2; }
+.reasons { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; }
+.reasons li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }
+.reasons .n { font-family: var(--print); font-size: 13px; width: 28px; height: 28px; border: 1.5px solid var(--ink); border-radius: 50%; display: grid; place-items: center; }
+.reasons strong { display: block; font-size: 14px; }
+.reasons p { margin: 2px 0 0; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.reasons em { font-style: normal; font-family: var(--print); color: var(--ink); }
+.small-note { font-size: 12px; color: var(--muted); margin: 0; }
+
+button { cursor: pointer; }
+button:focus-visible, a:focus-visible { outline: 3px solid var(--gate); outline-offset: 3px; }
+@media (prefers-reduced-motion: no-preference) { .seal.new { animation: press .5s cubic-bezier(.2,1.6,.4,1) both; } }
+@keyframes press { from { transform: rotate(var(--r)) scale(1.35); opacity: 0; } to { transform: rotate(var(--r)) scale(1); opacity: 1; } }
+</style>
+
+<div class="wrap">
+  <header class="intro">
+    <h1>Worth the Walk?, redesigned as a ticket for today</h1>
+    <p>Your mailbox becomes a train ticket: the stops are stations on a route, the best printed deal is a price sticker, walk mode is the display above the train door, and every visit leaves an ink stamp. Shop names and stations here are examples.</p>
+  </header>
+
+  <section class="screens" aria-label="App screens">
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="brand"><div class="wordmark">Worth the Walk?<small>チラシを、さんぽに。</small></div><div style="display:flex;gap:6px"><button class="iconbtn" aria-label="Your stamps">◎</button><button class="iconbtn" aria-label="Settings">⚙</button></div></div>
+
+        <article class="ticket" aria-labelledby="t1">
+          <div class="ticket-head">
+            <div class="ticket-kicker"><span>TODAY · 12 OCT</span><span>No. 0042</span></div>
+            <h2 class="ticket-title" id="t1">3 places worth the walk</h2>
+            <div class="ticket-meta">2.0 KM · 25 MIN · ~2,850 STEPS</div>
+          </div>
+          <ol class="route">
+            <li><span class="dot" aria-hidden="true"></span><div class="station">FROM HIKIFUNE 曳舟</div></li>
+            <li><span class="dot" aria-hidden="true">1</span>
+              <div class="stop"><div class="thumb"><div class="flyer" style="--band:#1d6fb8" data-big="体験0円"><i></i><i></i><i></i></div></div>
+                <div class="stop-text"><div class="stop-name">Pilates studio<span lang="ja">さくらピラティス</span></div><span class="sticker">Trial <b>¥1,000</b> <s>¥3,300</s></span><span class="walk">6 MIN · UNTIL 30 OCT</span></div>
+                <button class="x" aria-label="Not for me">✕</button></div></li>
+            <li><span class="dot" aria-hidden="true">2</span>
+              <div class="stop"><div class="thumb"><div class="flyer" style="--band:#13824f" data-big="半額"><i></i><i></i><i></i></div><div class="flyer" style="--band:#13824f" data-big="SALE"><i></i><i></i><i></i></div></div>
+                <div class="stop-text"><div class="stop-name">Dry cleaner<span lang="ja">ほしクリーニング</span></div><span class="sticker">Shirts <b>¥98</b> <s>¥297</s></span><span class="walk">9 MIN · UNTIL 31 OCT</span></div>
+                <button class="x" aria-label="Not for me">✕</button></div></li>
+            <li><span class="dot" aria-hidden="true">3</span>
+              <div class="stop"><div class="thumb"><div class="flyer" data-big="特売"><i></i><i></i><i></i></div></div>
+                <div class="stop-text"><div class="stop-name">Supermarket<span lang="ja">あおぞら市場</span></div><span class="sticker">Eggs <b>¥158</b> <s>¥198</s></span><span class="walk">4 MIN · TODAY ONLY</span></div>
+                <button class="x" aria-label="Not for me">✕</button></div></li>
+            <li><span class="dot" aria-hidden="true"></span><div class="station">HOME · HIGASHI-MUKOJIMA 東向島</div></li>
+          </ol>
+        </article>
+
+        <button class="gate">Start the walk <small>→ 改札</small></button>
+
+        <div class="tray" aria-label="The rest of your mailbox">
+          <div class="slot"><em>HOME</em><b>2</b><span>deals to order by phone</span></div>
+          <div class="slot"><em>RECYCLE</em><b>9</b><span>flyers to put out</span></div>
+          <div class="slot"><em>KEEP</em><b>1</b><span>letter, not an ad</span></div>
+        </div>
+      </div></div>
+      <figcaption>1 · THE ANSWER: YOUR TICKET FOR TODAY</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="brand"><div class="wordmark">Worth the Walk?<small>チラシを、さんぽに。</small></div><button class="iconbtn" aria-label="End walk">✕</button></div>
+        <div class="lcd" role="status">
+          <div class="next"><span>NEXT · 次は</span><span>STOP 1 / 3</span></div>
+          <div class="name">Pilates studio</div>
+          <div class="ja" lang="ja">さくらピラティス</div>
+          <div class="line">6 MIN WALK · 450 M</div>
+        </div>
+        <div class="walk-card">
+          <div class="thumb"><div class="flyer" style="--band:#1d6fb8" data-big="体験0円"><i></i><i></i><i></i></div></div>
+          <div style="display:grid;gap:6px;min-width:0"><span class="sticker">Trial <b>¥1,000</b> <s>¥3,300</s></span><a class="maps" href="#route">Open route in Google Maps</a></div>
+        </div>
+        <div class="howto"><strong>HOW TO USE</strong>Show this flyer at the front desk and ask for the mat trial.<br>Book by phone: 0120-000-000 · until 30 Oct</div>
+        <button class="gate">I'm here <small>· stamp</small></button>
+        <button class="ghost">Skip this stop</button>
+        <div class="rally" style="grid-template-columns:repeat(3,1fr)">
+          <div class="spot filled" data-stamp="体|PILATES STUDIO|2026.10.12|var(--ink-indigo)|-7|gps|new"></div>
+          <div class="spot">2<br>Dry cleaner</div>
+          <div class="spot">3<br>Supermarket</div>
+        </div>
+      </div></div>
+      <figcaption>2 · WALK MODE: THE DISPLAY ABOVE THE DOOR</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="brand"><div class="wordmark">Your stamps<small>スタンプラリー · OCTOBER</small></div><button class="iconbtn" aria-label="Close">✕</button></div>
+        <div class="rally-head"><h2>6 places stamped</h2><p>EACH KIND OF PLACE HAS ITS OWN INK</p></div>
+        <div class="rally">
+          <div class="spot filled" data-stamp="体|PILATES STUDIO|2026.10.12|var(--ink-indigo)|-7|gps"></div>
+          <div class="spot filled" data-stamp="洗|DRY CLEANER|2026.10.12|var(--ink-green)|5|gps"></div>
+          <div class="spot filled" data-stamp="市|SUPERMARKET|2026.10.12|var(--ink-vermilion)|-3|gps"></div>
+          <div class="spot filled" data-stamp="道|AIKIDO DOJO|2026.10.05|var(--ink-teal)|8|self"></div>
+          <div class="spot filled" data-stamp="市|SUPERMARKET|2026.10.05|var(--ink-vermilion)|-9|gps"></div>
+          <div class="spot filled" data-stamp="洗|DRY CLEANER|2026.10.05|var(--ink-green)|3|gps"></div>
+          <div class="spot">Next stamp</div><div class="spot" aria-hidden="true"></div><div class="spot" aria-hidden="true"></div>
+        </div>
+        <div class="tally">
+          <div><b>3</b><span>walks</span></div>
+          <div><b>6.2 km</b><span>~8,700 steps</span></div>
+          <div><b class="money">¥2,577</b><span>saved, printed on flyers</span></div>
+        </div>
+        <p class="small-note">Dashed stamp: stamped without GPS. Distance and steps are estimates from planned routes.</p>
+      </div></div>
+      <figcaption>3 · YOUR STAMPS: A STATION STAMP RALLY CARD</figcaption>
+    </figure>
+
+    <figure>
+      <div class="phone"><div class="screen">
+        <div class="brand"><div class="wordmark">Why open models?<small>オープンだから、できること</small></div><button class="iconbtn" aria-label="Close">✕</button></div>
+        <div class="stub">
+          <h2>Your mail is read by models anyone can run</h2>
+          <ol class="reasons">
+            <li><span class="n">1</span><div><strong>You choose where your mail is read</strong><p>The same Gemma 4 family reads flyers on a hosted GPU or on your own laptop (<em>LOCAL_LLM=1</em>). A closed API has no "run it at home" option.</p></div></li>
+            <li><span class="n">2</span><div><strong>We could check it on real flyers</strong><p>With open weights we tested both sizes on the same flyers: the small model got <em>0/8</em> prices from a whole page, the large one <em>4/4</em> from a tile. That is why reading works tile by tile.</p></div></li>
+            <li><span class="n">3</span><div><strong>It costs about half a yen a page</strong><p>Reading one page costs roughly <em>¥0.4</em> on serverless inference. A whole mailbox is a few yen, with no account and no subscription.</p></div></li>
+            <li><span class="n">4</span><div><strong>It learns your taste without your data</strong><p>TabPFN ranks flyers from your ✕ and stamps using only numbers: kind of place, distance, deal size. Names, addresses and photos never leave the phone for that.</p></div></li>
+          </ol>
+          <p class="small-note">Addresses come from Japan's open GSI geocoder. Photos are read and deleted; nothing is stored on a server.</p>
+        </div>
+      </div></div>
+      <figcaption>4 · WHY OPEN: A TICKET STUB IN THE APP</figcaption>
+    </figure>
+  </section>
+</div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <!-- Uneven stamp ink: speckled gaps plus a slight wobble at the edges. -->
+  <filter id="ink" x="-10%" y="-10%" width="120%" height="120%">
+    <feTurbulence type="fractalNoise" baseFrequency="1.1" numOctaves="2" seed="4" result="grain"/>
+    <feColorMatrix in="grain" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -1.9 1.8" result="speckle"/>
+    <feComposite in="SourceGraphic" in2="speckle" operator="in" result="inked"/>
+    <feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="1" seed="9" result="wobble"/>
+    <feDisplacementMap in="inked" in2="wobble" scale="2.4" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+<script>
+// Draw each station stamp from data-stamp="mark|NAME|date|ink|rotation|gps|new".
+document.querySelectorAll('[data-stamp]').forEach((spot, i) => {
+  const [mark, name, date, ink, rot, kind, isNew] = spot.dataset.stamp.split('|');
+  const id = 'arc' + i;
+  spot.style.setProperty('--c', ink);
+  spot.style.setProperty('--r', rot + 'deg');
+  spot.setAttribute('role', 'img');
+  spot.setAttribute('aria-label', `${name} stamp, ${date}${kind === 'self' ? ', stamped without GPS' : ''}`);
+  spot.innerHTML = `<svg class="seal${kind === 'self' ? ' self' : ''}${isNew ? ' new' : ''}" viewBox="0 0 100 100" aria-hidden="true">
+    <g filter="url(#ink)">
+      <circle class="outer" cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="4.2"/>
+      <circle cx="50" cy="50" r="39.5" fill="none" stroke="currentColor" stroke-width="1.1"/>
+      <path id="${id}" d="M 19 52 A 31 31 0 0 1 81 52" fill="none"/>
+      <text class="arc"><textPath href="#${id}" startOffset="50%" text-anchor="middle">${name}</textPath></text>
+      <text class="mark" x="50" y="64" text-anchor="middle">${mark}</text>
+      <rect x="31" y="69.5" width="38" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
+      <text class="date" x="50" y="77.6" text-anchor="middle">${date}</text>
+    </g>
+  </svg>`;
+});
+</script>

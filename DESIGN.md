@@ -1,198 +1,187 @@
 # Design System of Worth the Walk?
 
-> Format: the Stitch DESIGN.md structure with extended sections, as collected in [awesome-design-md](https://github.com/VoltAgent/awesome-design-md). Tokens below are the values the app ships in `dist/styles.css` and `dist/chirashi.css`; anything marked *(target)* is the agreed direction for the snap → answer → walk redesign.
+> Format: the Stitch DESIGN.md structure with extended sections, as collected in [awesome-design-md](https://github.com/VoltAgent/awesome-design-md). The approved visual reference is [`docs/design/mockup.html`](docs/design/mockup.html) with screenshots in `docs/design/`. When this file and the mockup disagree, the mockup wins; update this file.
 
 ## 1. Visual Theme & Atmosphere
 
-Worth the Walk? is **the calm after the pile**. Japanese mailbox flyers are loud: neon reds, starbursts, dense prices, three typefaces per square inch. The app is the opposite: a quiet station-signage page that has already read everything and tells you one thing — which flyers are worth leaving the house for, and how to get there. It should feel like a well-run railway notice board crossed with a stamp card: clear, calm, a little bit of ink.
+**Ticket and ink.** Your mailbox becomes a train ticket for today. Japanese mailbox flyers are loud four-colour newsprint; the app answers in the quiet vernacular of Japanese rail: pale ticket paper, dot-matrix print, a route line with stations, the display above the train door, and the ink stamps of a station stamp rally (駅スタンプ). The only loud element is the one that comes from the flyers themselves: the yellow price sticker with the sale price in red.
 
-The screen is the shortest part of the experience. Every view exists to get the user to the next physical action: photograph, start walking, say "I'm here".
+The screen is the shortest part of the experience. Every view leads to the next physical action: photograph, walk through the gate, say "I'm here", get a stamp.
 
 **Key Characteristics:**
-- Cool, quiet canvas (`#f4f6f9`) with white cards — the flyers provide the colour, the app provides the order
-- One primary action per screen, always in Signal Blue (`#174cbc`)
-- Stamp Vermilion (`#b54508`) is reserved for two things only: stamps, and money that is printed on a flyer
-- The user's own flyer thumbnail appears wherever a flyer is mentioned — recognition by sight, not by reading
-- English first; Japanese as small, `lang="ja"` reference text
-- Three short lines per flyer; details live in a sheet
-- Station-stamp motifs (circular vermilion seals, slight rotation, ink texture) for progress and reward
+- Pale kippu ticket paper (`#f6f8f2`) with a faint diagonal guilloché; a ticket card with perforation notches and a dashed tear line
+- Dot-matrix numerals (DotGothic16) for times, distances, dates and labels — like a ticket printer or a departure board
+- Chunky poster display face (Dela Gothic One) for headings and big numbers
+- One action per screen in ticket-gate blue (`#1846b8`), labelled with its Japanese gate word where it helps ("Start the walk → 改札")
+- The best printed deal is a yellow price sticker (`#ffd400`) with the price in flyer red (`#d40b0b`) and the old price struck through
+- Walk mode is the dark train-door display: "NEXT · 次は", amber dot-matrix text
+- Station stamps in per-category ink (indigo, green, vermilion, teal): double ring, name on an arc, central kanji, boxed date, uneven ink
+- The user's own flyer thumbnail appears wherever a flyer is mentioned; English first, Japanese as small reference
 
 ## 2. Color Palette & Roles
 
-### Primary
-- **Ink Navy** (`#172536`): Primary text, headings, stop titles, icons.
-- **Signal Blue** (`#174cbc`): The single primary action per screen ("Read 7 flyers", "Start the walk", "I'm here"), links, focus rings, progress fill.
-- **Signal Blue Deep** (`#0d3690`): Hover and pressed state of Signal Blue.
+### Surfaces
+- **Desk** (`#e4e9e1`; dark `#0b0f12`): Page background around the app column.
+- **Ticket Paper** (`#f6f8f2`; dark `#151b1f`): App surface, ticket card, sheets.
+- **Paper Shade** (`#edf2ea`; dark `#1b2328`): Notch fill, pressed states, secondary surfaces.
 
-### Accent
-- **Stamp Vermilion** (`#b54508`): Stamp seals, the walk-done stamp animation, and printed money ("Trial ¥1,000 · was ¥3,300", "¥2,300 saved"). Never for errors or warnings.
+### Ink
+- **Print Ink** (`#18222c`; dark `#e9eee7`): Primary text.
+- **Faded Ink** (`#5b6a62`; dark `#9aa8a0`): Secondary text, dot-matrix meta.
+- **Rule** (`#cdd7cb`; dark `#2a3631`): Borders, tear lines, empty stamp slots.
 
-### Surface & Background
-- **Mist** (`#f4f6f9`): Page background.
-- **Paper White** (`#ffffff`): Cards, sheets, sticky action bar, setup.
-- **Sky Tint** (`#eaf0fc`): Selected options, the current stop in walk mode, info chips, "walk" bucket pill.
+### Action
+- **Ticket-gate Blue** (`#1846b8`; dark `#5e88ff`): The one primary action per screen, the route line, station dots, links, focus rings, progress. Text on it: white (dark theme: `#0b1020`).
 
-### Neutrals & Text
-- **Slate** (`#506175`): Secondary text — distances, dates, "6 min away · until 30 Sep", Japanese reference lines.
-- **Rule** (`#d6dee9`): Dividers, card borders, thumbnail borders, progress track.
-- **Control Border** (`#91a3bc`): Inputs, selects, secondary buttons.
+### Flyer accents (printed money only)
+- **Price Sticker** (`#ffd400`, both themes): Background of the best-deal sticker. Text on it is always `#1b1300`.
+- **Sale Red** (`#d40b0b` on the sticker; standalone `#d40b0b` / dark `#ff5d4f`): The sale price, and "¥ saved (printed)" totals. Never for errors.
 
-### Bucket tints *(target)*
-- **Home Green** (`#2f6b4a` on `#e8f3ec`): "📞 Deals to order at home" row and pill.
-- **Recycle Gray** (`#5f6b7a` on `#eef1f4`): "♻ Safe to recycle" row and pill.
-- **Keep Neutral** (`#3d4752` on `#edeff2`): "🔒 Letters to keep" row.
+### Walk-mode display
+- **Display Black** (`#0f1418`; dark `#05080a`): Train-door board background.
+- **Display Amber** (`#f3c623`; dark `#f6cd2e`): Dot-matrix text on the board; the station name itself is `#f6f1e4`.
+- **Display Dim** (`#6f7a74`): Secondary board text ("NEXT · 次は", "STOP 1 / 3").
+
+### Stamp inks (one per kind of place)
+- **Indigo** (`#3d3a92`; dark `#8f8cf0`): lessons, fitness, studios
+- **Green** (`#17784c`; dark `#4fc28f`): cleaners, services, clinics
+- **Vermilion** (`#c2411c`; dark `#ff7a52`): supermarkets, drugstores, food shops, restaurants
+- **Teal** (`#0e6f82`; dark `#49b9cf`): events, dojos and everything else
 
 ### Gradient System
-No decorative gradients. The only gradient is the stamp's ink texture: a subtle radial gradient (`radial-gradient(circle at 30% 30%, rgba(181,69,8,.08), transparent 60%)`) inside the seal.
+No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`repeating-linear-gradient(135deg, transparent 0 7px, <green 7%> 7px 8px)`), the stamp card's dot grid, and the stamp ink filter.
 
 ## 3. Typography Rules
 
 ### Font Family
-- **Latin**: `Schibsted Grotesk` (400, 600; self-hosted woff2), fallback `system-ui, sans-serif`
-- **Japanese**: `Zen Kaku Gothic New` (400; self-hosted subsets), fallback `"Yu Gothic", Meiryo, sans-serif`
-- Stack: `Schibsted, 'Zen Kaku Gothic New', 'Yu Gothic', Meiryo, sans-serif`
+- **Display**: `Dela Gothic One` (Google Fonts), fallback `"Zen Kaku Gothic New", "Hiragino Sans", sans-serif`
+- **Body**: `Zen Kaku Gothic New` 400/500/700 (Google Fonts or self-hosted), fallback `"Hiragino Sans", "Yu Gothic", system-ui, sans-serif`
+- **Print (dot-matrix)**: `DotGothic16` (Google Fonts), fallback `"Zen Kaku Gothic New", monospace`
 
 ### Hierarchy
 
 | Role | Font | Size | Weight | Line Height | Letter Spacing | Notes |
 |---|---|---|---|---|---|---|
-| Answer title | Schibsted | clamp(28px, 4vw, 40px) | 600 | 1.15 | -0.035em | "3 places worth the walk" |
-| Screen title | Schibsted | 22px | 600 | 1.3 | -0.01em | Walk mode stop name, sheet titles |
-| Stop title | Schibsted | 18px | 600 | 1.3 | 0 | "Pilates studio · zen place" |
-| Deal line | Schibsted | 16px | 600 | 1.4 | 0 | Amounts in Stamp Vermilion |
-| Body | Schibsted | 16px | 400 | 1.55 | 0 | Sheets, "How to use" |
-| Meta | Schibsted | 14px | 400 | 1.5 | 0 | Slate; distance · date |
-| Japanese reference | Zen Kaku Gothic New | 13px | 400 | 1.5 | 0.02em | Slate; `lang="ja"` |
-| Label | Schibsted | 12px | 600 | 1.4 | 0.05em | Uppercase section labels only |
-| Stat number | Schibsted | 40px | 600 | 1.2 | -0.035em | Proportional figures |
+| Ticket title | Dela Gothic One | 22px | 400 | 1.2 | 0 | "3 places worth the walk" |
+| Board name | Dela Gothic One | 26px | 400 | 1.15 | 0 | Walk-mode stop name |
+| Big number | Dela Gothic One | 20px | 400 | 1.1 | 0 | Tray counts, tallies |
+| Sticker price | Dela Gothic One | 18px | 400 | 1 | 0.01em | Sale Red on Price Sticker |
+| Wordmark | Dela Gothic One | 17px | 400 | 1.1 | 0 | "Worth the Walk?" |
+| Stop name | Zen Kaku Gothic New | 15px | 700 | 1.25 | 0 | "Pilates studio" |
+| Body | Zen Kaku Gothic New | 15px | 400 | 1.55 | 0 | Sheets, how-to text |
+| Japanese reference | Zen Kaku Gothic New | 11.5px | 400 | 1.4 | 0.04em | Under the stop name, `lang="ja"` |
+| Print meta | DotGothic16 | 12–13px | 400 | 1.4 | 0.04–0.08em | "6 MIN · UNTIL 30 OCT", "TODAY · 12 OCT", captions |
+| Board print | DotGothic16 | 13–15px | 400 | 1.4 | 0.06–0.1em | Display Amber on Display Black |
 
 ### Principles
-- **Proportional figures only.** `font-variant-numeric: tabular-nums` makes Schibsted's comma and period as wide as a digit ("¥3 , 300", "1 . 4 km"). Never use it.
-- **English carries the meaning, Japanese proves it.** Show the English translation first; the printed Japanese sits underneath in Japanese reference style so the user can match it to the paper.
-- **Two weights.** 400 and 600; no light or black weights.
-- **Short lines.** Verdicts truncate at ~90 characters; stop titles at one line with ellipsis.
+- **Print face for facts, display face for headlines, body face for sentences.** Times, distances, dates and labels are always dot-matrix uppercase Latin.
+- **Proportional figures in body text.** Never `tabular-nums` with Zen Kaku/Schibsted (wide punctuation); DotGothic16 is already monospaced.
+- **English first, Japanese proves it.** The stop name is English ("Pilates studio"); the printed Japanese name sits underneath, small.
+- **Headings balance** (`text-wrap: balance`).
 
 ## 4. Component Stylings
 
+### The ticket (answer card)
+- Ticket Paper, 1px Rule border, radius 12px, guilloché texture, soft shadow (`0 1px 0 rgba(24,34,44,.06), 0 10px 24px -14px rgba(24,34,44,.35)`)
+- Two perforation notches (16px circles in Paper Shade with a Rule border) on the left and right edges at the tear line
+- Head: print kicker "TODAY · 12 OCT" with a ticket number on the right; ticket title; print meta "2.0 KM · 25 MIN · ~2,850 STEPS"; then a 1.5px dashed tear line
+- Body: the **route strip**
+
+### Route strip
+- Vertical Ticket-gate Blue line (3px) with 22px station dots (Ticket Paper fill, 3px blue ring, stop number in print face)
+- First and last rows are stations in print face: "FROM <STATION> <駅名>", "HOME · <STATION> <駅名>"
+- Stop rows between them: thumbnail stack (46×60px) · text (stop name + Japanese reference, price sticker, print meta) · ✕ "Not for me"
+- "Take the train to …" plans replace the FROM row with "TRAIN TO <STATION>, THEN WALK"
+
+### Price sticker (the one loud element)
+- Inline block, Price Sticker yellow, radius 3px, rotated −2°, tiny hard shadow
+- "Trial" label (12px 700, `#1b1300`) · price in Dela Gothic One 18px Sale Red · old price struck through (`#4d3f00`)
+- Free offers: "Trial **Free** ~~¥3,300~~"; no printed comparison: show the deal text without a sticker
+
+### Flyer thumbnails
+- The user's own photo, 480px source, `object-fit: cover`, 2px radius, light border, small shadow
+- Stacks: up to 3 pages, rotated −5° / +3°, offset; tap opens the page sheet
+- No thumbnail (old pages, personal mail): a paper-coloured tile with "No preview" in print face — never a hatched icon
+
 ### Buttons
-**Primary (Signal Blue)**
-- Background: Signal Blue (`#174cbc`); text white, 16px, 600
-- Min height 48px (56px for "I'm here"), padding 12px 20px, radius 6px
-- Hover/pressed: Signal Blue Deep (`#0d3690`); focus: 3px Signal Blue outline, 4px offset
-- One per screen. If you need a second, it is secondary.
+- **Gate (primary)**: Ticket-gate Blue, white 16px 700 text, radius 12px, padding 16px, full width; optional print-face suffix ("→ 改札", "· stamp"). One per screen.
+- **Ghost**: transparent, blue 14px 700 text, underlined, centred ("Skip this stop")
+- **Icon button**: 36–44px, 1px Rule border, radius 10px (header: stamps ◎, settings ⚙, close ✕)
+- Focus: 3px blue outline, 3px offset
 
-**Secondary (Paper)**
-- Background: Paper White; text Signal Blue; border 1px Control Border (`#91a3bc`); radius 6px; min height 44px
-- Hover: Sky Tint background
+### Mailbox tray
+- Three equal slots under the gate: print label (HOME / RECYCLE / KEEP), big number, one-line description ("deals to order by phone", "flyers to put out", "letter, not an ad"); a slot with 0 is hidden; tapping opens its sheet
 
-**Icon button (✕, ↻, ⚙, stamps)**
-- 44×44px hit area, 20px glyph, transparent background, accessible name required ("Not for me", "Rotate page 2")
+### Walk mode (train-door display)
+- Display Black panel, radius 14px, 6px Ticket-gate Blue top edge
+- "NEXT · 次は" (Display Dim) ← → "STOP 1 / 3"; stop name in Dela Gothic One (`#f6f1e4`); Japanese name and "6 MIN WALK · 450 M" in amber print face
+- Below: large thumbnail + price sticker + "Open route in Google Maps"; a "HOW TO USE" box (print label + plain instructions); Gate "I'm here · stamp"; Ghost "Skip this stop"; the walk's stamp slots
 
-**Text link**
-- Signal Blue, underline offset 4px; used for "Open route in Google Maps", "Show all", "Call"
+### Station stamp (SVG seal)
+- `viewBox 0 0 100 100`: outer ring r46 stroke 4.2; inner ring r39.5 stroke 1.1; place kind in print face on an arc (path M19 52 A31 31 0 0 1 81 52); central kanji in Dela Gothic One 27px (体 lessons/fitness · 洗 cleaners/services · 市 shops/food · 道 dojos/other); date "2026.10.12" in a 38×11 box
+- Ink per category (section 2), rotated −9°…+9° (deterministic from the stamp id), ink filter: fractal-noise speckle (alpha matrix `-1.9 1.8`) + small displacement (scale 2.4)
+- Self-reported: dashed outer ring (`7 4`), opacity .55
+- Arrival animation: scale 1.35 → 1 with a slight overshoot (`cubic-bezier(.2,1.6,.4,1)`, 0.5s); none with reduced motion
+- Empty slot: dashed Rule circle; the first says "Next stamp"
 
-### Cards & Containers
-**Stop row** (the core component)
-- Paper White, 1px Rule border, radius 6px, padding 12px, gap 12px
-- Left: thumbnail stack (56×56px tiles, radius 4px, 1px Rule border, up to 3 tiles offset 6px)
-- Middle: Stop title (one line) · Deal line (amounts in Vermilion, "was ¥X" in Slate) · Meta line
-- Right: ✕ icon button "Not for me"
-- Whole row opens the flyer sheet; the thumbnail opens the page sheet
+### Stamp rally card
+- Card with 1.5px Rule border and a 10px dot grid; 3 columns of stamps; heading "6 places stamped" + print "EACH KIND OF PLACE HAS ITS OWN INK"
+- Tallies: three columns with a 2px ink top rule: walks · km + steps · ¥ saved (Sale Red, "saved, printed on flyers"); hide zeros
 
-**Collapsed bucket row**
-- Height 56px, Paper White, 1px Rule border, icon (📞 ♻ 🔒) + label + count + chevron; opens a sheet
+### "Why open models?" stub
+- Opens from the header (◎ menu) and from the footer line; a ticket stub with a "✂ - - -" tear line on top
+- Heading "Your mail is read by models anyone can run"; four numbered reasons (print-face numbers in circles), each a bold line plus one or two sentences with the real figures (see section 9)
 
-**Walk summary**
-- Directly under the stops: "2.1 km · ~35 min · ~3,000 steps" in Meta, then the primary "Start the walk →"
-
-### Sheets (dialog)
-- Mobile: bottom sheet, full width, top radius 12px, max height 90vh, scrolls inside
-- Desktop ≥ 720px: centered dialog, 560px wide, radius 12px
-- Backdrop `rgba(23,37,54,.4)`; Esc and a 44px close button; focus returns to the opener
-- **Flyer sheet**: thumbnails row → title → How to use (Call / Website / Show this flyer at the counter / Use by) → offers (top 5) → prices (top 5, "Show all") → "Not for me"
-- **Page sheet**: 480px preview of the page → its one-line reading → "This page belongs to:" radio cards (this flyer · other flyers by thumbnail · a flyer of its own) → Apply
-
-### Inputs & Forms
-- Height 48px, 1px Control Border, radius 6px, 12px horizontal padding, white background
-- Focus: 3px Signal Blue outline; labels 14px 600 above the field
-- Used only in settings (line, station, walk length) and "Add address"
-
-### Navigation
-- No tab bar. Header 64px: brand (left), "Your stamps" icon and ⚙ (right)
-- Sticky bottom action bar (Paper White, top Rule border, safe-area padding) holds the screen's primary button when it would otherwise scroll away ("Read 7 flyers", "Start the walk")
-
-### Image Treatment
-- Thumbnails are the user's own photos, cropped to the flyer, 480px long side, stored only on the phone
-- Tiles use `object-fit: cover`; previews use `contain` on Mist
-- Personal mail never has a thumbnail — show a neutral 🔒 tile
-
-### Distinctive Components
-**Stamp seal**
-- 104px circle, 3px Stamp Vermilion border, category icon (24px, Vermilion) centred, business name inside along the bottom (12px, ellipsis)
-- Rotation: deterministic −8° to +8° from the stamp id; ink texture radial gradient
-- GPS-verified: solid border, 100% opacity. Self-reported: dashed border, 60% opacity, "self-reported" under the date
-- Stamping animation: scale 1.15 → 1 with a 120ms ink "press" (instant with reduced motion)
-
-**Reading progress**
-- 6px bar, Rule track, Signal Blue fill; text "Reading 3 of 7 · about 1 min left"; a Stop link; never hidden off-screen
-
-**Walk mode**
-- Full-screen: "Stop 1 of 3 · 6 min walk" (Meta), large thumbnail, Screen title, Deal line, "Open route in Google Maps" link, "I'm here" (56px primary), "Skip this stop" (text link)
-- After a stamp: "Did you use it?" chips (Sky Tint when selected) for offers/items with a printed value, then "Next stop →"
+### Sheets
+- Bottom sheet on phones (top radius 18px), centred 560px dialog on desktop; Ticket Paper; backdrop `rgba(15,20,24,.45)`; focus returns to the opener
 
 ## 5. Layout Principles
 
 ### Spacing System
-- Base unit 8px; scale 4 · 8 · 12 · 16 · 24 · 32 · 48
-- Card padding 12px; section gap 24px; screen side gutter 20px (16px minimum)
+- Base unit 4px; scale 4 · 6 · 8 · 10 · 12 · 14 · 16 · 24 · 32
+- Screen padding 16px × 14px; ticket padding 14px; gaps 10–14px
 
 ### Grid & Container
-- Single column. Content max width 640px, centred on larger screens
-- Sheets 560px on desktop
+- Single app column, max 480px, centred on the Desk; sheets 560px on desktop
 
 ### Whitespace Philosophy
-- **One decision per view.** The answer screen is a short list, a summary and one button; everything else collapses into rows.
-- **Three lines per flyer.** If a fourth line seems necessary, it belongs in the sheet.
-- **Counts before lists.** "♻ 9 flyers safe to recycle" is enough; the list is one tap away.
+- **The ticket is the page.** The answer screen is one ticket, one gate, one tray. Nothing else competes.
+- **Three lines per stop**: name (+ Japanese), sticker, print meta. Details live in the flyer sheet.
 
 ### Border Radius Scale
-- 4px: thumbnails, pills
-- 6px: buttons, inputs, cards (`--radius`)
-- 12px: sheets
-- 50%: stamp seals; 999px: chips
+- 2–3px: thumbnails, stickers · 10px: icon buttons, tray slots, how-to box · 12px: ticket, gate, stamp card · 14px: walk display · 18px: sheets, phone screen · 50%: dots, stamps
 
 ## 6. Depth & Elevation
 
 | Level | Treatment | Use |
 |---|---|---|
-| Flat (0) | Mist background, no border | Page canvas |
-| Card (1) | Paper White + 1px Rule border, no shadow | Stop rows, bucket rows, settings |
-| Sticky (2) | Paper White + top Rule border + `0 -2px 8px rgba(23,37,54,.06)` | Bottom action bar |
-| Sheet (3) | Paper White + `0 -8px 24px rgba(23,37,54,.12)` + backdrop `rgba(23,37,54,.4)` | Flyer sheet, page sheet, settings sheet |
+| Desk (0) | Desk colour, no border | Page canvas |
+| Paper (1) | Ticket Paper + 1px Rule | Tray slots, how-to box, stamp card |
+| Ticket (2) | Ticket Paper + Rule + soft shadow + guilloché | The answer ticket |
+| Object (3) | Hard 1–2px shadow | Price stickers, flyer thumbnails (things stuck or laid on paper) |
+| Sheet (4) | Ticket Paper + backdrop | Flyer, page, settings, why-open sheets |
 
-**Shadow Philosophy**: borders, not shadows, separate content. Shadows only signal "this is on top of the page" (sticky bar, sheets). Stamps have ink texture, never a drop shadow.
+**Shadow Philosophy**: paper on a desk. Soft shadow for the ticket, tiny hard shadows for things stuck on it. Stamps are ink, never shadowed.
 
 ## 7. Do's and Don'ts
 
 ### Do
-- Show the flyer's own thumbnail wherever the flyer is mentioned
-- Keep exactly one Signal Blue primary button per screen
-- Let the app decide: pre-select stops; the user only removes (✕)
-- Learn implicitly: ✕ / "Not for me" = 👎, a stamp = 👍
-- Show money only when the flyer prints it, in Stamp Vermilion, with the original price in Slate ("¥1,000 · was ¥3,300")
-- Say how to use a deal ("Call", "Show this flyer at the counter", "Use by 30 Dec")
-- Keep reading progress visible at all times and show flyers as they finish
-- Use plain verbs: "Photograph your flyers", "Start the walk", "I'm here", "Not for me"
+- Make the answer a ticket with a route strip; keep one gate button per screen
+- Put the best printed deal on a yellow sticker; strike the old price
+- Use the print face for every time, distance, date and label
+- Show the user's own flyer thumbnail wherever a flyer appears
+- Draw stamps as SVG seals with per-category ink
+- Let the app decide; the user only removes stops (✕), which teaches ranking
+- Say how to use each deal; hide rows and tallies that are zero
+- Use example shops and stations in screenshots, fixtures and the mockup
 
 ### Don't
-- Don't use tabs, bucket headers, rating buttons or checkboxes to choose stops
-- Don't print every extracted item, coupon or Japanese line by default
-- Don't use Stamp Vermilion for errors, warnings or decoration
-- Don't use `tabular-nums`
-- Don't show zero stats ("0 walks · 0.0 km") — hide them until they are non-zero
-- Don't show station names or addresses from the user's own mail in screenshots, copy or test fixtures
+- Don't add tabs, rating buttons, or stop checkboxes
+- Don't use the sticker yellow or sale red for anything except printed prices
+- Don't use emoji as icons (use print-face labels and the stamp kanji)
+- Don't use `tabular-nums` on Zen Kaku Gothic New
+- Don't show the user's own station, area or addresses anywhere public
 - Don't store photos anywhere but the phone; personal mail keeps no thumbnail
-- Don't add emoji beyond the fixed set: 📷 📞 ♻ 🔒 📍 and the stamp category icons
 
 ## 8. Responsive Behavior
 
@@ -200,40 +189,42 @@ No decorative gradients. The only gradient is the stamp's ink texture: a subtle 
 
 | Name | Width | Key changes |
 |---|---|---|
-| Phone (primary) | < 720px | Single column, bottom sheets, sticky bottom action bar, 20px gutters |
-| Tablet / desktop | ≥ 720px | 640px centred column, centred dialog sheets (560px), sticky bar stays within the column |
+| Phone (primary) | < 720px | Single column, bottom sheets, gate full width, 16px gutters |
+| Wide | ≥ 720px | 480px app column centred on the Desk; sheets as centred 560px dialogs |
 
 ### Touch Targets
-- Minimum 44×44px; primary buttons 48px; "I'm here" 56px
-- ✕ and ↻ icon buttons keep 44px hit areas even when the glyph is 20px
+- 44px minimum hit area (✕ keeps 44px even if the glyph is small); gate buttons 52px+; "I'm here" 56px
 
 ### Collapsing Strategy
-- Bucket lists collapse to one row each; sheets hold the detail
-- Thumbnail stacks show at most 3 tiles (+N)
-- Long titles truncate to one line; verdicts to ~90 characters
+- Tray stays three slots (hides empty ones); stop names wrap to two lines, Japanese reference to one with ellipsis
+- Stamp card stays 3 columns; stickers wrap below the name if needed
 
 ### Image Behavior
-- Thumbnails 56px in rows, 96px in the snap strip, up to 480px in the page sheet (never upscaled beyond source)
-- Respect `env(safe-area-inset-bottom)` for the sticky bar and sheets
+- Thumbnails 46×60 in the route, 66×86 in walk mode, up to 480px in the page sheet; never upscaled beyond source
 
 ## 9. Agent Prompt Guide
 
 ### Quick Color Reference
-- Text: "Ink Navy (#172536)"
-- Primary action: "Signal Blue (#174cbc)", hover "Signal Blue Deep (#0d3690)"
-- Stamps and printed money: "Stamp Vermilion (#b54508)"
-- Background: "Mist (#f4f6f9)"; cards and sheets: "Paper White (#ffffff)"
-- Secondary text: "Slate (#506175)"; borders: "Rule (#d6dee9)"; inputs: "Control Border (#91a3bc)"
-- Selected / current: "Sky Tint (#eaf0fc)"
+- Ticket paper "#f6f8f2" on desk "#e4e9e1"; ink "#18222c"; faded ink "#5b6a62"; rule "#cdd7cb"
+- Gate blue "#1846b8" (one action per screen, route line)
+- Price sticker "#ffd400" with sale red "#d40b0b" (printed prices only)
+- Walk board black "#0f1418" with amber "#f3c623"
+- Stamp inks: indigo "#3d3a92", green "#17784c", vermilion "#c2411c", teal "#0e6f82"
+
+### Why open models (in-app copy, keep the figures true)
+1. **You choose where your mail is read.** The same Gemma 4 family reads flyers on a hosted GPU or on your own laptop (`LOCAL_LLM=1`). A closed API has no run-it-at-home option.
+2. **We could check it on real flyers.** With open weights we tested both sizes on the same flyers: the small model got 0/8 prices from a whole page, the large one 4/4 from a tile. That is why reading works tile by tile.
+3. **It costs about half a yen a page** (≈ ¥0.4 on serverless inference), with no account and no subscription.
+4. **It learns your taste without your data.** TabPFN ranks flyers from your ✕ and stamps using only numbers (kind of place, distance, deal size). Names, addresses and photos never go to it.
+Footer note: addresses come from Japan's open GSI geocoder; photos are read and deleted; nothing is stored on a server.
 
 ### Example Component Prompts
-- "Create a stop row on Paper White (#ffffff) with a 1px Rule (#d6dee9) border and 6px radius: a stack of two 56px flyer thumbnails on the left (4px radius, offset 6px), then 'Pilates studio · zen place' in 18px Schibsted 600 Ink Navy, a deal line '¥1,000' in Stamp Vermilion (#b54508) 600 followed by '· was ¥3,300' in Slate, and '6 min away · until 30 Sep' in 14px Slate. A 44px ✕ icon button labelled 'Not for me' sits on the right."
-- "Create the walk-mode screen on Mist (#f4f6f9): 'Stop 1 of 3 · 6 min walk' in 14px Slate, a 240px flyer thumbnail, the stop title in 22px Schibsted 600, a vermilion deal line, an 'Open route in Google Maps' Signal Blue link, a full-width 56px Signal Blue (#174cbc) 'I'm here' button and a 'Skip this stop' text link."
-- "Create a stamp seal: a 104px circle with a 3px Stamp Vermilion (#b54508) border, rotated −5°, a vermilion walking-figure icon in the centre, the business name in 12px along the bottom inside the circle, a faint radial ink texture, and the date in 14px Slate below. A dashed, 60%-opacity variant means self-reported."
-- "Create the answer screen header: '3 places worth the walk' in clamp(28px,4vw,40px) Schibsted 600 with −0.035em tracking on Mist, then three stop rows, a Meta line '2.1 km · ~35 min · ~3,000 steps' and one Signal Blue 'Start the walk →' button; below it three 56px collapsed rows: '📞 2 deals to order at home', '♻ 9 flyers safe to recycle', '🔒 1 letter to keep'."
+- "Create the answer ticket on Ticket Paper (#f6f8f2) with a 1px Rule (#cdd7cb) border, 12px radius, faint diagonal guilloché, perforation notches at the tear line, a DotGothic16 kicker 'TODAY · 12 OCT', a Dela Gothic One title '3 places worth the walk', print meta '2.0 KM · 25 MIN · ~2,850 STEPS', a dashed tear line, then a vertical gate-blue (#1846b8) route strip from 'FROM HIKIFUNE 曳舟' to 'HOME · HIGASHI-MUKOJIMA 東向島' with three stop rows."
+- "Create a stop row: a stack of two flyer thumbnails (46×60, rotated −5°/+3°), 'Dry cleaner' in Zen Kaku Gothic New 700 15px with 'ほしクリーニング' below in 11.5px faded ink, a yellow (#ffd400) price sticker rotated −2° reading 'Shirts ¥98 ¥297' with ¥98 in Dela Gothic One sale red (#d40b0b) and ¥297 struck through, print meta '9 MIN · UNTIL 31 OCT', and a 44px ✕ 'Not for me'."
+- "Create walk mode: a train-door display (#0f1418, 6px gate-blue top edge) with 'NEXT · 次は' and 'STOP 1 / 3' in dim DotGothic16, 'Pilates studio' in Dela Gothic One 26px, 'さくらピラティス' and '6 MIN WALK · 450 M' in amber (#f3c623) DotGothic16; below, the flyer thumbnail, its price sticker, a HOW TO USE box and a full-width gate button 'I'm here · stamp'."
+- "Create a station stamp SVG (viewBox 0 0 100 100) in indigo (#3d3a92): outer ring r46 stroke 4.2, inner ring r39.5 stroke 1.1, 'PILATES STUDIO' on the top arc in DotGothic16 8.6px, '体' in Dela Gothic One 27px at the centre, '2026.10.12' in a boxed 7.4px date, the ink-speckle filter, rotated −7°."
 
 ### Iteration Guide
-- Work on one screen at a time: snap → answer → walk → stamps
-- Name colours by role ("Stamp Vermilion", "Signal Blue"), never by hex alone
-- Before adding anything to a card, ask whether it changes the user's next physical action; if not, it goes in the sheet
-- Check every screen at 390×844 and 1280 wide for horizontal overflow, 44px targets and a single primary button
+- Compare every screen with `docs/design/*.png` at 390px, light and dark
+- One loud element per screen (the sticker); one gate button per screen
+- Name colours by role ("gate blue", "price sticker"), never by hex alone
