@@ -16,6 +16,7 @@ const homePoint=coordinates.find(s => s.id === station.id);
 const errors=[], reads=[], merges=[], locates=[], ranks=[], releases=[];
 const coarse = value => Number.isFinite(Number(value)) && Math.abs(Number(value)*100-Math.round(Number(value)*100))<1e-8;
 const capturedScreens=new Set();
+const contrastThemes=new Set();
 let server,browser,serverError,logs='';
 const readState=page => page.evaluate(key => JSON.parse(localStorage.getItem(key)),key);
 const active=state => state.outings.find(o => o.status === 'active');
@@ -57,6 +58,73 @@ async function overflow(page,label) {
     assert.ok(await text.evaluate(el => { const label=el.getBoundingClientRect(),dot=el.parentElement.querySelector('.cw-line-dot').getBoundingClientRect(),board=el.closest('.cw-board').getBoundingClientRect(); return Math.abs((label.left+label.right-dot.left-dot.right)/2)<1 && label.left>=board.left && label.right<=board.right; }),label+': line label is centred on its dot and inside the board');
   }
 }
+async function accessibility(page,label) {
+  const problems=await page.evaluate(() => {
+    const visible=el => el.getClientRects().length && getComputedStyle(el).visibility !== 'hidden' && !el.closest('[hidden],dialog:not([open])');
+    const name=el => {
+      if (el.getAttribute('aria-label')?.trim()) return el.getAttribute('aria-label').trim();
+      if (el.getAttribute('aria-labelledby')) return el.getAttribute('aria-labelledby').split(/\s+/).map(id => document.getElementById(id)?.textContent ?? '').join(' ').trim();
+      return Array.from(el.childNodes).map(node => node.nodeType===Node.TEXT_NODE ? node.textContent : node.matches?.('[aria-hidden=true]') ? '' : name(node)).join(' ').trim() || el.getAttribute('alt') || el.getAttribute('title') || '';
+    };
+    const errors=[];
+    for (const el of document.querySelectorAll('button,a[href]')) if (visible(el) && !name(el)) errors.push('unnamed '+el.outerHTML);
+    if (document.querySelectorAll('#panel h1').length!==1) errors.push('main view must have exactly one h1');
+    for (const dialog of document.querySelectorAll('dialog[open]')) {
+      const title=document.getElementById(dialog.getAttribute('aria-labelledby'));
+      if (!title || !dialog.contains(title) || !title.textContent.trim()) errors.push('dialog missing title');
+      let level=1;
+      for (const heading of dialog.querySelectorAll('h1,h2,h3,h4,h5,h6')) {
+        const next=Number(heading.tagName.slice(1)); if (next>level+1) errors.push('skipped sheet heading'); level=next;
+      }
+    }
+    const walker=document.createTreeWalker(document.body,NodeFilter.SHOW_TEXT);
+    while (walker.nextNode()) {
+      const node=walker.currentNode, el=node.parentElement;
+      if (el.closest('script,style') || !visible(el)) continue;
+      if (/[\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]/u.test(node.textContent) && !el.closest('[lang]')?.getAttribute('lang').startsWith('ja')) errors.push('Japanese language missing: '+node.textContent);
+    }
+    for (const el of document.querySelectorAll('input:not([type=file]),select,textarea')) {
+      if (!visible(el)) continue;
+      if (!el.labels?.length && !el.getAttribute('aria-label')) errors.push('unlabelled form field');
+      if (el.getAttribute('aria-invalid')==='true' && !el.getAttribute('aria-describedby')) errors.push('invalid field missing error description');
+    }
+    return errors;
+  });
+  assert.deepEqual(problems,[],label+': names, headings, language and forms');
+  const originalFocus=await page.evaluateHandle(() => document.activeElement);
+  await page.keyboard.press('Tab');
+  assert.ok(await page.evaluate(() => { const el=document.activeElement, s=getComputedStyle(el); return el.matches(':focus-visible') && ((s.outlineStyle!=='none' && parseFloat(s.outlineWidth)>=2) || s.boxShadow!=='none'); }),label+': Tab has a visible focus ring');
+  await originalFocus.evaluate(el => { if (el.isConnected) el.focus({preventScroll:true}); }); await originalFocus.dispose();
+}
+async function contrast(page,theme) {
+  const table=await page.evaluate(() => {
+    const host=document.createElement('div'); host.setAttribute('aria-hidden','true'); host.style.cssText='position:fixed;left:-10000px;background:var(--paper)'; document.body.append(host);
+    const rgb=color => color.match(/[\d.]+/g).slice(0,3).map(Number);
+    const lum=color => { const [r,g,b]=rgb(color).map(x => { x/=255; return x<=.04045 ? x/12.92 : ((x+.055)/1.055)**2.4; }); return .2126*r+.7152*g+.0722*b; };
+    const ratio=(a,b) => (Math.max(lum(a),lum(b))+.05)/(Math.min(lum(a),lum(b))+.05);
+    const pairs=[['ink','paper'],['ink','desk'],['muted','paper'],['muted','desk'],['muted','paper-2'],['gate','paper'],['gate-ink','gate'],['sticker-ink','sticker'],['sticker-sale','sticker'],['sticker-old','sticker'],['lcd-ink','lcd'],['lcd-dim','lcd'],['sale','paper'],['ink-green','paper'],...['indigo','green','vermilion','teal'].map(ink => ['ink-'+ink,'paper',3]),['control-rule','paper',3],['control-rule','paper-2',3],['gate','desk',3],['gate','paper-2',3]];
+    const table=pairs.map(([foreground,background,min=4.5]) => {
+      const el=document.createElement('span'); el.style.color=`var(--${foreground})`; el.style.backgroundColor=`var(--${background})`; el.textContent='Aa'; host.append(el);
+      const style=getComputedStyle(el); return {pair:foreground+'/'+background,ratio:ratio(style.color,style.backgroundColor),min};
+    });
+    for (const [tag,className,parentClass] of [['p','cw-print',''],['input','',''],['button','','cw-chips'],['label','','cw-radio'],['button','cw-primary','']]) {
+      const parent=document.createElement('div'); parent.className=parentClass; host.append(parent);
+      const el=document.createElement(tag); el.className=className; el.textContent='Aa'; parent.append(el); const style=getComputedStyle(el);
+      const paper=getComputedStyle(host).backgroundColor;
+      if (className==='cw-print') table.push({pair:'print label/paper',ratio:ratio(style.color,paper),min:4.5});
+      else if (className==='cw-primary') {
+        el.disabled=true; const disabled=getComputedStyle(el);
+        table.push({pair:'disabled primary (exempt)',ratio:ratio(disabled.color,disabled.backgroundColor),min:0,opacity:Number(disabled.opacity)});
+      } else table.push({pair:tag+' '+parentClass+' boundary/paper',ratio:ratio(style.borderColor,paper),min:3});
+    }
+    host.remove(); return table;
+  });
+  for (const row of table) {
+    assert.ok(row.ratio>=row.min,`${theme} ${row.pair}: ${row.ratio.toFixed(2)} < ${row.min}`);
+    if (row.opacity !== undefined) assert.ok(row.opacity>=.4 && row.opacity<=.7,'disabled is visibly dimmed');
+  }
+  if (!contrastThemes.has(theme)) { console.log('WCAG contrast '+theme+': '+table.map(row => row.pair+' '+row.ratio.toFixed(2)).join(' · ')); contrastThemes.add(theme); }
+}
 async function resize(page,size) {
   await page.setViewportSize(size);
   // The media-query change event moves the tray asynchronously after a resize.
@@ -66,7 +134,21 @@ async function resize(page,size) {
   }
 }
 async function bothWidths(page,label,screenshot=false) {
+  const originalReducedMotion=await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
   await page.evaluate(() => document.fonts.ready);
+  const originalTheme=await page.locator('html').getAttribute('data-theme');
+  for (const theme of ['light','dark']) {
+    await page.evaluate(theme => document.documentElement.dataset.theme=theme,theme);
+    await accessibility(page,label+' '+theme); await contrast(page,theme);
+    await resize(page,{width:320,height:900}); await overflow(page,label+' '+theme+' 320');
+    await page.evaluate(() => document.documentElement.style.fontSize='200%');
+    await overflow(page,label+' '+theme+' 320 at 200% text');
+    await page.evaluate(() => document.documentElement.style.removeProperty('font-size'));
+  }
+  await page.evaluate(theme => { if (theme===null) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme=theme; },originalTheme);
+  await page.emulateMedia({reducedMotion:'reduce'});
+  assert.deepEqual(await page.locator('body *').evaluateAll(els => els.filter(el => el.getClientRects().length).flatMap(el => ['', '::before', '::after'].map(pseudo => getComputedStyle(el,pseudo || null))).filter(style => style.animationName !== 'none' || style.transitionDuration.split(',').some(time => parseFloat(time)>0)).map(style => style.animationName)),[],label+': reduced motion disables animations/transitions');
+  await page.emulateMedia({reducedMotion:originalReducedMotion ? 'reduce' : 'no-preference'});
   await resize(page,{width:390,height:844}); await overflow(page,label+' 390');
   if (screenshot && !capturedScreens.has(label)) await page.screenshot({path:`.impeccable/review/chirashi-${label}.png`,fullPage:true});
   await resize(page,{width:1280,height:900}); await overflow(page,label+' 1280');
@@ -80,12 +162,12 @@ async function ticketChecks(page) {
   assert.equal(await ticket.count(),1,'answer is a ticket');
   assert.equal(await page.locator('.cw-hero-scene').count(),0,'hero disappears once flyers exist');
   const route=ticket.locator('.cw-route');
-  assert.ok(await ticket.getByText("Tap ✕ on any place you don't want. Start when you're ready.",{exact:true}).isVisible(),'ticket explains the remove button');
+  assert.ok(await ticket.getByText("Remove any place you don't want. Start when you're ready.",{exact:true}).isVisible(),'ticket explains the remove button');
   const rows=route.locator(':scope > .cw-route-station, :scope > .cw-route-stop');
   assert.ok(await rows.count()>=3,'route includes endpoints and stops');
   assert.ok(await rows.first().evaluate(el => el.classList.contains('cw-route-station')),'route starts at a station');
   assert.ok(await rows.last().evaluate(el => el.classList.contains('cw-route-station')),'route ends at a station');
-  assert.match(await ticket.locator('h2').evaluate(el => getComputedStyle(el).fontFamily),/^"?Dela Gothic One/);
+  assert.match(await ticket.locator('h1').evaluate(el => getComputedStyle(el).fontFamily),/^"?Dela Gothic One/);
   assert.doesNotMatch(await page.locator('.cw-header, .cw-snap, .cw-tray').allTextContents().then(parts => parts.join(' ')),/[📷📄📞♻🔒⚙◎]/u,'icons use SVG or print labels');
 }
 async function sealChecks(page) {
@@ -215,7 +297,9 @@ async function nonHappyChecks(sampleState) {
   assert.ok(await empty.page.getByText('We read 6 flyers: 2 deals to use at home, 4 safe to recycle. None is a place to walk to.',{exact:true}).isVisible());
   assert.equal(await empty.page.locator('.cw-slot').count(),2);
   const chooser=empty.page.waitForEvent('filechooser');
-  await empty.page.getByRole('button',{name:'Add more flyers',exact:true}).click(); await chooser;
+  assert.equal(await empty.page.getByRole('button',{name:'Add more flyers',exact:true}).count(),0);
+  assert.ok(await empty.page.getByRole('button',{name:'Photograph my flyers',exact:true}).evaluate(el => el.classList.contains('cw-primary')));
+  await empty.page.getByRole('button',{name:'Photograph my flyers',exact:true}).click(); await chooser;
   await bothWidths(empty.page,'empty-walk',true);
   await empty.page.locator('#stamps-button').click();
   assert.ok(await empty.page.getByText('Your first stamp is one walk away.',{exact:true}).isVisible());
@@ -263,7 +347,12 @@ async function nonHappyChecks(sampleState) {
   await offline.page.getByRole('button',{name:'Read 1 flyer',exact:true}).click();
   await offline.page.locator('[data-reading-page][data-status=failed]').waitFor();
   await offline.page.getByRole('button',{name:'Retry page 1',exact:true}).waitFor();
-  assert.ok(await offline.page.locator('#reading-failures').getByText('Page 1: Reading limit reached — try again in 2 min',{exact:true}).isVisible());
+  await offline.page.locator('#reading-failures').getByText('Reading limit reached — try again in 2 min',{exact:true}).waitFor();
+  assert.equal(await offline.page.locator('#progress').textContent(),'');
+  assert.equal(await offline.page.locator('#reading-message').textContent(),'');
+  assert.equal(await offline.page.locator('#reading-hint').isVisible(),false);
+  assert.equal(await offline.page.locator('#reading-progress').isVisible(),false);
+  assert.equal(await offline.page.locator('#reading-count').isVisible(),false);
   await offline.page.getByText('None of these pages could be read.',{exact:true}).waitFor();
   assert.ok(await offline.page.getByRole('button',{name:'Retry all',exact:true}).isVisible());
   assert.ok(await offline.page.getByRole('button',{name:'Remove these photos',exact:true}).isVisible());
@@ -275,7 +364,7 @@ async function nonHappyChecks(sampleState) {
   for (const [status,error,reason] of [[413,'Payload too large','Photo too large — try a closer, smaller photo'],[400,'Timed out','Took too long'],[400,'Unknown',"Couldn't read this page"]]) {
     await offline.page.route('**/api/read-page',route => route.fulfill({status,contentType:'application/json',body:JSON.stringify({error})}));
     await offline.page.getByRole('button',{name:'Retry page 1',exact:true}).click();
-    await offline.page.locator('#reading-failures').getByText('Page 1: '+reason,{exact:true}).waitFor();
+    await offline.page.locator('#reading-failures').getByText(reason,{exact:true}).waitFor();
     await offline.page.waitForFunction(() => !document.querySelector('[data-action=retry-page]').disabled);
     await offline.page.unroute('**/api/read-page');
   }
@@ -289,7 +378,7 @@ async function nonHappyChecks(sampleState) {
   await offline.context.setOffline(true); disconnected.release();
   await offline.page.waitForFunction(() => document.querySelectorAll('[data-status=failed]').length===2);
   await offline.page.getByText('None of these pages could be read.',{exact:true}).waitFor();
-  assert.equal(await offline.page.locator('#reading-failures').getByText(/No connection/).count(),2);
+  assert.equal(await offline.page.locator('#reading-failures').getByText(/No connection/).count(),1);
   assert.ok(await offline.page.getByRole('button',{name:'Retry all',exact:true}).isDisabled());
   await offline.context.setOffline(false);
   await offline.page.getByRole('button',{name:'Remove these photos',exact:true}).click();
@@ -783,9 +872,11 @@ try {
   assert.equal(await longLine.page.getByRole('button',{name:'Next stop →',exact:true}).evaluate(el => el===document.activeElement),true,'no chips focuses Next stop');
   assert.deepEqual(await longLine.page.evaluate(() => window.stampVibrations),[],'self stamps do not vibrate');
   assert.equal(await longLine.page.locator('.cw-seal-impression').evaluate(el => getComputedStyle(el,'::before').animationName),'ink-splat');
+  const originalLongLineReducedMotion=await longLine.page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches);
   await longLine.page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await longLine.page.locator('.cw-seal-impression').evaluate(el => getComputedStyle(el,'::before').animationName),'none');
   assert.equal(await longLine.page.locator('.cw-seal.new').evaluate(el => getComputedStyle(el).animationName),'none');
+  await longLine.page.emulateMedia({reducedMotion:originalLongLineReducedMotion ? 'reduce' : 'no-preference'});
   await longLine.context.close();
   await sample.page.locator('#settings-button').click(); await sample.page.getByLabel('Dark',{exact:true}).check(); await sample.page.keyboard.press('Escape');
   await sample.page.emulateMedia({colorScheme:'dark'}); await bothWidths(sample.page,'welcome-dark',true);

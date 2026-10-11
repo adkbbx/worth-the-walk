@@ -6,6 +6,8 @@ import {japanToday, storePrograms, reward} from '/rules.mjs';
 const KEY = 'worth-the-walk-v1';
 const $ = id => document.getElementById(id);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const closeIcon = '<svg class="cw-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="m4 4 10 10M14 4 4 14"/></svg>';
+const rotateIcon = '<svg class="cw-icon" width="18" height="18" viewBox="0 0 18 18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 6a5.5 5.5 0 1 0 .5 5M14 2v4h-4"/></svg>';
 const plural = (n, one, many) => n === 1 ? one : many;
 const money = value => '¥' + Number(value).toLocaleString('en-US');
 const uid = prefix => prefix + crypto.randomUUID();
@@ -54,7 +56,8 @@ const offlineReason="You're offline. Reading flyers needs a connection; your mai
 const serviceReason='Reading is unavailable right now. You can still try the sample mailbox.';
 const readUnavailable = () => offline;
 function availability() {
-  $('availability').innerHTML=`${offline ? `<div id="offline-strip" class="cw-strip"><p>${offlineReason}</p></div>` : ''}${savingFailed && !savingDismissed ? `<div id="saving-strip" class="cw-strip" data-tone="error"><p>This browser isn't saving. Your mailbox and stamps will be lost when you close this page.</p><button data-action="dismiss-saving" aria-label="Dismiss saving warning">✕</button></div>` : ''}${serviceUnavailable ? `<div id="service-strip" class="cw-strip" data-tone="warn"><p>${serviceReason}</p><button class="cw-text" data-action="sample" ${busy || startRequest ? 'disabled' : ''}>Try a sample mailbox</button></div>` : ''}`;
+  const markup=`${offline ? `<div id="offline-strip" class="cw-strip"><p>${offlineReason}</p></div>` : ''}${savingFailed && !savingDismissed ? `<div id="saving-strip" class="cw-strip" data-tone="error"><p>This browser isn't saving. Your mailbox and stamps will be lost when you close this page.</p><button data-action="dismiss-saving" aria-label="Dismiss saving warning">${closeIcon}</button></div>` : ''}${serviceUnavailable ? `<div id="service-strip" class="cw-strip" data-tone="warn"><p>${serviceReason}</p><button class="cw-text" data-action="sample" ${busy || startRequest ? 'disabled' : ''}>Try a sample mailbox</button></div>` : ''}`;
+  if ($('availability').dataset.html !== markup) { $('availability').innerHTML=markup; $('availability').dataset.html=markup; }
 }
 
 function applyTheme() {
@@ -69,19 +72,21 @@ function applyTheme() {
 }
 
 function notify(message = '', {tone='info',actionLabel,onAction} = {}) {
-  clearTimeout(noticeTimer);
   const notice=$('notice');
+  if (message && !notice.hidden && notice.dataset.message === message && notice.dataset.tone === tone) return;
+  notice.dataset.message=message;
+  clearTimeout(noticeTimer);
   notice.replaceChildren(); notice.hidden=!message;
   notice.dataset.tone=tone;
   notice.setAttribute('role',tone === 'error' ? 'alert' : 'status');
   notice.setAttribute('aria-live',tone === 'error' ? 'assertive' : 'polite');
   if (!message) return;
-  const text=document.createElement('span'); text.textContent=message; notice.append(text);
+  const text=document.createElement('span'); text.innerHTML=modelText(message); notice.append(text);
   if (actionLabel && onAction) {
     const action=document.createElement('button'); action.className='cw-text'; action.textContent=actionLabel;
     action.addEventListener('click',() => safely(onAction)); notice.append(action);
   }
-  const close=document.createElement('button'); close.className='cw-toast-close'; close.setAttribute('aria-label','Dismiss'); close.textContent='✕';
+  const close=document.createElement('button'); close.className='cw-toast-close'; close.setAttribute('aria-label','Dismiss'); close.innerHTML=closeIcon;
   close.addEventListener('click',() => notify('')); notice.append(close);
   if (tone === 'info') noticeTimer=setTimeout(() => notify(''),6000);
 }
@@ -134,7 +139,7 @@ async function useLocation() {
 }
 function stationSelects(prefix,lineId,stationId) {
   const options=(rows,selected) => rows.map(row => `<option value="${escape(row.id)}"${row.id === selected ? ' selected' : ''}>${escape(row.name)}</option>`).join('');
-  return `<label class="cw-field">Train line<select id="${prefix}-line"><option value="">Choose a line</option>${options(railLines,lineId)}</select></label><label class="cw-field">${prefix === 'setup' ? 'Home station' : 'Start station'}<select id="${prefix}-station"><option value="">Choose a station</option>${options(stationsOnLine(stations,lineId),stationId)}</select></label>`;
+  return `<label class="cw-field">Train line<select id="${prefix}-line"><option value="">Choose a line</option>${options(railLines,lineId)}</select></label><label class="cw-field">${prefix === 'setup' ? 'Home station' : 'Start station'}<select id="${prefix}-station" aria-invalid="${Boolean(startError)}"${startError ? ` aria-describedby="${prefix}-error"` : ''}><option value="">Choose a station</option>${options(stationsOnLine(stations,lineId),stationId)}</select></label>`;
 }
 function stationOptions(prefix,selected=null) {
   const line=$(prefix+'-line'), station=$(prefix+'-station');
@@ -142,10 +147,10 @@ function stationOptions(prefix,selected=null) {
   station.value=selected ?? '';
 }
 function startChooser() {
-  return startRequest ? `<section class="cw-start" aria-labelledby="start-heading"><h2 id="start-heading" tabindex="-1">Where do you start walking?</h2><p class="cw-muted">We plan the walk from here and back. Your location stays on this phone.</p><button class="cw-primary cw-wide" data-action="use-location" ${locatingStart ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-secondary cw-wide" data-action="pick-station" aria-expanded="${startPicker}" ${locatingStart ? 'disabled' : ''}>Pick a station</button>${startProblems()}${startPicker ? stationSelects('start',startLine,startStation)+`<button class="cw-secondary cw-wide" data-action="use-station" ${locatingStart ? 'disabled' : ''}>Use this station</button>` : ''}</section>` : '';
+  return startRequest ? `<section class="cw-start" aria-labelledby="start-heading"><h1 id="start-heading" tabindex="-1">Where do you start walking?</h1><p class="cw-muted">We plan the walk from here and back. Your location stays on this phone.</p><button class="cw-primary cw-wide" data-action="use-location" ${locatingStart ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-secondary cw-wide" data-action="pick-station" aria-expanded="${startPicker}" ${locatingStart ? 'disabled' : ''}>Pick a station</button>${startProblems()}${startPicker ? stationSelects('start',startLine,startStation)+`<button class="cw-secondary cw-wide" data-action="use-station" ${locatingStart ? 'disabled' : ''}>Use this station</button>` : ''}</section>` : '';
 }
-function startProblems() {
-  return `${startError ? `<p class="cw-inline-reason" role="status">${escape(startError)}</p>` : ''}${coordinatesFailed ? '<div class="cw-inline-reason" role="status"><p>Station coordinates could not be loaded. Reload to pick a station.</p><button data-action="reload-coordinates">Reload</button></div>' : ''}`;
+function startProblems(prefix='start') {
+  return `${startError ? `<p id="${prefix}-error" class="cw-inline-reason" role="status">${escape(startError)}</p>` : ''}${coordinatesFailed ? '<div class="cw-inline-reason" role="status"><p>Station coordinates could not be loaded. Reload to pick a station.</p><button data-action="reload-coordinates">Reload</button></div>' : ''}`;
 }
 async function loadCoordinates() {
   try { const response=await fetch('/station-coordinates.json'); if (!response.ok) throw new Error(); const points=await response.json(); if (!Array.isArray(points)) throw new Error(); coordinates=points; coordinatesFailed=false; }
@@ -407,7 +412,6 @@ async function readPage(photo,session,sortReadings) {
   if (saved) await photoDB('delete',photo.id);
   photo.file=null; photo.blob=null;
   photos=photos.filter(p => p.id !== photo.id);
-  $('progress').textContent = `Read page ${session.batch.indexOf(photo)+1}. ${session.batch.filter(p => p.status === 'read').length} of ${session.batch.length} pages read.`;
   updateReading();
 }
 function replaceFlyers(current,replacements) {
@@ -526,7 +530,7 @@ async function readPhotos(ids=null) {
         if (error.name !== 'AbortError') {
           if (error.status >= 500) { serviceUnavailable=true; availability(); }
           session.message='Your readings are saved. Use Retry sorting saved readings to finish sorting them.'; notify(session.message,{tone:'error',actionLabel:'Retry',onAction:retryMerge});
-          if (error.status === 429) { stopReading(error.message,false); notify(error.message,{tone:'error'}); }
+          if (error.status === 429) { stopReading('',false); if (!session.failureNotice) { session.failureNotice=true; notify(readingReason(error),{tone:'error'}); } }
         }
       }
     });
@@ -544,10 +548,10 @@ async function readPhotos(ids=null) {
           p.status=stopped ? 'waiting' : 'failed';
           p.error=stopped ? '' : readingReason(error);
           if (error.status >= 500) { serviceUnavailable=true; availability(); }
-          if (error.status === 429) { stopReading(error.message,false); notify(error.message,{tone:'error'}); }
-          else if (!stopped) { session.message='Some pages could not be read. Retry the failed pages.'; notify(p.error,{tone:'error',actionLabel:'Retry',onAction:() => retryPages([p.id])}); }
+          if (error.status === 429) { stopReading('',false); if (!session.failureNotice) { session.failureNotice=true; notify(readingReason(error),{tone:'error'}); } }
+          else if (!stopped && !session.failureNotice) { session.failureNotice=true; notify(p.error,{tone:'error',actionLabel:'Retry',onAction:() => retryPages([p.id])}); }
           await storePhoto(p);
-          $('progress').textContent=`Page ${batch.indexOf(p)+1}: ${pageStatus(p)}${p.error ? '. '+p.error : ''}`;
+
           updateReading();
         }
       }
@@ -562,7 +566,7 @@ async function readPhotos(ids=null) {
     if (!session.batch.length) reading=null;
     busy=false; render();
     if (!reading) { $('progress').textContent=''; focusHeading(); }
-    else $('progress').textContent=session.message || 'Reading paused. Your unread pages are kept for later.';
+    else announceReading();
     await rank();
   }
 }
@@ -639,7 +643,7 @@ function sealHTML(stamp,{current=true,animate=true,finished=false} = {}) {
       <circle class="outer" cx="50" cy="50" r="46" fill="none" stroke="currentColor" stroke-width="4.2"/>
       <circle cx="50" cy="50" r="39.5" fill="none" stroke="currentColor" stroke-width="1.1"/>
       <path id="${arcId}" d="M 19 52 A 31 31 0 0 1 81 52" fill="none"/>
-      <text class="arc"${label.length>16 ? ' textLength="86" lengthAdjust="spacingAndGlyphs"' : ''}${hasJapanese(kind) ? ' lang="ja"' : ''}><textPath id="text-${arcId}" href="#${arcId}" startOffset="50%" text-anchor="middle">${escape(label.slice(0,16))}</textPath></text>
+      <text class="arc"${label.length>16 ? ' textLength="86" lengthAdjust="spacingAndGlyphs"' : ''}><textPath id="text-${arcId}" href="#${arcId}" startOffset="50%" text-anchor="middle">${modelText(label.slice(0,16),'tspan')}</textPath></text>
       <text class="mark" lang="ja" x="50" y="64" text-anchor="middle">${mark}</text>
       <rect x="31" y="69.5" width="38" height="11" rx="1" fill="none" stroke="currentColor" stroke-width="1"/>
       <text class="date" x="50" y="77.6" text-anchor="middle">${date}</text>
@@ -649,24 +653,24 @@ function sealHTML(stamp,{current=true,animate=true,finished=false} = {}) {
 function stampCard(stamp) {
   const p=stop(stamp.stopId), f=p?.flyer, kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : 'Stamped place'));
   const name=f?.business?.name ?? p?.name;
-  return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}">${sealHTML(stamp)}<div class="cw-stamp-name">${modelText(kind)}${name ? `<small${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</small>` : ''}</div><p class="cw-meta">${escape(formatDate(stamp.at))}</p></div>`;
+  return `<div class="cw-stamp-card" data-stamp="${escape(stamp.stopId)}">${sealHTML(stamp)}<div class="cw-stamp-name">${modelText(kind)}${name ? `<small>${modelText(name)}</small>` : ''}</div><p class="cw-meta">${escape(formatDate(stamp.at))}</p></div>`;
 }
-function emptyStamp(label='',hidden=false) { return `<div class="cw-spot"${hasJapanese(label) ? ' lang="ja"' : ''}${hidden ? ' aria-hidden="true"' : ''}>${label === 'Next stamp' ? '<span class="cw-spot-mark" lang="ja" aria-hidden="true">歩</span>' : ''}<span>${escape(label)}</span></div>`; }
+function emptyStamp(label='',hidden=false) { return `<div class="cw-spot"${hidden ? ' aria-hidden="true"' : ''}>${label === 'Next stamp' ? '<span class="cw-spot-mark" lang="ja" aria-hidden="true">歩</span>' : ''}<span>${modelText(label)}</span></div>`; }
 const stopKind = id => { const p=stop(id); return capital(p?.flyer?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : p?.name ?? 'Stop')); };
 function stopState(o,id,i) { return o.stamps.some(s => s.stopId === id) ? 'stamped' : (o.skipped ?? []).includes(id) ? 'skipped' : i === currentCursor(o) ? 'current' : 'upcoming'; }
 function lineMap(o) {
-  return `<div class="cw-line-map" aria-hidden="true" style="--stations:${o.stopIds.length+2}"><span class="cw-line-station endpoint"><i class="cw-line-dot"></i><small lang="ja">発</small></span>${o.stopIds.map((id,i) => `<span class="cw-line-station ${stopState(o,id,i)}${i === currentCursor(o) ? ' current' : ''}" data-line-stop="${escape(id)}">${i === currentCursor(o) ? '<em lang="ja">次</em>' : ''}<i class="cw-line-dot"></i><small>${i+1}</small>${i === currentCursor(o) ? `<b>${escape(shortText(stopKind(id).toUpperCase(),12))}</b>` : ''}</span>`).join('')}<span class="cw-line-station endpoint"><i class="cw-line-dot"></i><small lang="ja">着</small></span></div>`;
+  return `<div class="cw-line-map" aria-hidden="true" style="--stations:${o.stopIds.length+2}"><span class="cw-line-station endpoint"><i class="cw-line-dot"></i><small lang="ja">発</small></span>${o.stopIds.map((id,i) => `<span class="cw-line-station ${stopState(o,id,i)}${i === currentCursor(o) ? ' current' : ''}" data-line-stop="${escape(id)}">${i === currentCursor(o) ? '<em lang="ja">次</em>' : ''}<i class="cw-line-dot"></i><small>${i+1}</small>${i === currentCursor(o) ? `<b>${modelText(shortText(stopKind(id).toUpperCase(),12))}</b>` : ''}</span>`).join('')}<span class="cw-line-station endpoint"><i class="cw-line-dot"></i><small lang="ja">着</small></span></div>`;
 }
 function walkRally(o) {
-  return `<aside class="cw-walk-ticket" aria-label="This walk"><h2 class="cw-print cw-walk-ticket-title">This walk</h2><ol class="cw-mini-route"><li><span class="cw-dot" aria-hidden="true">発</span><span class="cw-print">Start</span></li>${o.stopIds.map((id,i) => { const status=stopState(o,id,i), stamped=o.stamps.find(s => s.stopId === id); return `<li class="${status}"${status === 'current' ? ' aria-current="step"' : ''}><span class="cw-dot" aria-hidden="true">${i+1}</span><div><strong>${modelText(stopKind(id))}</strong><small class="cw-print">${status === 'stamped' ? '✓ stamped' : status === 'current' ? '→ current' : status}</small></div>${stamped ? `<span class="cw-mini-seal">${sealHTML(stamped,{current:false,animate:false})}</span>` : ''}</li>`; }).join('')}<li><span class="cw-dot" aria-hidden="true">着</span><span class="cw-print">Finish</span></li></ol><div class="cw-rally" aria-label="This walk's stamps">${o.stopIds.map((id,i) => { const stamped=o.stamps.find(s => s.stopId === id); return stamped ? sealHTML(stamped,{current:false,animate:false}) : emptyStamp(`${i+1} · ${stopKind(id)}`); }).join('')}</div></aside>`;
+  return `<aside class="cw-walk-ticket" aria-label="This walk"><h2 class="cw-print cw-walk-ticket-title">This walk</h2><ol class="cw-mini-route"><li><span class="cw-dot" aria-hidden="true" lang="ja">発</span><span class="cw-print">Start</span></li>${o.stopIds.map((id,i) => { const status=stopState(o,id,i), stamped=o.stamps.find(s => s.stopId === id); return `<li class="${status}"${status === 'current' ? ' aria-current="step"' : ''}><span class="cw-dot" aria-hidden="true">${i+1}</span><div><strong>${modelText(stopKind(id))}</strong><small class="cw-print">${status === 'stamped' ? '✓ stamped' : status === 'current' ? '→ current' : status}</small></div>${stamped ? `<span class="cw-mini-seal">${sealHTML(stamped,{current:false,animate:false})}</span>` : ''}</li>`; }).join('')}<li><span class="cw-dot" aria-hidden="true" lang="ja">着</span><span class="cw-print">Finish</span></li></ol><div class="cw-rally" aria-label="This walk's stamps">${o.stopIds.map((id,i) => { const stamped=o.stamps.find(s => s.stopId === id); return stamped ? sealHTML(stamped,{current:false,animate:false}) : emptyStamp(`${i+1} · ${stopKind(id)}`); }).join('')}</div></aside>`;
 }
-function stamp(o,id,kind,distance = null) {
+function stamp(o,id,kind,distance = null,announcement = null) {
   if (o.status !== 'active' || o.stamps.some(s => s.stopId === id)) return;
   o.stamps.push({stopId:id,at:now(),kind,distance});
   if (flyer(id)?.bucket !== 'keep' && flyer(id)) state.labels[id]=1;
   recentStamp=id;
   stampMessages.delete(id); save(); render();
-  notify(`Stamped: ${stopKind(id)}`);
+  notify(announcement ?? `Stamped: ${stopKind(id)}`);
   const target=document.querySelector('.cw-used h2') ?? document.querySelector('[data-action="next-stop"]');
   if (target) { if (target.tagName !== 'BUTTON') target.tabIndex=-1; target.focus({preventScroll:true}); }
   if (kind === 'gps') { try { navigator.vibrate?.(18); } catch {} }
@@ -680,7 +684,7 @@ async function here(o,id,button) {
     const distance = distanceMeters({lat:position.coords.latitude,lon:position.coords.longitude},p);
     if (distance-position.coords.accuracy <= 200) stamp(o,id,'gps',Math.round(distance));
     else { stampMessages.set(id,{distance:Math.round(distance),text:`You're ${Math.round(distance)} m away — keep walking`}); render(); }
-  } catch { stamp(o,id,'self'); notify(`Stamped: ${stopKind(id)}. Location unavailable, so the stamp has a dashed outline.`,{tone:'warn'}); }
+  } catch { stamp(o,id,'self',null,`Stamped: ${stopKind(id)}. Location unavailable, so the stamp has a dashed outline.`); }
   finally { button.disabled = false; button.removeAttribute('aria-busy'); }
 }
 
@@ -693,10 +697,12 @@ const usedEntries = (outings = state.outings) => outings.flatMap(o => o.used.map
 // Gemma writes kinds in lower case ("dry cleaner"); show them as names.
 const capital = value => { const text=String(value ?? ''); return /^[a-z]/.test(text) ? text[0].toUpperCase()+text.slice(1) : text; };
 const hasJapanese = value => /[\u3040-\u30ff\u3400-\u9fff]/u.test(String(value ?? ''));
-const modelText = value => `<span${hasJapanese(value) ? ' lang="ja"' : ''}>${escape(value)}</span>`;
+// Escape runs separately so mixed English/Japanese keeps both languages.
+const modelText = (value,tag='span') => String(value ?? '').split(/([\u3040-\u30ff\u3400-\u9fff\uff66-\uff9f]+[\u3000-\u303f]*)/u)
+  .map(run => hasJapanese(run) || /[\uff66-\uff9f]/u.test(run) ? `<${tag} lang="ja">${escape(run)}</${tag}>` : escape(run)).join('');
 function flyerTitle(f) {
   const kind=capital(f.business?.kind ?? f.category.replaceAll('_',' ')), name=f.business?.name;
-  return `${modelText(kind)}${name ? `<span class="cw-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</span>` : ''}`;
+  return `<span>${modelText(kind)}</span>${name ? `<span class="cw-ja">${modelText(name)}</span>` : ''}`;
 }
 function dealParts(f) {
   const offers=currentOffers(f).map(o => o.entry), entries=[...offers,...(f.items ?? [])].filter(e => printedValue(e) !== null).sort((a,b) => printedValue(b)-printedValue(a));
@@ -741,7 +747,7 @@ function heroScene() {
 }
 function addPagesCard() {
   const disabled=busy || preparing || recovering, readDisabled=disabled || readUnavailable(), welcome=!state.flyers.length && !photos.length && !reading;
-  return `<section class="cw-snap${welcome ? ' cw-welcome' : ''}" aria-label="Photograph flyers">${welcome ? `${heroScene()}<div class="cw-welcome-copy"><p class="cw-print">For the flyers (<span lang="ja">チラシ</span>) in your mailbox</p><h1>One good reason to go outside.</h1><p class="cw-muted">Photograph the flyers in your mailbox. We'll find the ones worth walking to, plan a short walk past them, and give you a stamp at each stop.</p>` : `<h2>${state.flyers.length ? 'Add more flyers' : 'Your mailbox'}</h2>`}<button class="${welcome ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>${welcome ? '<svg class="cw-camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>' : ''}Photograph my flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button>${welcome ? `<div class="cw-sample-invite"><button class="cw-secondary cw-wide" data-action="sample" ${disabled || startRequest ? 'disabled' : ''}>Try a sample mailbox</button><p class="cw-muted">No flyers to hand? Try it with made-up shops.</p></div></div>` : ''}<input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<p class="cw-print">${photos.length} ${plural(photos.length,'page','pages')} ready</p><div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><p class="cw-print">Page ${i+1}</p><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>↻</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>✕</button></div></div>`).join('')}</div><p class="cw-muted">Add every page of every flyer, then tap Read.</p>` : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${readDisabled || startRequest ? 'disabled' : ''}${readUnavailable() ? ' aria-describedby="read-reason"' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button>${readUnavailable() ? `<p id="read-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}</div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
+  return `<section class="cw-snap${welcome ? ' cw-welcome' : ''}" aria-label="Photograph flyers">${welcome ? `${heroScene()}<div class="cw-welcome-copy"><p class="cw-print">For the flyers (<span lang="ja">チラシ</span>) in your mailbox</p><${startRequest ? 'h2' : 'h1'}>One good reason to go outside.</${startRequest ? 'h2' : 'h1'}><p class="cw-muted">Photograph the flyers in your mailbox. We'll find the ones worth walking to, plan a short walk past them, and give you a stamp at each stop.</p>` : `<${state.flyers.length || startRequest || reading ? 'h2' : 'h1'}>${state.flyers.length ? 'Add more flyers' : 'Your mailbox'}</${state.flyers.length || startRequest || reading ? 'h2' : 'h1'}>`}<button class="${welcome || state.flyers.length && !candidates().length ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="take-photo" ${disabled ? 'disabled' : ''}>${welcome ? '<svg class="cw-camera" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>' : ''}Photograph my flyers</button><button class="cw-text cw-wide" data-action="choose-photos" ${disabled ? 'disabled' : ''}>Choose from photos</button>${welcome ? `<div class="cw-sample-invite"><button class="cw-secondary cw-wide" data-action="sample" ${disabled || startRequest ? 'disabled' : ''}>Try a sample mailbox</button><p class="cw-muted">No flyers to hand? Try it with made-up shops.</p></div></div>` : ''}<input id="camera-input" type="file" accept="image/*" capture="environment" hidden><input id="photos-input" type="file" accept="image/*" multiple hidden>${photos.length && !reading ? `<p class="cw-print">${photos.length} ${plural(photos.length,'page','pages')} ready</p><div class="cw-photos" aria-label="Selected pages">${photos.map((p,i) => `<div class="cw-photo" data-rotation="${p.rotation}"><img src="${escape(p.url)}" alt="Page ${i+1} preview"><p class="cw-print">Page ${i+1}</p><div class="cw-photo-controls"><button data-action="rotate" data-id="${escape(p.id)}" aria-label="Rotate page ${i+1}" ${disabled ? 'disabled' : ''}>${rotateIcon}</button><button data-action="remove-photo" data-id="${escape(p.id)}" aria-label="Remove page ${i+1}" ${disabled ? 'disabled' : ''}>${closeIcon}</button></div></div>`).join('')}</div><p class="cw-muted">Add every page of every flyer, then tap Read.</p>` : ''}${preparing ? '<p class="cw-meta" role="status">Preparing photos…</p>' : ''}${photos.length && !reading && !recovered ? `<div class="cw-read-dock"><button class="cw-primary" data-action="read" ${readDisabled || startRequest ? 'disabled' : ''}${readUnavailable() ? ' aria-describedby="read-reason"' : ''}>Read ${photos.length} ${plural(photos.length,'flyer','flyers')}</button>${readUnavailable() ? `<p id="read-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}</div>` : ''}${recovered && photos.length && !reading ? resumeCard() : ''}${reading ? readingCard() : ''}</section>`;
 }
 function resumeCard() {
   const time=new Intl.DateTimeFormat('en-US',{hour:'numeric',minute:'2-digit'}).format(new Date(photos[0].addedAt));
@@ -749,11 +755,22 @@ function resumeCard() {
 }
 function failedReadingActions() {
   const failed=reading.batch.filter(p => p.status === 'failed'), allFailed=!reading.active && failed.length === reading.batch.length && !reading.completed;
+  const commonReason=allFailed && new Set(failed.map(p => p.error)).size === 1 ? failed[0]?.error : '';
   const retryDisabled=readUnavailable() || (busy && (!reading.active || reading.controller.signal.aborted));
-  return `${allFailed ? '<p class="cw-empty-reading">None of these pages could be read.</p>' : ''}${failed.map(p => `<div class="cw-failed-page"><p class="cw-meta">Page ${p.pageNumber}: ${escape(p.error)}</p><button data-action="retry-page" data-id="${escape(p.id)}" ${retryDisabled ? 'disabled' : ''}>Retry page ${p.pageNumber}</button></div>`).join('')}${failed.length >= 2 || allFailed ? `<button class="${allFailed ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="retry-failed" ${retryDisabled ? 'disabled' : ''}>${allFailed ? 'Retry all' : 'Retry all failed'}</button>` : ''}${!reading.active && photos.length ? `<div class="cw-actions">${!allFailed ? `<button class="cw-primary" data-action="resume" ${readUnavailable() ? 'disabled' : ''}>Resume</button>` : ''}<button data-action="discard">${allFailed ? 'Remove these photos' : 'Discard'}</button></div>` : ''}${readUnavailable() ? `<p id="resume-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}`;
+  return `${commonReason ? `<p class="cw-meta">${escape(commonReason)}</p>` : ''}${failed.map(p => `<div class="cw-failed-page">${!commonReason ? `<p class="cw-meta">Page ${p.pageNumber}: ${escape(p.error)}</p>` : ''}<button data-action="retry-page" data-id="${escape(p.id)}" ${retryDisabled ? 'disabled' : ''}>Retry page ${p.pageNumber}</button></div>`).join('')}${failed.length >= 2 || allFailed ? `<button class="${allFailed ? 'cw-primary' : 'cw-secondary'} cw-wide" data-action="retry-failed" ${retryDisabled ? 'disabled' : ''}>${allFailed ? 'Retry all' : 'Retry all failed'}</button>` : ''}${!reading.active && photos.length ? `<div class="cw-actions">${!allFailed ? `<button class="cw-primary" data-action="resume" ${readUnavailable() ? 'disabled' : ''}>Resume</button>` : ''}<button data-action="discard">${allFailed ? 'Remove these photos' : 'Discard'}</button></div>` : ''}${readUnavailable() ? `<p id="resume-reason" class="cw-muted">${offline ? 'Reading flyers needs a connection.' : serviceReason}</p>` : ''}`;
+}
+const allReadingFailed = () => reading && !reading.active && !reading.completed && reading.batch.length > 0 && reading.batch.every(p => p.status === 'failed');
+function announceReading() {
+  if (!reading) return;
+  const done=reading.completed+reading.batch.filter(p => p.status === 'read').length;
+  // Seconds/ETA and tile progress stay visual; announce completed pages/state only.
+  const key=`${reading.active}:${done}`;
+  if (reading.announcement === key) return;
+  reading.announcement=key;
+  $('progress').textContent=allReadingFailed() ? '' : reading.active ? `Reading flyers. ${done} pages read.` : 'Reading paused. Your unread pages are kept for later.';
 }
 function readingCard() {
-  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><h2 id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</h2><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" max="1" value="0"></progress><p class="cw-muted">Keep this screen open. Cards appear as each flyer is read.</p><div class="cw-reading-pages">${reading.batch.map((p,i) => `<div class="cw-reading-page" data-reading-page="${escape(p.id)}" data-status="${escape(p.status)}">${p.url ? `<img src="${escape(p.url)}" alt="Page ${p.pageNumber ?? i+1}">` : `<span class="cw-reading-blank" aria-label="Page ${p.pageNumber ?? i+1}">${p.pageNumber ?? i+1}</span>`}<span data-page-status>${pageStatus(p)}${p.status === 'read' ? ' \u2713' : ''}</span></div>`).join('')}</div><p id="reading-message" class="cw-meta">${escape(reading.message)}</p><div id="reading-failures">${failedReadingActions()}</div></section>`;
+  return `<section id="reading-card" class="cw-reading" aria-labelledby="reading-heading"><${state.flyers.length || startRequest ? 'h2' : 'h1'} id="reading-heading" tabindex="-1" class="cw-sr">Reading your flyers</${state.flyers.length || startRequest ? 'h2' : 'h1'}><div class="cw-progress-line"><label id="reading-count" for="reading-progress"></label><button class="cw-text" data-action="stop-reading" ${!reading.active ? 'hidden' : ''}>Stop</button></div><progress id="reading-progress" aria-label="Flyer reading progress" max="1" value="0"></progress><p id="reading-hint" class="cw-muted">Keep this screen open. Cards appear as each flyer is read.</p><div class="cw-reading-pages">${reading.batch.map((p,i) => `<div class="cw-reading-page" data-reading-page="${escape(p.id)}" data-status="${escape(p.status)}">${p.url ? `<img src="${escape(p.url)}" alt="Page ${p.pageNumber ?? i+1}">` : `<span class="cw-reading-blank" aria-label="Page ${p.pageNumber ?? i+1}">${p.pageNumber ?? i+1}</span>`}<span data-page-status>${pageStatus(p)}${p.status === 'read' ? ' \u2713' : ''}</span></div>`).join('')}</div><p id="reading-message" class="cw-meta">${escape(reading.message)}</p><div id="reading-failures">${failedReadingActions()}</div></section>`;
 }
 function updateReading() {
   if (!reading || !$('reading-progress')) return;
@@ -763,7 +780,14 @@ function updateReading() {
   const remaining=Math.max(1,Math.ceil((average || 15000)*(total-calls)/lanes/60000));
   $('reading-progress').max=total; $('reading-progress').value=calls;
   $('reading-count').textContent=r.active ? `Reading ${Math.min(done+1,r.batch.length)} of ${r.batch.length} · about ${remaining} min left` : `${done} pages read · paused`;
-  $('reading-message').textContent=r.message;
+  const allFailed=allReadingFailed();
+  $('reading-heading').textContent=allFailed ? 'None of these pages could be read.' : 'Reading your flyers';
+  $('reading-heading').classList.toggle('cw-sr',!allFailed);
+  $('reading-progress').hidden=allFailed;
+  $('reading-count').closest('.cw-progress-line').hidden=allFailed;
+  $('reading-hint').hidden=allFailed;
+  $('reading-message').textContent=r.batch.some(p => p.status === 'failed') ? '' : r.message;
+  announceReading();
   const failures=$('reading-failures'), failureHTML=failedReadingActions();
   if (failures.dataset.html !== failureHTML) { const focus=focusKey(document.activeElement); failures.innerHTML=failureHTML; failures.dataset.html=failureHTML; if (focus && focus.action?.startsWith('retry')) restoreFocus(focus); }
   for (const chip of document.querySelectorAll('[data-reading-page]')) {
@@ -777,11 +801,11 @@ function updateReading() {
   for (const badge of document.querySelectorAll('[data-reading-prices]')) { const f=flyer(badge.dataset.readingPrices); badge.hidden=!r.active || !r.batch.some(p => f?.pageIds.includes(p.id) && p.status === 'detailing'); }
 }
 function locateControl(f) {
-  return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy || offline ? 'disabled' : ''}${offline ? ` aria-describedby="address-offline-${escape(f.id)}"` : ''}>Find address</button>${offline ? `<p id="address-offline-${escape(f.id)}" class="cw-inline-reason">Finding an address needs a connection.</p>` : ''}${addressErrors.has(f.id) ? `<p class="cw-inline-reason" role="status">${escape(addressErrors.get(f.id))}</p>` : ''}</form>` : '';
+  return addressOpen.has(f.id) ? `<form class="cw-locate" data-locate="${escape(f.id)}"><label class="cw-field">Printed address<input name="address" aria-invalid="${addressErrors.has(f.id)}"${addressErrors.has(f.id) ? ` aria-describedby="address-error-${escape(f.id)}"` : ''} required maxlength="300" autocomplete="street-address" placeholder="Address or business name"></label><button type="submit" ${busy || offline ? 'disabled' : ''}${offline ? ` aria-describedby="address-offline-${escape(f.id)}"` : ''}>Find address</button>${offline ? `<p id="address-offline-${escape(f.id)}" class="cw-inline-reason">Finding an address needs a connection.</p>` : ''}${addressErrors.has(f.id) ? `<p id="address-error-${escape(f.id)}" class="cw-inline-reason" role="status">${modelText(addressErrors.get(f.id))}</p>` : ''}</form>` : '';
 }
 function stopRow(f,previous=home()) {
   const location=f.location && previous ? `${walkMinutes(distanceMeters(previous,f.location))} min${f.deadline ? ` · until ${shortDate(f.deadline)}` : ''}` : f.location ? '' : 'No address on the flyer';
-  return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me">✕</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
+  return `<div class="cw-stop-row" data-flyer="${escape(f.id)}">${stack(f)}<button class="cw-row-content" data-action="flyer-sheet" data-id="${escape(f.id)}"><strong>${flyerTitle(f)}</strong>${stickerHTML(f)}<span class="cw-meta">${escape(location)}</span></button><button class="cw-remove" data-action="not-for-me" data-id="${escape(f.id)}" aria-label="Not for me: ${escape(capital(f.business?.kind ?? f.category))}">${closeIcon}</button>${!f.location ? `<div class="cw-row-address"><button class="cw-text" data-action="add-address" data-id="${escape(f.id)}">Add address</button>${locateControl(f)}</div>` : ''}${reading?.batch.some(p => f.pageIds.includes(p.id) && p.status === 'detailing') ? `<p class="cw-meta cw-row-address" data-reading-prices="${escape(f.id)}">Reading prices…</p>` : ''}</div>`;
 }
 function routeSummary(p) { const e=estimates(p.meters,state.settings.weightKg); return `${(e.routeMeters/1000).toFixed(1)} km · ~${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps`; }
 function stationHTML(point) {
@@ -792,7 +816,7 @@ function droppedHTML(p) {
   return p?.dropped?.length ? `<div class="cw-dropped"><p class="cw-muted">${p.dropped.length} ${plural(p.dropped.length,'stop','stops')} didn't fit in ${state.settings.maxMinutes} min: ${modelText(p.dropped.map(s => s.name).join(', '))}</p><div class="cw-actions">${[60,90].filter(n => n>state.settings.maxMinutes).map(n => `<button data-action="extend-walk" data-minutes="${n}">Make it ${n} min</button>`).join('')}</div></div>` : '';
 }
 function groceryRow(p) {
-  return `<div class="cw-stop-row cw-store-row"><div class="cw-row-content"><strong>${modelText(p.name)}</strong><span class="cw-meta">Grocery stop on the way</span></div><button class="cw-store-toggle" data-action="grocery" data-id="${escape(p.id)}" aria-label="Remove grocery stop" aria-pressed="true">✕</button></div>`;
+  return `<div class="cw-stop-row cw-store-row"><div class="cw-row-content"><strong>${modelText(p.name)}</strong><span class="cw-meta">Grocery stop on the way</span></div><button class="cw-store-toggle" data-action="grocery" data-id="${escape(p.id)}" aria-label="Remove grocery stop: ${escape(p.name)}" aria-pressed="true">${closeIcon}</button></div>`;
 }
 function routeHTML(p,list) {
   if (!p?.stops.length) return `<ol class="cw-stop-list cw-candidates">${list.map(f => `<li>${stopRow(f)}</li>`).join('')}${p?.dropped?.length ? `<li>${droppedHTML(p)}</li>` : ''}</ol>`;
@@ -823,7 +847,7 @@ function emptyWalkReason() {
 function renderHome() {
   const list=candidates(), p=list.length ? plan() : null, e=p ? estimates(p.meters,state.settings.weightKg) : null;
   const number=String(state.outings.filter(o => o.status === 'done').length+1).padStart(4,'0');
-  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><h2 class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'No walk today'}</h2>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${p?.stops.length ? '<p class="cw-muted cw-ticket-hint">Tap ✕ on any place you don\'t want. Start when you\'re ready.</p>' : ''}${!list.length ? `<p class="cw-muted">${emptyWalkReason()}</p>` : ''}${list.length ? routeHTML(p,list) : ''}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}<div class="cw-tray-anchor">${collapsedRows()}</div>${!list.length ? `<div class="cw-empty-actions"><button class="cw-primary cw-wide" data-action="choose-photos" ${busy || preparing || recovering ? 'disabled' : ''}>Add more flyers</button>${state.flyers.some(f => f.bucket === 'walk') ? '<button class="cw-text cw-wide" data-action="restore-places">Show places I said Not for me</button>' : ''}${!state.flyers.some(f => f.sample) ? '<button class="cw-text cw-wide" data-action="sample">Try a sample mailbox</button>' : ''}</div>` : ''}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
+  const answer=state.flyers.length ? `<section class="cw-answer" aria-labelledby="answer-heading"><article class="cw-ticket"><div class="cw-ticket-head"><div class="cw-ticket-kicker"><span>Today · ${escape(shortDate(japanToday()))}</span><span>No. ${number}</span></div><${startRequest ? 'h2' : 'h1'} class="cw-ticket-title" id="answer-heading">${list.length ? `${list.length} ${plural(list.length,'place','places')} worth the walk` : 'No walk today'}</${startRequest ? 'h2' : 'h1'}>${p?.stops.length ? `<div class="cw-ticket-meta">${(e.routeMeters/1000).toFixed(1)} km · ${e.minutes} min · ~${e.steps.toLocaleString('en-US')} steps</div>` : ''}${rankModel === 'tabpfn' ? '<p class="cw-meta">Ordered for you by TabPFN</p>' : ''}</div>${p?.stops.length ? '<p class="cw-muted cw-ticket-hint">Remove any place you don\'t want. Start when you\'re ready.</p>' : ''}${!list.length ? `<p class="cw-muted">${emptyWalkReason()}</p>` : ''}${list.length ? routeHTML(p,list) : ''}${list.length && !p?.stops.length ? '<p class="cw-muted">Add an address to find your route, or try a longer walk in Settings.</p>' : ''}</article>${walkSummary(p)}<div class="cw-tray-anchor">${collapsedRows()}</div>${!list.length ? `<div class="cw-empty-actions">${state.flyers.some(f => f.bucket === 'walk') ? '<button class="cw-text cw-wide" data-action="restore-places">Show places I said Not for me</button>' : ''}${!state.flyers.some(f => f.sample) ? '<button class="cw-text cw-wide" data-action="sample">Try a sample mailbox</button>' : ''}</div>` : ''}${pendingGroups() ? `<button data-action="merge-retry" ${busy ? 'disabled' : ''}>Retry sorting saved readings</button>` : ''}</section>` : '';
   const snapFirst=!(state.flyers.length && !photos.length && !reading);
   const stamps=stampPreview(), side=(snapFirst ? "" : addPagesCard())+(stamps ? `<div class="cw-wide-only">${stamps}</div>` : "");
   const sample=state.flyers.some(f => f.sample) ? '<section class="cw-sample-banner" aria-label="Sample mailbox"><p class="cw-print">Sample mailbox</p><p class="cw-muted">Made-up shops placed near your start.</p><button class="cw-text" data-action="clear-sample">Clear sample</button></section>' : "";
@@ -906,7 +930,7 @@ function walkScreen(o) {
   const meters=p ? distanceMeters(previous,p) : 0, minutes=walkMinutes(meters);
   const remaining=o.stopIds.slice(cursor).map(stop).filter(Boolean), href=mapsLink(previous,remaining,o.end);
   const kind=capital(f?.business?.kind ?? (p?.category === 'supermarket' ? 'Supermarket' : p?.name ?? 'Stop unavailable')), name=f?.business?.name ?? p?.name;
-  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board" role="status"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja"${hasJapanese(name) ? ' lang="ja"' : ''}>${escape(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div>${lineMap(o)}</div>${!stamped ? `<p class="cw-muted">${f?.sample ? "This place is made up. Tap I'm here, then Stamp anyway to try a stamp." : "Walk there, then tap I'm here."}</p>` : ''}<div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}${routeLink(f,href)}</div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-result"><p class="cw-print cw-stamp-label">Stamp ${o.stamps.findIndex(s => s.stopId === id)+1} of ${o.stopIds.length} · ${stamped.kind === 'gps' ? 'GPS checked' : 'without GPS'}</p><div class="cw-stamp-arrival">${stampCard(stamped)}</div></div>${f ? usedChips(f,o) : ''}${walkSavings(o)}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? farCard(o,id,f,message,href) : ''}${walkSavings(o)}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
+  return `<section class="cw-walk-mode" data-active-stop="${escape(id)}"><div class="cw-board"><div class="cw-board-next"><span>Next · <span lang="ja">次は</span></span><span>Stop ${cursor+1} / ${o.stopIds.length}</span></div><h1 class="cw-board-name">${modelText(kind)}</h1>${name ? `<div class="cw-board-ja">${modelText(name)}</div>` : ''}<div class="cw-board-line">${minutes} min walk · ${Math.round(meters)} m</div>${lineMap(o)}</div>${!stamped ? `<p class="cw-muted">${f?.sample ? "This place is made up. Tap I'm here, then Stamp anyway to try a stamp." : "Walk there, then tap I'm here."}</p>` : ''}<div class="cw-walk-card">${f ? stack(f) : '<div class="cw-placeholder cw-stack">Grocery stop</div>'}<div>${f ? stickerHTML(f) : ''}${routeLink(f,href)}</div></div>${f ? `<section class="cw-how"><h2>How to use</h2>${actionsFor(f).map(a => a.href ? `<a class="cw-link" href="${escape(a.href)}">${modelText(a.text)}</a>` : `<p>${modelText(a.text)}</p>`).join('') || '<p class="cw-muted">Check the printed flyer for instructions.</p>'}</section>` : ''}${stamped ? `<div class="cw-stamp-result"><p class="cw-print cw-stamp-label">Stamp ${o.stamps.findIndex(s => s.stopId === id)+1} of ${o.stopIds.length} · ${stamped.kind === 'gps' ? 'GPS checked' : 'without GPS'}</p><div class="cw-stamp-arrival">${stampCard(stamped)}</div></div>${f ? usedChips(f,o) : ''}${walkSavings(o)}<button class="cw-primary cw-wide" data-action="next-stop" data-id="${escape(o.id)}">Next stop →</button>` : `<button class="cw-primary cw-wide" data-action="here" data-id="${escape(id)}" data-outing="${escape(o.id)}" ${!p ? 'disabled' : ''}>I'm here<small aria-hidden="true">· stamp</small></button>${message ? farCard(o,id,f,message,href) : ''}${walkSavings(o)}<button class="cw-text cw-wide" data-action="skip-stop" data-id="${escape(o.id)}">Skip this stop</button>`}${walkRally(o)}</section>`;
 }
 function usedChips(f,o) {
   // Printed savings first; otherwise let people still mark the offer they used (it counts as used, no printed value).
@@ -936,6 +960,19 @@ const desktopLayout=matchMedia('(min-width:960px)');
 const dockObserver=new ResizeObserver(entries => {
   const height=entries[0]?.target.getBoundingClientRect().height ?? 0;
   document.documentElement.style.setProperty('--read-dock-height',height+'px');
+});
+const noticeObserver=new ResizeObserver(() => {
+  document.documentElement.style.setProperty('--notice-height',($('notice').hidden ? 0 : $('notice').getBoundingClientRect().height)+'px');
+});
+noticeObserver.observe($('notice'));
+document.addEventListener('focusin',event => {
+  const target=event.target;
+  if (!(target instanceof HTMLElement) || target.closest('dialog, .cw-read-dock, #notice')) return;
+  requestAnimationFrame(() => {
+    if (!target.isConnected) return;
+    const obstacles=[document.querySelector('.cw-read-dock'),!$('notice').hidden && $('notice')].filter(Boolean);
+    if (obstacles.some(el => target.getBoundingClientRect().bottom > el.getBoundingClientRect().top)) target.scrollIntoView({block:'center'});
+  });
 });
 function placeTray() {
   const tray=document.querySelector('.cw-mailbox-tray'), side=document.querySelector('.cw-home-side'), anchor=document.querySelector('.cw-tray-anchor');
@@ -974,7 +1011,7 @@ function openSheet(type,id,opener=document.activeElement) {
 }
 function renderSheet() {
   const body=sheet.type === 'flyer' ? flyerSheet(flyer(sheet.id)) : sheet.type === 'page' ? pageSheet(sheet.id) : sheet.type === 'bucket' ? bucketSheet(sheet.id) : sheet.type === 'past' ? pastWalkSheet(sheet.id) : stampsContent();
-  $('sheet').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-sheet" aria-label="Close sheet">✕</button></div>${body}`;
+  $('sheet').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-sheet" aria-label="Close sheet">${closeIcon}</button></div>${body}`;
 }
 function pastWalkSheet(id) { const o=state.outings.find(o => o.id === id); return o ? `<h2 id="sheet-heading">Walk · ${formatDate(o.createdAt)}</h2><p class="cw-print">${totals(o)} · ${money(savings(usedEntries([o])).yen)} saved, printed</p><div class="cw-rally">${o.stamps.map(stampCard).join('')}</div>` : '<h2 id="sheet-heading">Walk unavailable</h2>'; }
 function closeSheet() {
@@ -987,7 +1024,7 @@ $('sheet').addEventListener('cancel',event => { if (sheetTrail.length) { event.p
 $('sheet').addEventListener('close',() => { sheet=null; sheetTrail.length=0; render(); restoreFocus(sheetOpener); sheetOpener=null; });
 function renderSetup() {
   if (!setupOpen) { if ($('setup').open) $('setup').close(); return; }
-  $('setup').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-setup" aria-label="Close settings">✕</button></div><h2 id="setup-heading">Your walk starts here.</h2><p class="cw-muted">${state.settings.home ? 'Starting from '+stationHTML(home() ?? {stationId:state.settings.home}) : state.settings.place ? 'Starting from your location' : 'Choose where you start walking.'}</p><button class="cw-secondary cw-wide" data-action="use-location" ${locatingStart || busy ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-text cw-wide" data-action="pick-station">Pick a station</button><form id="setup-form">${startProblems()}${stationSelects('setup',state.settings.lineId,state.settings.home)}<fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><fieldset><legend>Appearance</legend><div class="cw-radio cw-radio-appearance">${[['light','Light'],['dark','Dark'],['auto','Match my device']].map(([value,label]) => `<label><input type="radio" name="theme" value="${value}" ${state.settings.theme === value ? 'checked' : ''}>${label}</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
+  $('setup').innerHTML=`<div class="cw-sheet-top"><button class="cw-text" data-action="close-setup" aria-label="Close settings">${closeIcon}</button></div><h2 id="setup-heading">Your walk starts here.</h2><p class="cw-muted">${state.settings.home ? 'Starting from '+stationHTML(home() ?? {stationId:state.settings.home}) : state.settings.place ? 'Starting from your location' : 'Choose where you start walking.'}</p><button class="cw-secondary cw-wide" data-action="use-location" ${locatingStart || busy ? 'disabled' : ''}>${locatingStart ? 'Finding your location…' : 'Use my location'}</button><button class="cw-text cw-wide" data-action="pick-station">Pick a station</button><form id="setup-form">${startProblems('setup')}${stationSelects('setup',state.settings.lineId,state.settings.home)}<fieldset><legend>Walk length</legend><div class="cw-radio">${[20,40,60,90].map(n => `<label><input type="radio" name="minutes" value="${n}" ${state.settings.maxMinutes === n ? 'checked' : ''}>${n} min</label>`).join('')}</div></fieldset><fieldset><legend>Appearance</legend><div class="cw-radio cw-radio-appearance">${[['light','Light'],['dark','Dark'],['auto','Match my device']].map(([value,label]) => `<label><input type="radio" name="theme" value="${value}" ${state.settings.theme === value ? 'checked' : ''}>${label}</label>`).join('')}</div></fieldset><details class="cw-more"><summary>More</summary><label class="cw-field">Weight in kg<input id="setup-weight" type="number" min="1" max="500" step="0.1" value="${escape(state.settings.weightKg)}" required></label><p class="cw-meta">For the kcal estimate.</p></details><button class="cw-primary cw-wide" type="submit" ${busy ? 'disabled' : ''}>Save</button></form>${state.flyers.length || state.outings.length ? '<button type="button" class="cw-text cw-danger" data-action="start-fresh">Start fresh: delete my flyers, walks and stamps on this phone</button>' : ''}`;
   $('setup-form').addEventListener('submit',event => {
     event.preventDefault();
     if ($('setup-station').value) { if (!useStation($('setup-line').value,$('setup-station').value)) return; }

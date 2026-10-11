@@ -1,5 +1,6 @@
 import http from 'node:http';
-import { readFile } from 'node:fs/promises';
+import { readFile, stat } from 'node:fs/promises';
+import { brotliCompressSync, gzipSync, constants } from 'node:zlib';
 import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { loadEnv } from '../agent/env.mjs';
@@ -13,6 +14,17 @@ const types = { '.html': 'text/html; charset=utf-8', '.mjs': 'text/javascript; c
   '.css': 'text/css; charset=utf-8', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2',
   '.webmanifest': 'application/manifest+json', '.png': 'image/png', '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg' };
 const limits = { '/api/read-page': 12 * 1024 * 1024, '/api/merge': 1024 * 1024, '/api/rank': 256 * 1024 };
+const textTypes = new Set(['.html', '.mjs', '.js', '.css', '.json', '.svg', '.webmanifest']);
+
+// Respect explicit exclusions (including q=0) before wildcard negotiation.
+function staticEncoding(header = '') {
+  const accepted = new Map(header.toLowerCase().split(',').map(part => {
+    const [name, ...params] = part.trim().split(';');
+    const quality = params.find(p => p.trim().startsWith('q='));
+    return [name, quality ? Number(quality.trim().slice(2)) : 1];
+  }));
+  return ['br', 'gzip'].find(name => (accepted.get(name) ?? accepted.get('*') ?? 0) > 0);
+}
 
 function httpError(status, message) { return Object.assign(new Error(message), { status }); }
 
@@ -66,6 +78,7 @@ async function writeEvent(res, event) {
 export function createServer({ app, fetch, env = process.env, log = console.log, now = Date.now } = {}) {
   app ??= createApp({ fetch, env });
   const reads = new Map();
+  const staticFiles = new Map();
   const hour = 60 * 60 * 1000;
   function reserve(req, count, kind = 'tiles', limit = 240) {
     const forwarded = req.headers['x-forwarded-for'];
@@ -137,8 +150,34 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
       catch { res.writeHead(404).end('Not found'); return; }
       if (!path.startsWith(root + sep)) { res.writeHead(403).end(); return; }
       try {
-        const body = await readFile(path);
-        res.writeHead(200, { 'Content-Type': types[extname(path)] || 'application/octet-stream', 'Cache-Control': 'no-cache' }).end(body);
+        const info = await stat(path);
+        if (!info.isFile()) throw new Error('Not a file');
+        const extension = extname(path);
+        const compressible = textTypes.has(extension);
+        const encoding = compressible ? staticEncoding(req.headers['accept-encoding']) : undefined;
+        const etag = `W/"${info.size}-${info.mtimeMs}"`;
+        const headers = { 'Content-Type': types[extension] || 'application/octet-stream',
+          'Cache-Control': pathname.startsWith('/fonts/') && extension === '.woff2'
+            ? 'public, max-age=31536000, immutable' : 'no-cache', ETag: etag,
+          ...(compressible ? { Vary: 'Accept-Encoding' } : {}),
+          ...(encoding ? { 'Content-Encoding': encoding } : {}) };
+        const matches = req.headers['if-none-match']?.split(',').map(value => value.trim());
+        if (['GET', 'HEAD'].includes(req.method) && matches?.some(value => value === '*' || value.replace(/^W\//, '') === etag.slice(2))) {
+          res.writeHead(304, headers).end(); return;
+        }
+        // One entry per path; replacing it drops stale encodings after a rebuild.
+        let cached = staticFiles.get(path);
+        if (cached?.etag !== etag) {
+          cached = { etag, body: readFile(path), encodings: new Map() };
+          staticFiles.set(path, cached);
+        }
+        let body = await cached.body;
+        if (encoding) {
+          if (!cached.encodings.has(encoding)) cached.encodings.set(encoding, encoding === 'br'
+            ? brotliCompressSync(body, { params: { [constants.BROTLI_PARAM_QUALITY]: 9 } }) : gzipSync(body));
+          body = cached.encodings.get(encoding);
+        }
+        res.writeHead(200, { ...headers, 'Content-Length': body.length }).end(req.method === 'HEAD' ? undefined : body);
       } catch { res.writeHead(404).end('Not found'); }
     } catch (error) {
       if (res.headersSent) { res.destroy(); return; }

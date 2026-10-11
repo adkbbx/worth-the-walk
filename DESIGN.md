@@ -30,19 +30,20 @@ The screen is the shortest part of the experience. Every view leads to the next 
 - **Print Ink** (`#18222c`; dark `#e9eee7`): Primary text.
 - **Faded Ink** (`#5b6a62`; dark `#9aa8a0`): Secondary text, dot-matrix meta.
 - **Rule** (`#cdd7cb`; dark `#2a3631`): Borders, tear lines, empty stamp slots.
+- **Control rule** (`#758477`; dark `#64756b`): Input, chip, radio-label, thumbnail and button boundaries. Keep the lighter Rule for paper decoration. Control rule contrasts at least 3:1 against Paper and Paper Shade in both themes.
 
 ### Action
 - **Ticket-gate Blue** (`#1846b8`; dark `#5e88ff`): The one primary action per screen, the route line, station dots, links, focus rings, progress. Text on it: white (dark theme: `#0b1020`).
 
 ### Flyer accents (printed money only)
 - **Price Sticker** (`#ffd400`, both themes): Background of the best-deal sticker. Text on it is always `#1b1300`.
-- **Sticker ink tokens**: `--sticker-ink` (`#1b1300`), `--sticker-sale` (`#c40000`), and `--sticker-old` (`#4d3f00`) stay fixed against yellow in both themes.
+- **Sticker ink tokens**: `--sticker-ink` (`#1b1300`), `--sticker-sale` (`#c00000`), and `--sticker-old` (`#4d3f00`) stay fixed against yellow in both themes.
 - **Sale Red** (standalone `#d40b0b` / dark `#ff5d4f`): Printed savings totals; also the Failed reading-chip status, as specified for the reading ticket.
 
 ### Walk-mode display
 - **Display Black** (`#0f1418`; dark `#05080a`): Train-door board background.
 - **Display Amber** (`#f3c623`; dark `#f6cd2e`): Dot-matrix text on the board; the station name itself is `#f6f1e4`.
-- **Display Dim** (`#6f7a74`): Secondary board text ("NEXT · 次は", "STOP 1 / 3").
+- **Display Dim** (`#78847d`): Secondary board text ("NEXT · 次は", "STOP 1 / 3").
 
 ### Stamp inks (one per kind of place)
 - **Indigo** (`#3d3a92`; dark `#8f8cf0`): lessons, fitness, studios
@@ -85,7 +86,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### The ticket (answer card)
 - Ticket Paper, 1px Rule border, radius 12px, guilloché texture, soft shadow (`0 1px 0 rgba(24,34,44,.06), 0 10px 24px -14px rgba(24,34,44,.35)`)
-- Two perforation notches (16px circles in Paper Shade with a Rule border) on the left and right edges at the tear line
+- Two perforation notches (16px circles in Paper Shade with a Rule border) at the tear line, clipped horizontally into half-circles at the ticket edges (`overflow-x: clip; overflow-y: visible`) while the done seal can overlap the lower edge
 - Head: print kicker "TODAY · 12 OCT" with a ticket number on the right; ticket title; print meta "2.0 KM · 25 MIN · ~2,850 STEPS"; then a 1.5px dashed tear line
 - Body: the **route strip**
 
@@ -111,7 +112,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - **Ghost**: transparent, blue 14px 700 text, underlined, centred ("Skip this stop")
 - **Icon button**: 44px, 1px Rule border, radius 10px (header: stamps ◎, settings ⚙, close ✕)
 - All ✕ controls (stop removal, grocery removal, sheet close, photo removal) rest in Faded Ink and use Print Ink on hover or keyboard focus. The header's “Your stamps” button gains a 24px gate-blue round count badge at top-right for one or more stamps, capped at 99+. The badge is decorative; the accessible name remains exactly “Your stamps”.
-- Focus: 3px blue outline, 3px offset
+- Focus: 2px gate-blue outline, 3px offset on every interactive element, including radios, text buttons, thumbnails and links
 
 ### Mailbox tray
 - Three equal slots under the gate on phone/tablet: print label (HOME / RECYCLE / KEEP), big number, description; a slot with 0 is hidden; tapping opens its sheet. All slots share Ticket Paper, Rule border, 12px × 8px padding, aligned labels and number rows, with optional thumbnails after the description.
@@ -164,7 +165,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 ### Station stamp (SVG seal)
 - `viewBox 0 0 100 100`: outer ring r46 stroke 4.2; inner ring r39.5 stroke 1.1; place kind in print face on an arc (path M19 52 A31 31 0 0 1 81 52); central kanji in Dela Gothic One 27px (体 lessons/fitness · 洗 cleaners/services · 市 shops/food · 道 dojos/other); date "2026.10.12" in a 38×11 box
 - Ink per category (section 2), rotated −9°…+9° (deterministic from the stamp id), ink filter: fractal-noise speckle (alpha matrix `-1.9 1.8`) + small displacement (scale 2.4)
-- Self-reported: dashed outer ring (`7 4`), opacity .55
+- Self-reported: dashed outer ring (`7 4`), full ink opacity so the stamp keeps its contrast. The dashed ring and accessible label distinguish stamps without GPS.
 - Arrival animation: scale 1.35 → 1 with a slight overshoot (`cubic-bezier(.2,1.6,.4,1)`, 0.5s); none with reduced motion
 - Empty slot: dashed Rule circle; the first says "Next stamp"
 - The "Next stamp" spot has a faint decorative 歩 inside the dashed circle, with the label readable below it.
@@ -197,7 +198,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - **Saving:** unavailable/full localStorage shows persistent error strip “This browser isn't saving. Your mailbox and stamps will be lost when you close this page.” Dismiss applies for the session, including subsequent failed saves. In-memory mailbox and stamps remain usable.
 - **Reading service:** failed config or reading/sorting service outages show “Reading is unavailable right now. You can still try the sample mailbox.” with a working sample action. Existing read/retry actions remain available online. The sample uses local fictional content and existing start selection, with no reading API calls.
 - **Start chooser and Settings:** permission denied, unavailable location or timeout says inline “Location is off for this site, so pick a station instead.” Reveal the station picker and focus its train-line select, including when a previously saved start exists. Keep “Pick a station”. Failed station-coordinate loading has an inline reason and “Reload”, which retries the existing coordinate resource. Station validation also stays inline.
-- **Empty ticket:** retain the date/number header, perforations and tray, title “No walk today”. For home/recycle/keep-only mailboxes, use actual flyer bucket counts: “We read 6 flyers: 2 deals to use at home, 4 safe to recycle. None is a place to walk to.” Omit zero parts and use singular nouns where appropriate. Primary “Add more flyers” opens the existing photo chooser; show text “Try a sample mailbox” when no sample is loaded.
+- **Empty ticket:** retain the date/number header, perforations and tray, title “No walk today”. For home/recycle/keep-only mailboxes, use actual flyer bucket counts: “We read 6 flyers: 2 deals to use at home, 4 safe to recycle. None is a place to walk to.” Omit zero parts and use singular nouns where appropriate. Omit the duplicate “Add more flyers” button. The Add more flyers section makes “Photograph my flyers” primary, with “Choose from photos” below. Show text “Try a sample mailbox” under the empty ticket when no sample is loaded.
 - When all walk flyers are expired, closed or rejected, the empty line is “The places on these flyers have ended their offers or you said Not for me.” Text “Show places I said Not for me” clears only rejected walk-flyer labels and replans, without asking anything. Other labels and expiry/closure rules remain intact.
 - **Missing address:** the flyer row says “No address on the flyer” alongside “Add address”. Failed lookup stays under the form: “Couldn't find that. Try the address printed on the flyer (住所) or the full business name.” Preserve the entered address across render and connection changes.
 - **Skipped files:** keep accepted images; summarize non-images and images the browser cannot decode in one persistent warn toast, e.g. “2 files skipped: not photos.” Other preparation failures use an error toast with a next action.
@@ -271,6 +272,45 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 
 ### Image Behavior
 - Thumbnails 46×60 in the route, 66×86 in walk mode, up to 480px in the page sheet; never upscaled beyond source
+
+### Accessibility and delivery (Round 5)
+
+- Each main view has exactly one h1. Start selection takes heading priority; otherwise the answer ticket, reading card, photo view or welcome owns it. Sheets begin at h2 and progress to h3, with an existing heading matching the dialog's `aria-labelledby` in every state.
+- Every control has an accessible name. Remove controls include the place kind or grocery name. Close and rotate icons share an 18px inline SVG box, 1.8px currentColor stroke and `aria-hidden="true"`; keep their action attributes and accessible labels. Decorative flyer art stays hidden. Ticket stops retain the ordered list; station numbers are decorative. Price stickers include the spoken word “was” before the struck price.
+- Model strings remain escaped. Wrap detected Japanese runs in `lang="ja"`, retaining English as English, including in notices, board names, stamp captions and SVG stamp text. Use `tspan` within SVG.
+- Focus uses a 2px Gate outline with a 3px offset. Focused thumbnails rise above the stack. Reserve measured Read dock and toast heights in scroll padding/margins; move keyboard focus into view if either fixed card covers it. The Skip link uses a clipped 1px visually hidden box until focused, then appears fixed at top-left.
+- Labels contain their form controls. Required fields retain native required semantics. Invalid address and station inputs expose `aria-invalid` and link to their inline error with `aria-describedby`. Placeholder text uses Faded Ink at full opacity.
+- Reading announces completed pages and pause/start changes, not seconds, ETA or tile ticks. Stamping uses one atomic announcement, including the no-GPS explanation. Unchanged availability strips and identical notices keep their DOM. Errors appear in the reading card and at most one toast per batch, never as an error in the top progress region.
+- All-failed reading cards show the heading “None of these pages could be read.”, the reason, Retry all and Remove these photos. Consolidate an identical reason into one card line; retain individual retry buttons. Hide the waiting hint, paused count and empty progress bar. Mixed failures retain per-page reasons.
+- Typography uses rem values equivalent to the original sizes at a 16px root. At 320px and 200% text size, tray rows stack, station radios stack vertically, input heights grow and ticket/sticker/board text wraps. Every animation and transition, including stamp splats and the location spinner, is disabled under reduced motion.
+- Static text (`html`, `mjs`, `js`, `css`, `json`, `svg`, `webmanifest`) negotiates Brotli quality 9 before gzip. Cache representations by path, size/mtime validator and encoding, replacing stale versions. Send Vary and no-cache; weak size/mtime ETags support 304 and bodyless HEAD. Font subsets under `/fonts/` stay uncompressed with a one-year immutable cache. Exactly the Latin 400 Dela Gothic One and Zen Kaku Gothic New subsets are preloaded.
+- Acceptance checks cover names, main headings, dialog titles/heading levels, visible Japanese text nodes, forms, Tab focus, both-theme contrast, reduced motion, and 320px at 200% text size on every captured main/sheet state. They must be run by a reviewer: this audit session did not launch a browser.
+
+Contrast ratios calculated from the shipped token values below. The browser acceptance test also calculates these from computed styles. Normal text requires 4.5:1, seal ink and control boundaries 3:1; disabled text is exempt and visibly dimmed to 0.55 opacity.
+
+| Pair | Light | Dark |
+| --- | ---: | ---: |
+| Ink / Paper | 15.05 | 14.77 |
+| Ink / Desk | 13.07 | 16.36 |
+| Muted / Paper (including print labels) | 5.33 | 7.02 |
+| Muted / Desk | 4.63 | 7.77 |
+| Muted / Paper Shade | 5.02 | 6.44 |
+| Gate / Paper | 7.53 | 5.33 |
+| Gate Ink / Gate | 8.06 | 5.81 |
+| Sticker Ink / Sticker | 12.87 | 12.87 |
+| Sticker Sale / Sticker | 4.53 | 4.53 |
+| Sticker Old / Sticker | 7.24 | 7.24 |
+| Display Amber / Display | 11.39 | 13.09 |
+| Display Dim / Display | 4.76 | 5.16 |
+| Sale / Paper | 5.10 | 5.74 |
+| Indigo / Paper | 8.85 | 5.94 |
+| Green / Paper | 5.13 | 7.82 |
+| Vermilion / Paper | 4.83 | 6.75 |
+| Teal / Paper | 5.43 | 7.55 |
+| Control Rule / Paper | 3.69 | 3.56 |
+| Control Rule / Paper Shade | 3.47 | 3.26 |
+| Focus Gate / Desk | 6.54 | 5.90 |
+| Focus Gate / Paper Shade | 7.09 | 4.89 |
 
 ## 9. Agent Prompt Guide
 
