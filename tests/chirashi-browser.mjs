@@ -284,6 +284,76 @@ async function waitServer() {
   for (let n=0;n<100;n++) { if (serverError) throw serverError; if (server.exitCode!==null) throw new Error(logs); try { if (logs.includes(base) && (await fetch(base+'/api/config')).ok) return; } catch {} await delay(100); }
   throw new Error('Mock server did not start: '+logs);
 }
+async function installAndOfflineChecks() {
+  // A separate localhost context opts into the SW; all route-based tests stay on 127.0.0.1.
+  const origin=base.replace('127.0.0.1','localhost');
+  const context=await browser.newContext({viewport:{width:390,height:844},permissions:['geolocation'],
+    geolocation:{latitude:homePoint.lat,longitude:homePoint.lon,accuracy:1},reducedMotion:'reduce'});
+  try {
+    const page=await context.newPage();
+    page.on('pageerror',e => errors.push(e.message));
+    await page.clock.setFixedTime(clock);
+    await page.goto(origin); await page.getByText('Demo mode',{exact:true}).waitFor();
+    const description='Photograph the flyers in your mailbox. An open model (Gemma 4) picks the places worth walking to, plans a short walk past them, and gives you an ink stamp at each stop.';
+    const title='Worth the Walk? — turn mailbox flyers into a walk';
+    for (const [selector,content] of [
+      ['meta[name="description"]',description], ['meta[property="og:type"]','website'],
+      ['meta[property="og:site_name"]','Worth the Walk?'], ['meta[property="og:title"]',title],
+      ['meta[property="og:description"]',description], ['meta[property="og:url"]','https://worth-the-walk.onrender.com/'],
+      ['meta[property="og:image:width"]','1200'], ['meta[property="og:image:height"]','630'],
+      ['meta[property="og:image:alt"]','A pile of flyers turning into a train-ticket walk with an ink stamp'],
+      ['meta[name="twitter:card"]','summary_large_image'], ['meta[name="twitter:title"]',title],
+      ['meta[name="twitter:description"]',description], ['meta[name="apple-mobile-web-app-title"]','Worth the Walk']
+    ]) assert.equal(await page.locator(selector).getAttribute('content'),content);
+    const image=await page.locator('meta[property="og:image"]').getAttribute('content');
+    assert.equal(image,'https://worth-the-walk.onrender.com/icons/og-image.png');
+    assert.equal(await page.locator('meta[name="twitter:image"]').getAttribute('content'),image);
+    // Verify the asset on the same mock server, without depending on a deployed version.
+    const share=await context.request.get(origin+new URL(image).pathname);
+    assert.equal(share.status(),200); assert.equal(share.headers()['content-type'],'image/png');
+    const manifestURL=await page.locator('link[rel="manifest"]').evaluate(el => el.href);
+    assert.equal(manifestURL,origin+'/manifest.webmanifest');
+    const response=await context.request.get(manifestURL);
+    assert.equal(response.status(),200); assert.equal(response.headers()['content-type'],'application/manifest+json');
+    const manifest=await response.json();
+    assert.deepEqual(manifest,{name:'Worth the Walk?',short_name:'Worth the Walk',description,id:'/',start_url:'/',scope:'/',
+      display:'standalone',orientation:'portrait',background_color:'#e4e9e1',theme_color:'#f6f8f2',lang:'en',icons:[
+        {src:'/icons/icon-192.png',sizes:'192x192',type:'image/png',purpose:'any'},
+        {src:'/icons/icon-512.png',sizes:'512x512',type:'image/png',purpose:'any'},
+        {src:'/icons/icon-maskable-512.png',sizes:'512x512',type:'image/png',purpose:'maskable'}]});
+    assert.deepEqual(await page.locator('link[rel="icon"]').evaluateAll(els => els.map(el => ({href:el.getAttribute('href'),sizes:el.getAttribute('sizes'),type:el.type}))),[
+      {href:'/icons/favicon-32.png',sizes:'32x32',type:'image/png'}, {href:'/icons/favicon-48.png',sizes:'48x48',type:'image/png'}]);
+    assert.equal(await page.locator('link[rel="apple-touch-icon"]').getAttribute('href'),'/icons/apple-touch-icon.png');
+    for (const path of [...manifest.icons.map(icon => icon.src),'/icons/apple-touch-icon.png','/icons/favicon-32.png','/icons/favicon-48.png']) {
+      const icon=await context.request.get(origin+path); assert.equal(icon.status(),200); assert.equal(icon.headers()['content-type'],'image/png');
+    }
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.waitForFunction(() => !!navigator.serviceWorker.controller);
+    const apiResponse=page.waitForResponse(r => new URL(r.url()).pathname==='/api/config');
+    await page.evaluate(() => fetch('/api/config').then(r => r.json()));
+    const api=await apiResponse; assert.equal(api.status(),200); assert.equal(api.fromServiceWorker(),false,'API bypasses the controlling service worker');
+    await page.getByRole('button',{name:'Try a sample mailbox',exact:true}).click();
+    await page.getByRole('heading',{name:'Where do you start walking?',exact:true}).waitFor();
+    await page.getByRole('button',{name:'Use my location',exact:true}).click();
+    await page.getByRole('button',{name:'Start the walk →',exact:true}).click();
+    await page.getByRole('button',{name:"I'm here",exact:true}).click();
+    await page.getByRole('button',{name:'Stamp anyway',exact:true}).click();
+    await page.locator('.cw-stamp.self').waitFor();
+    const before=active(await readState(page)); assert.equal(before.stamps.length,1);
+    await context.setOffline(true);
+    const reload=await page.reload(); assert.equal(reload.fromServiceWorker(),true,'offline navigation comes from the cached shell');
+    await page.locator('.cw-walk-mode').waitFor(); await page.locator('#offline-strip').waitFor();
+    await page.locator('.cw-stamp.self').waitFor();
+    assert.equal(await page.evaluate(() => navigator.onLine),false);
+    assert.deepEqual(active(await readState(page)),before,'walk, cursor and stamps survive an offline reload');
+    assert.match(await page.locator('#offline-strip').textContent(),/Reading flyers needs a connection/);
+    assert.equal(await page.locator('.cw-stamp-count').textContent(),'1');
+    await context.setOffline(false);
+    await page.locator('#offline-strip').waitFor({state:'detached'});
+    await page.reload(); await page.getByText('Demo mode',{exact:true}).waitFor();
+    assert.deepEqual(active(await readState(page)),before,'reconnecting preserves the same walk');
+  } finally { await context.setOffline(false); await context.close(); }
+}
 async function nonHappyChecks(sampleState) {
   const saved={...structuredClone(sampleState),flyers:[],outings:[],labels:{},pages:{},overrides:{}};
   async function seed(page,state=saved) {
@@ -437,6 +507,7 @@ try {
   server=spawn(process.execPath,['scripts/serve.mjs','--mock'],{cwd:new URL('..',import.meta.url),env:{...process.env,PORT:'4180',HOST:'127.0.0.1',MOCK_GEMMA:'1',SENTRY_DSN:''},stdio:['ignore','pipe','pipe'],windowsHide:true});
   server.on('error',e => { serverError=e; }); server.stdout.on('data',c => { logs+=c; }); server.stderr.on('data',c => { logs+=c; });
   await waitServer(); browser=await chromium.launch({channel:process.env.TEST_BROWSER || 'msedge'}); await mkdir('.impeccable/review',{recursive:true});
+  await installAndOfflineChecks();
   // Appearance applies immediately, follows the device only by choice, and survives Save/reload.
   const appearance=await newPhone({colorScheme:'dark'}); await setup(appearance.page);
   async function themeChecks(page,scheme,attribute) {

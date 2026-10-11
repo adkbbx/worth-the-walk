@@ -20,6 +20,9 @@ The screen is the shortest part of the experience. Every view leads to the next 
 
 ## 2. Color Palette & Roles
 
+### Brand assets
+The share card (`dist/icons/og-image.png`, 1200×630) carries the mailbox-to-ticket walk story and an ink stamp. The app icon is the vermilion 歩 seal on pale ticket paper, supplied at 192 and 512 pixels, with a maskable 512 variant whose content stays inside the central 80% safe zone. The 180-pixel Apple touch icon and 32/48-pixel PNG favicons use the same identity. These existing assets serve link previews and installation; the legacy train favicon remains for other pages.
+
 ### Surfaces
 - **Appearance**: Light is the default, including on dark devices. Settings stores `light`, `dark`, or `auto` under `settings.theme`; missing or invalid legacy preferences become Light. A synchronous `/theme.js` applies it before styles paint. Light and Dark set `data-theme`; Match my device removes it. Both theme-color meta tags follow a fixed preference; device mode keeps one paper colour per scheme. `--paper-light` and `--paper-dark` provide those browser colours.
 - **Desk** (`#e4e9e1`; dark `#0b0f12`): Page background around the app column.

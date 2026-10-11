@@ -4,6 +4,8 @@ Photograph the flyers in your mailbox, read what each one is in English, and pla
 
 No Japanese flyers to hand? Open the app and tap **Try a sample mailbox**: eight made-up flyers, placed around your start, with no model calls.
 
+**Install and offline:** Worth the Walk? is installable on your phone. After an online visit, the app shell is cached network-first so a walk in progress reopens without signal, with your saved walk and stamps intact. Reading flyers still needs a connection.
+
 ## How it works
 
 1. Photograph the pages. Gemma 4 reads each page whole first (one call), so its card appears within seconds. Only walkable price lists (supermarkets, drugstores, cleaners, menus) get a second pass in six overlapping tiles for exact prices.

@@ -158,7 +158,9 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
         const etag = `W/"${info.size}-${info.mtimeMs}"`;
         const headers = { 'Content-Type': types[extension] || 'application/octet-stream',
           'Cache-Control': pathname.startsWith('/fonts/') && extension === '.woff2'
-            ? 'public, max-age=31536000, immutable' : 'no-cache', ETag: etag,
+            ? 'public, max-age=31536000, immutable'
+            : pathname.startsWith('/icons/') && extension === '.png'
+              ? 'public, max-age=86400' : 'no-cache', ETag: etag,
           ...(compressible ? { Vary: 'Accept-Encoding' } : {}),
           ...(encoding ? { 'Content-Encoding': encoding } : {}) };
         const matches = req.headers['if-none-match']?.split(',').map(value => value.trim());

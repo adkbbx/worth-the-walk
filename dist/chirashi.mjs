@@ -1202,3 +1202,9 @@ await loadCoordinates();
 try { const config=await api('/api/config'); $('mode').textContent=config.mode === 'mock' ? 'Demo mode' : ''; }
 catch { serviceUnavailable=true; render(); }
 save(); await rank();
+
+function registerServiceWorker() {
+  if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) navigator.serviceWorker.register('/sw.js').catch(() => {});
+}
+if (document.readyState === 'complete') registerServiceWorker();
+else window.addEventListener('load', registerServiceWorker, {once:true});
