@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { createSerpApi } from '../agent/serpapi.mjs';
 import { privacyProcessor, createApp } from '../agent/mastra.mjs';
 import { createTools, rulesRank } from '../agent/tools.mjs';
-import { createCallQueue, modelCall } from '../agent/queue.mjs';
+import { createCallQueue, modelCall, hedged } from '../agent/queue.mjs';
 import { FEATURES, normalizeTile } from '../src/mailbox.mjs';
 import { createServer } from '../scripts/serve.mjs';
 
@@ -410,4 +410,20 @@ test('NDJSON delivers a completed tile before the final result exists', async t 
     req.on('error', reject); req.end(body);
   });
   assert.deepEqual(lines.map(line => line.type), ['tile', 'done']);
+});
+
+test('hedged requests answer from a backup when the first is slow and abort the loser', async () => {
+  const wait = (ms, signal, value) => new Promise((resolve, reject) => {
+    const timer = setTimeout(() => resolve(value), ms);
+    signal.addEventListener('abort', () => { clearTimeout(timer); reject(new Error('aborted')); });
+  });
+  let calls = 0; const signals = [];
+  const slowThenFast = signal => { signals.push(signal); return wait(++calls === 1 ? 1000 : 10, signal, `answer ${calls}`); };
+  assert.equal(await hedged(slowThenFast, { after: 20 }), 'answer 2');
+  assert.equal(calls, 2); assert.ok(signals.every(signal => signal.aborted), 'both attempts are cleaned up');
+  calls = 0;
+  assert.equal(await hedged(signal => { calls++; return wait(5, signal, 'quick'); }, { after: 50 }), 'quick');
+  await new Promise(resolve => setTimeout(resolve, 80));
+  assert.equal(calls, 1, 'no backup when the first attempt is fast');
+  await assert.rejects(hedged(() => Promise.reject(new Error('boom')), { after: 10 }), /boom/);
 });

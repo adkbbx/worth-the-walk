@@ -1,4 +1,4 @@
-export const TILE_PROMPT = `You are reading ONE part (tile) of ONE page of a Japanese flyer that a resident photographed. Return ONLY one JSON object, no prose, with exactly these keys:
+export const TILE_PROMPT = `You are reading ONE part (tile) of ONE page of a Japanese flyer that a resident photographed. Return ONLY one compact JSON object (no prose, no code fences). Use these keys, but leave out any key whose value would be null, false or an empty list; missing keys default automatically:
 {"business":{"name":null,"branch":null,"kind":null},"category":"other","summary_en":null,"offers":[],"items":[],"address":null,"phones":[],"websites":[],"hours":null,"valid_from_text":null,"valid_to_text":null,"comes_to_you":false,"delivery":false}
 Rules:
 - Report only text printed in this tile. If something is cut off or unreadable, use null. Never guess or invent.

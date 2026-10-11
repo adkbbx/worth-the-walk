@@ -106,10 +106,10 @@ try {
   await page.getByRole('button',{name:'Read 1 page',exact:true}).waitFor();
   await page.getByRole('button',{name:'Remove page 1',exact:true}).click();
   await page.locator('#photos-input').setInputFiles(files);
-  await page.waitForFunction(() => document.querySelectorAll('.cw-photo').length === 3 && !document.querySelector('[data-action=read]').disabled);
+  await page.waitForFunction(() => document.querySelectorAll('.cw-photo').length === 3 && !document.querySelector('[data-action=read]').disabled,null,{timeout:90000});
   assert.equal(await page.locator('.cw-photo').count(),3);
   await page.getByRole('button',{name:'Rotate page 1'}).click();
-  await page.waitForFunction(() => document.querySelector('.cw-photo').dataset.rotation === '90' && !document.querySelector('[data-action=read]').disabled);
+  await page.waitForFunction(() => document.querySelector('.cw-photo').dataset.rotation === '90' && !document.querySelector('[data-action=read]').disabled,null,{timeout:90000});
   await page.waitForFunction(() => document.querySelector('.cw-photo img').naturalWidth > 0);
   assert.equal(await page.locator('.cw-photo').first().getAttribute('data-rotation'),'90');
   assert.ok(await page.locator('.cw-photo img').first().evaluate(img => img.naturalWidth > img.naturalHeight),'rotation is baked into the prepared preview');

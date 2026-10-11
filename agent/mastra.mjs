@@ -12,7 +12,7 @@ import { visionModel, textModel, modelInfo } from './models.mjs';
 import { TILE_PROMPT, MERGE_PROMPT } from './prompts.mjs';
 import { createTools, rulesRank } from './tools.mjs';
 import { readPageSchema, mergeSchema, locateSchema, rankSchema } from './schemas.mjs';
-import { modelCall } from './queue.mjs';
+import { modelCall, hedged } from './queue.mjs';
 
 function compact(value) {
   if (Array.isArray(value)) return value.map(compact);
@@ -137,12 +137,12 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
               if (mock) tile = normalizeTile(fixtures[index % fixtures.length]);
               else {
                 const [header, base64] = tiles[index].split(',');
-                const output = await modelCall(() => flyerReader.generate([{
+                const output = await hedged(abortSignal => modelCall(() => flyerReader.generate([{
                   role: 'user', content: [
                     { type: 'text', text: TILE_PROMPT },
                     { type: 'image', image: new Uint8Array(Buffer.from(base64, 'base64')), mediaType: header.slice(5).split(';')[0] },
                   ],
-                }], { tracingContext, requestContext }));
+                }], { tracingContext, requestContext, abortSignal })));
                 if (output.error) throw new Error('Tile read failed');
                 const raw = parseJsonLoose(output.text);
                 if (!raw || Array.isArray(raw)) throw new Error('Invalid tile JSON');
@@ -172,9 +172,9 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
         try {
           // Price-list items are merged by code below: rewriting 50 menu items made the model merge take ~25 s per flyer.
           const readings = pages.flatMap((page, index) => page.tiles.filter(Boolean).map(tile => ({ ...normalizeTile(tile), items: undefined, page: index })));
-          const output = await modelCall(() => flyerMerger.generate([{
+          const output = await hedged(abortSignal => modelCall(() => flyerMerger.generate([{
             role: 'user', content: JSON.stringify(compact(readings)),
-          }], { tracingContext, requestContext }));
+          }], { tracingContext, requestContext, abortSignal }), { priority: 'high' }), { after: 30_000 });
           if (!output.error) merged = normalizeMerged({ ...parseJsonLoose(output.text), items: [] }, pages);
           if (merged) merged.items = dedupeItems(pages.flatMap((page, index) => page.tiles.filter(Boolean)
             .flatMap(tile => normalizeTile(tile).items.map(item => ({ ...item, page: index })))));
