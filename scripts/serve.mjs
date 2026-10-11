@@ -163,6 +163,7 @@ export function createServer({ app, fetch, env = process.env, log = console.log,
               ? 'public, max-age=86400' : 'no-cache', ETag: etag,
           ...(compressible ? { Vary: 'Accept-Encoding' } : {}),
           ...(encoding ? { 'Content-Encoding': encoding } : {}) };
+        if (encoding) headers['Cache-Control'] += ', no-transform';
         const matches = req.headers['if-none-match']?.split(',').map(value => value.trim());
         if (['GET', 'HEAD'].includes(req.method) && matches?.some(value => value === '*' || value.replace(/^W\//, '') === etag.slice(2))) {
           res.writeHead(304, headers).end(); return;

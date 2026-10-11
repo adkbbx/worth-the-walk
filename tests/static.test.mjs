@@ -29,7 +29,7 @@ test('static text negotiates br/gzip, decodes byte-for-byte and varies by encodi
     for (const encoding of ['gzip','br']) {
       const result=await request('/'+file,{'Accept-Encoding':encoding});
       assert.equal(result.status,200); assert.equal(result.headers['content-encoding'],encoding);
-      assert.equal(result.headers.vary,'Accept-Encoding'); assert.equal(result.headers['cache-control'],'no-cache');
+      assert.equal(result.headers.vary,'Accept-Encoding'); assert.equal(result.headers['cache-control'],'no-cache, no-transform');
       assert.deepEqual(encoding === 'br' ? brotliDecompressSync(result.body) : gunzipSync(result.body),original);
       assert.deepEqual((await request('/'+file,{'Accept-Encoding':encoding})).body,result.body,'cached representation is stable');
     }
@@ -39,7 +39,17 @@ test('static text negotiates br/gzip, decodes byte-for-byte and varies by encodi
   assert.equal((await request('/',{'Accept-Encoding':'br;q=0, gzip;q=0, *;q=1'})).headers['content-encoding'],undefined);
   const plain=await request('/');
   assert.equal(plain.headers['content-encoding'],undefined); assert.equal(plain.headers.vary,'Accept-Encoding');
+  assert.equal(plain.headers['cache-control'],'no-cache');
   assert.deepEqual(plain.body,await readFile('dist/index.html'));
+});
+
+test('compressed ticket CSS forbids transformation and varies by encoding',async () => {
+  for (const encoding of ['br','gzip']) {
+    const result=await request('/fonts/ticket.css',{'Accept-Encoding':encoding});
+    assert.equal(result.status,200); assert.equal(result.headers['content-encoding'],encoding);
+    assert.equal(result.headers['cache-control'],'no-cache, no-transform');
+    assert.equal(result.headers.vary,'Accept-Encoding');
+  }
 });
 
 test('font subsets stay uncompressed and immutable',async () => {
@@ -58,7 +68,7 @@ test('install assets have the expected content types and revalidation policy',as
   ]) {
     const result=await request(path,{'Accept-Encoding':'br, gzip'});
     assert.equal(result.status,200); assert.equal(result.headers['content-type'],type);
-    assert.equal(result.headers['cache-control'],policy);
+    assert.equal(result.headers['cache-control'],policy+(path.endsWith('.png') ? '' : ', no-transform'));
     if (path.endsWith('.png')) assert.equal(result.headers['content-encoding'],undefined);
     else assert.equal(result.headers['content-encoding'],'br');
     const head=await request(path,{},'HEAD'); assert.equal(head.status,200);
@@ -71,10 +81,13 @@ test('install assets have the expected content types and revalidation policy',as
 test('service worker precaches startup dependencies and keeps APIs/photos off its cache',async () => {
   const origin=`http://127.0.0.1:${server.address().port}`, handlers=new Map(), stores=new Map();
   let offline=false, claimed=false, skipped=false, networkCalls=0, networkResponse;
+  let pendingNetwork;
+  const timers=new Map(), background=[];
   const absolute=input => new URL(typeof input === 'string' ? input : input.url,origin).href;
   const network=async input => {
     networkCalls++;
     if (offline) throw new Error('Offline');
+    if (pendingNetwork) return pendingNetwork;
     return networkResponse ? networkResponse.clone() : fetch(absolute(input));
   };
   const caches={
@@ -106,12 +119,14 @@ test('service worker precaches startup dependencies and keeps APIs/photos off it
   runInNewContext(await readFile('dist/sw.js','utf8'),{
     self:{location:{origin},addEventListener:(type,handler) => handlers.set(type,handler),
       skipWaiting:async () => { skipped=true; },clients:{claim:async () => { claimed=true; }}},
-    caches,URL,Request:class extends Request { constructor(input,options) { super(absolute(input),options); } },fetch:network
+    caches,URL,Request:class extends Request { constructor(input,options) { super(absolute(input),options); } },fetch:network,
+    setTimeout:(callback,delay) => { assert.equal(delay,4000); const id={}; timers.set(id,callback); return id; },
+    clearTimeout:id => timers.delete(id)
   });
   async function lifecycle(type) { let done; handlers.get(type)({waitUntil:promise => { done=promise; }}); await done; }
   await lifecycle('install'); assert.ok(skipped);
   await lifecycle('activate'); assert.ok(claimed); assert.equal(stores.size,1); assert.ok(!stores.has('wtw-old'));
-  const cache=await caches.open((await caches.keys())[0]);
+  const cacheName=(await caches.keys())[0], cache=await caches.open(cacheName);
   // Follow actual module imports, including catalog's transitive data modules.
   const checked=new Set();
   async function checkModule(path) {
@@ -126,7 +141,8 @@ test('service worker precaches startup dependencies and keeps APIs/photos off it
   assert.ok(await cache.match('/station-coordinates.json'));
   function intercepted(path,{method='GET',mode='cors'}={}) {
     let response;
-    handlers.get('fetch')({request:{url:absolute(path),method,mode},respondWith:value => { response=value; }});
+    handlers.get('fetch')({request:{url:absolute(path),method,mode},respondWith:value => { response=value; },
+      waitUntil:promise => background.push(promise)});
     return response;
   }
   for (const [path,options] of [['/api/config',{}],['/api/read-page',{method:'POST'}],['/chirashi.mjs',{method:'POST'}],
@@ -139,6 +155,35 @@ test('service worker precaches startup dependencies and keeps APIs/photos off it
   networkResponse=new Response('server failure',{status:503});
   assert.equal((await intercepted('/chirashi.mjs')).status,503);
   assert.equal(await (await cache.match('/chirashi.mjs')).text(),'fresh module','non-200 must not replace a cached success');
+  assert.equal(timers.size,0,'non-navigation shell requests have no timeout');
+  networkResponse=new Response('fast navigation');
+  assert.equal(await (await intercepted('/fast',{mode:'navigate'})).text(),'fast navigation');
+  assert.equal(timers.size,0,'fast navigation clears its timeout');
+
+  let finishNetwork;
+  pendingNetwork=new Promise(resolve => { finishNetwork=resolve; });
+  const slowNavigation=intercepted('/index.html',{mode:'navigate'});
+  await new Promise(setImmediate);
+  assert.equal(timers.size,1);
+  for (const callback of timers.values()) callback();
+  assert.deepEqual(Buffer.from(await (await slowNavigation).arrayBuffer()),await readFile('dist/index.html'));
+  finishNetwork(new Response('background refresh'));
+  await Promise.all(background);
+  assert.equal(await (await cache.match('/index.html')).text(),'background refresh','late network success updates the cache');
+
+  stores.clear();
+  pendingNetwork=new Promise(resolve => { finishNetwork=resolve; });
+  let settled=false;
+  const uncachedNavigation=intercepted('/uncached',{mode:'navigate'}).then(response => { settled=true; return response; });
+  await new Promise(setImmediate);
+  for (const callback of timers.values()) callback();
+  await new Promise(setImmediate);
+  assert.equal(settled,false,'timeout without a cached shell keeps waiting');
+  finishNetwork(new Response('uncached network success'));
+  assert.equal(await (await uncachedNavigation).text(),'uncached network success');
+  stores.clear(); stores.set(cacheName,cache);
+  await cache.put('/index.html',new Response(await readFile('dist/index.html')));
+  pendingNetwork=undefined;
   networkResponse=undefined; offline=true;
   assert.equal(await (await intercepted('/chirashi.mjs')).text(),'fresh module','shell falls back when the network fails');
   assert.deepEqual(Buffer.from(await (await intercepted('/?resume=1',{mode:'navigate'})).arrayBuffer()),await readFile('dist/index.html'));

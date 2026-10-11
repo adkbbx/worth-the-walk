@@ -1,5 +1,5 @@
 // Bump this version when changing the app shell or its startup dependencies.
-const VERSION = 'wtw-2026-10-12-1';
+const VERSION = 'wtw-2026-10-12-2';
 const SHELL = [
   '/', '/index.html', '/chirashi.mjs', '/chirashi.css', '/theme.js',
   '/manifest.webmanifest', '/walks.mjs', '/mailbox.mjs', '/rules.mjs',
@@ -26,16 +26,31 @@ self.addEventListener('activate', event => {
   })());
 });
 
-async function networkFirst(request, navigation) {
+async function networkFirst(request, navigation, event) {
   const cache = await caches.open(VERSION);
+  let timer;
   try {
-    const response = await fetch(request);
-    if (response.status === 200) await cache.put(request, response.clone()).catch(() => {});
-    return response;
+    const network = (async () => {
+      const response = await fetch(request);
+      if (response.status === 200) await cache.put(request, response.clone()).catch(() => {});
+      return response;
+    })();
+    if (!navigation) return await network;
+    // Keep the refresh alive when a slow navigation returns the cached shell.
+    event.waitUntil(network.catch(() => {}));
+    const response = await Promise.race([
+      network,
+      new Promise(resolve => { timer = setTimeout(resolve, 4000); })
+    ]);
+    if (response) return response;
+    const cached = await cache.match('/index.html', { ignoreSearch: true });
+    return cached || await network;
   } catch (error) {
     const cached = await cache.match(navigation ? '/index.html' : request, { ignoreSearch: true });
     if (cached) return cached;
     throw error;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -55,6 +70,6 @@ self.addEventListener('fetch', event => {
   if (url.pathname.startsWith('/fonts/') && url.pathname.endsWith('.woff2')) {
     event.respondWith(fontFirst(request));
   } else if (request.mode === 'navigate' || shellPaths.has(url.pathname)) {
-    event.respondWith(networkFirst(request, request.mode === 'navigate'));
+    event.respondWith(networkFirst(request, request.mode === 'navigate', event));
   }
 });
