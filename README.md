@@ -38,15 +38,18 @@ Gemma 4 (open weights, Apache 2.0) and Mastra (Apache 2.0) are the parts the app
 | --- | --- | --- |
 | DigitalOcean serverless inference | hosted service, open model | `LOCAL_LLM=1`: Gemma 4 E2B through Ollama |
 | TabPFN via Prior Labs' MCP | open-source code, hosted API | rule-based ranking |
-| SerpApi | hosted service | printed addresses only, through GSI |
+| SerpApi | hosted service | printed addresses through GSI, and shops that print no address through OpenStreetMap |
 | Sentry | hosted service | no tracing |
 
 ```sh
 ollama pull gemma4:e2b-it-qat
 LOCAL_LLM=1 GRADIENT_MODEL_ACCESS_KEY= PRIOR_LABS_MCP_TOKEN= SERPAPI_API_KEY= SENTRY_DSN= npm start
+# then open http://127.0.0.1:4175
 ```
 
-Blank values override `.env`. Only the printed address text goes out, to Japan's GSI address search. Checked on 12 Oct 2026: a supermarket page read on a laptop in 27–40 s (rough: three prices, two without a product name), a printed address located through GSI, and ranking by rules.
+Blank values override `.env`. It costs nothing and needs no account or key. What leaves your machine: a printed address to Japan's GSI address search (free, no key), and, for a walkable flyer with no printed address, the business name and a ~3 km box around your rounded start to OpenStreetMap's Nominatim (open data, free, no key; one request a second, cached). `LOCAL_LLM_MODEL` picks a bigger Gemma 4 from Ollama if your machine can hold it.
+
+Checked on 12 Oct 2026 with every key blank: three real mailbox flyers went from photos to a ticket in **35 s** on a laptop, with no failures. Gemma 4 E2B put 2 of the 3 in the right pile (it sent a dinner-delivery menu to Recycle) and invented the yoga studio's prices, so local mode tells you to check every price. A printed address was placed through GSI in 0.1 s, OpenStreetMap found a chain store by name in 0.5 s, and ranking ran on rules. Running it at home works; Gemma 4 31B in the cloud (the same open model family) reads far better.
 
 ## Architecture
 
@@ -92,6 +95,7 @@ See [the architecture contract](docs/chirashi-architecture.md), [agent runtime](
 | Sentry Agent Tracing | Keeps model, token, cost, and timing attributes while dropping prompts, outputs, images, and URLs with query strings. |
 | Render | Hosts the Node server and static phone app using `render.yaml`. |
 | GSI address search, 国土地理院 | Resolves printed Japanese addresses. Free, no API key; results can be at block precision. |
+| OpenStreetMap Nominatim | Open-data fallback when SerpApi is off or finds nothing: looks up a walkable flyer's business name inside a ~3 km box around the rounded start. Free, no key; one request a second, cached for 7 days; places from it show "© OpenStreetMap contributors". Turn off with `OSM_LOOKUP=0`. |
 
 The live TabPFN check used synthetic labels. Through remote MCP's upload → fit → predict flow, it ranked a nearby free-trial flyer at **0.9996** and a far no-offer flyer at **0.0004** in **11.6 seconds**. This proves the integration on synthetic rows, not prediction quality for your choices. Fewer than six labels, only one label class, a missing token, or any failure uses simple rules.
 
@@ -117,7 +121,7 @@ Only offers and items you mark as used enter the savings total. The app counts a
 - The browser shrinks each photo and sends each page once to the app server (as six tiles only for price lists), and the server discards the photos after reading. The server does not save images or mailbox records. Cloud mode forwards tiles to DigitalOcean for inference.
 - Settings, extracted flyer records, labels, walks, and stamps live in the phone's localStorage. There are no accounts. Clearing browser storage removes that history.
 - Personal or official mail retains only its ID, page IDs, bucket, and category. Its extracted page readings are removed from saved state.
-- If you use your location as the start, it stays on the phone; the server only ever receives the start rounded to two decimals (about 1 km). GSI receives a printed or manually entered address. SerpApi receives a business name and that rounded start. Its server-side cache stores sanitized public place results and a budget ledger, not mail photos.
+- If you use your location as the start, it stays on the phone; the server only ever receives the start rounded to two decimals (about 1 km). GSI receives a printed or manually entered address. SerpApi receives a business name and that rounded start. OpenStreetMap's Nominatim, used only when SerpApi finds nothing, receives a business name and a ~3 km box around that rounded start. Its server-side cache stores sanitized public place results and a budget ledger, not mail photos.
 - TabPFN receives numeric feature rows and labels. Sentry receives sanitized traces. GPS readings stay in the browser; the app saves stamp time, type, and distance rather than a GPS trail.
 - Opening a walking route sends the route locations to Google Maps.
 
