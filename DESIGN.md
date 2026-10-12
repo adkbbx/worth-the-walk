@@ -21,6 +21,7 @@ The screen is the shortest part of the experience. Every view leads to the next 
 ## 2. Color Palette & Roles
 
 ### Brand assets
+The header pairs the two-line wordmark with a double-ring 歩 seal in `--ink-vermilion`, rotated −8°, at 40px wide or 34px below 720px, without an ink filter.
 The share card (`dist/icons/og-image.png`, 1200×630) carries the mailbox-to-ticket walk story and an ink stamp. The app icon is the vermilion 歩 seal on pale ticket paper, supplied at 192 and 512 pixels, with a maskable 512 variant whose content stays inside the central 80% safe zone. The 180-pixel Apple touch icon and 32/48-pixel PNG favicons use the same identity. These existing assets serve link previews and installation; the legacy train favicon remains for other pages.
 
 ### Surfaces

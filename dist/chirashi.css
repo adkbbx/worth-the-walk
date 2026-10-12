@@ -151,10 +151,15 @@ p { margin:0; }
 .cw-sr, body:has(#reading-card) #progress { position:absolute; width:1px; height:1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
 .cw-app { min-height:100dvh; background:var(--paper); }
 .cw-header-inner { padding:16px; justify-content:initial; }
-.cw-brand { color:var(--ink); text-decoration:none; margin-right:auto; min-height:44px; display:flex; flex-direction:column; justify-content:center; }
-.cw-brand span { display:block; font:400 0.65625rem/1.4 var(--body); color:var(--muted); letter-spacing:.12em; margin-top:3px; }
+.cw-brand { color:var(--ink); text-decoration:none; margin-right:auto; min-height:44px; display:inline-flex; align-items:center; gap:10px; }
+.cw-brand-text { display:block; }
+.cw-brand-text > span { display:block; font:400 0.65625rem/1.4 var(--body); color:var(--muted); letter-spacing:.12em; margin-top:3px; }
+.cw-logo { width:40px; height:40px; flex:none; color:var(--ink-vermilion); transform:rotate(-8deg); }
+.cw-logo text { fill:currentColor; font-family:var(--display); font-size:50px; }
+@media (width < 720px) { .cw-logo { width:34px; height:34px; } }
+@media (width < 360px) { .cw-header-inner { padding-inline:8px; gap:4px; } }
 .cw-header button { width:44px; height:44px; flex:none; padding:10px; }
-.cw-header svg { width:22px; height:22px; display:block; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linejoin:round; }
+.cw-header button svg { width:22px; height:22px; display:block; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linejoin:round; }
 .cw-main { padding:0 16px 24px; }
 .cw-main *, .cw-sheet *, .cw-header-inner * { min-width:0; }
 .cw-main, .cw-sheet { overflow-wrap:anywhere; }
