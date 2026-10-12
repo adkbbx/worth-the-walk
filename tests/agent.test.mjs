@@ -2,6 +2,7 @@ import { test, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import { readFileSync } from 'node:fs';
+import { runInNewContext } from 'node:vm';
 import { once } from 'node:events';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -244,6 +245,90 @@ test('locate falls back from a failed address to a nearby business only when hom
   assert.equal(withoutHome.location, null); assert.equal(calls.length, 2);
 });
 
+test('local mode locates a flyer with OSM when SerpApi is disabled and reports the open feature', async () => {
+  const calls = [];
+  const app = createApp({ env: { LOCAL_LLM: '1', SERPAPI_API_KEY: '', PRIOR_LABS_MCP_TOKEN: '', SENTRY_DSN: '' },
+    fetch: async url => {
+      calls.push(url.hostname);
+      return response([{ name: '架空店', lat: '35.505', lon: '139.505' }]);
+    } });
+  assert.deepEqual(await app.locate({ name: '架空店', phones: [], lat: 35.5, lon: 139.5 }),
+    { lat: 35.505, lon: 139.505, source: 'osm', precision: 'poi', title: '架空店', phoneMatch: false });
+  assert.deepEqual(calls, ['nominatim.openstreetmap.org']);
+  assert.equal(app.config().mode, 'local');
+  assert.deepEqual(app.config().features, { serpapi: false, osm: true, tabpfn: false, sentry: false });
+  assert.equal(createApp({ env: { ...env, OSM_LOOKUP: '0' }, fetch: noFetch }).config().features.osm, false);
+});
+
+test('locate skips OSM after GSI or SerpApi and rejects OSM results over five km', async () => {
+  let searches = 0;
+  const input = { q: 'printed address', name: '架空店', lat: 35.5, lon: 139.5, phones: ['0120-000-111'] };
+  const osm = { enabled: true, search: async args => {
+    searches++;
+    assert.deepEqual(args, { name: searches === 1 ? input.name : fixtures[0].business.name,
+      lat: input.lat, lon: input.lon, phones: input.phones });
+    return { lat: 35.56, lon: 139.5, source: 'osm', precision: 'poi', title: '架空店', phoneMatch: false };
+  } };
+  const withAddress = createApp({ env, osm, fetch: async () => response([{ geometry: { coordinates: [139.505, 35.505] } }]) });
+  assert.equal((await withAddress.locate(input, { maxMeters: 5000 })).source, 'gsi'); assert.equal(searches, 0);
+  const withSerp = createApp({ env, osm, fetch: noFetch, serpapi: { search: async () => ({ result: {
+    local_results: [{ gps_coordinates: { latitude: 35.505, longitude: 139.505 } }],
+  } }) } });
+  assert.equal((await withSerp.locate(input, { maxMeters: 5000 })).source, 'serpapi'); assert.equal(searches, 0);
+  const withoutAddress = createApp({ env, osm, fetch: noFetch, serpapi: { search: async () => ({ result: null }) } });
+  assert.equal(await withoutAddress.locate(input, { maxMeters: 5000 }), null); assert.equal(searches, 1);
+  assert.equal((await withoutAddress.mergeFlyer(mergeInput())).location, null); assert.equal(searches, 2);
+});
+
+test('OSM follows missing, not-live, budget-exhausted and distant SerpApi results', async () => {
+  const input = { name: '架空店', lat: 35.5, lon: 139.5 };
+  const location = { lat: 35.505, lon: 139.505, source: 'osm', precision: 'poi', title: input.name, phoneMatch: false };
+  for (const reason of ['disabled', 'not-live', 'budget', 'not-found', 'far']) {
+    const calls = [];
+    const app = createApp({ env, fetch: noFetch,
+      serpapi: { search: async () => {
+        calls.push('serpapi');
+        return { reason, result: reason === 'far' ? { local_results: [{ gps_coordinates: { latitude: 36, longitude: 139.5 } }] } : null };
+      } },
+      osm: { enabled: true, search: async () => { calls.push('osm'); return location; } },
+    });
+    assert.deepEqual(await app.locate(input, { maxMeters: 5000 }), location);
+    assert.deepEqual(calls, ['serpapi', 'osm']);
+  }
+  const tools = createTools({ env, fetch: noFetch, osm: { enabled: true, search: async () => location } });
+  assert.deepEqual(await tools.osmPlace(input), location);
+  assert.equal(tools.tools.osmPlace.id, 'osm-place'); assert.equal(typeof tools.tools.osmPlace.execute, 'function');
+});
+
+test('OSM merge traces retain only the source and omit flyer content', async t => {
+  const app = createApp({ env: { ...env, SENTRY_DSN: 'https://synthetic@example.invalid/1' }, fetch: noFetch,
+    osm: { enabled: true, search: async () => ({ lat: 35.505, lon: 139.505, source: 'osm', precision: 'poi', title: 'private flyer name', phoneMatch: false }) } });
+  const observability = app.mastra.observability;
+  t.after(() => observability.shutdown());
+  const events = [];
+  observability.getDefaultInstance().getExporters()[0].exportTracingEvent = async event => { events.push(event); };
+  assert.equal((await app.mergeFlyer(mergeInput())).location.source, 'osm');
+  await observability.flush();
+  assert.ok(events.some(event => event.exportedSpan?.attributes?.['chirashi.location_source'] === 'osm'));
+  assert.doesNotMatch(JSON.stringify(events), /private flyer name/);
+});
+
+test('flyer sheet shows linked attribution only for OSM locations', () => {
+  const source = readFileSync(new URL('../dist/chirashi.mjs', import.meta.url), 'utf8');
+  const sheet = source.slice(source.indexOf('function flyerSheet(f)'), source.indexOf('function pageSheet(id)'));
+  const render = runInNewContext(sheet + '\nflyerSheet', {
+    priceItems: () => [], state: { pages: {} }, flyerTitle: () => 'Test flyer', actionsFor: () => [],
+    currentOffers: () => [], allItems: new Set(),
+  });
+  const flyer = { id: 'test', bucket: 'walk', pageIds: [] };
+  const html = render({ ...flyer, location: { source: 'osm' } });
+  assert.match(html, /Place from OpenStreetMap · /);
+  assert.match(html, /<a href="https:\/\/www.openstreetmap.org\/copyright" target="_blank" rel="noopener">© OpenStreetMap contributors<\/a>/);
+  for (const source of ['gsi', 'serpapi', 'mock', undefined]) {
+    assert.doesNotMatch(render({ ...flyer, location: source ? { source } : null }), /OpenStreetMap/);
+  }
+});
+
 test('ranking uses the exact rules with no token, fewer than six rows, or one label', async () => {
   const expected = rulesRank({ predict });
   assert.equal(expected.model, 'rules');
@@ -396,6 +481,7 @@ test('HTTP config, NDJSON, merge, locate, rank, and static serving work on an ep
   const server = await startServer(t);
   const config = await request(server, '/api/config'); assert.equal(config.status, 200);
   assert.equal(JSON.parse(config.text).mode, 'mock');
+  assert.equal(JSON.parse(config.text).features.osm, true);
   const read = await request(server, '/api/read-page', { method: 'POST', body: { pageId: 'http', tiles: [image, image] } });
   assert.equal(read.status, 200); assert.equal(read.headers['content-type'], 'application/x-ndjson');
   assert.ok(read.text.endsWith('\n'));

@@ -73,7 +73,7 @@ export const privacyProcessor = { name: 'omit-flyer-payloads', process(span) {
     'chirashi.page_count': value => Number.isInteger(value) && value >= 0,
     'chirashi.merge': value => ['code', 'model'].includes(value),
     'chirashi.bucket': value => ['walk', 'home', 'keep', 'toss'].includes(value),
-    'chirashi.location_source': value => ['gsi', 'serpapi', 'mock', 'none'].includes(value),
+    'chirashi.location_source': value => ['gsi', 'serpapi', 'osm', 'mock', 'none'].includes(value),
     'chirashi.rank_model': value => ['rules', 'tabpfn'].includes(value),
   };
   function numericTree(value) {
@@ -110,11 +110,11 @@ function annotate(tracingContext, attributes) {
   span?.parent?.update({ attributes });
 }
 
-export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
+export function createApp({ fetch, env = process.env, serpapi, osm, tabpfn } = {}) {
   const mock = env.MOCK_GEMMA === '1';
   const allowLocate = !mock || fetch !== undefined;
   const fixtures = mock ? JSON.parse(readFileSync(new URL('../tests/fixtures/tiles.json', import.meta.url), 'utf8')) : null;
-  const { gsiGeocode, serpapiPlace, rankFlyers, serpapi: budget } = createTools({ fetch, env, serpapi, tabpfn });
+  const { gsiGeocode, serpapiPlace, osmPlace, rankFlyers, serpapi: budget, osm: openPlaces } = createTools({ fetch, env, serpapi, osm, tabpfn });
   const flyerReader = new Agent({ id: 'flyer-reader', name: 'flyer-reader', instructions: TILE_PROMPT, model: visionModel(env) });
   const pageReader = new Agent({ id: 'page-reader', name: 'page-reader', instructions: PAGE_PROMPT, model: visionModel(env) });
   const flyerMerger = new Agent({ id: 'flyer-merger', name: 'flyer-merger', instructions: MERGE_PROMPT, model: textModel(env) });
@@ -125,7 +125,7 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
     if (!allowLocate) return null;
     const near = place => place && (maxMeters == null || lat == null || lon == null || distanceMeters({ lat, lon }, place) <= maxMeters) ? place : null;
     const address = near(q ? await gsiGeocode({ q }) : null);
-    return address ?? near(await serpapiPlace({ name, phones, lat, lon }));
+    return address ?? near(await serpapiPlace({ name, phones, lat, lon })) ?? near(await osmPlace({ name, phones, lat, lon }));
   }
 
   const readStep = createStep({
@@ -242,6 +242,6 @@ export function createApp({ fetch, env = process.env, serpapi, tabpfn } = {}) {
     locate,
     rank: body => run('rankFlyers', rankSchema.parse(body)),
     config: () => ({ mode: mock ? 'mock' : env.LOCAL_LLM === '1' ? 'local' : 'cloud', model: modelInfo(env).model,
-      features: { serpapi: Boolean(env.SERPAPI_API_KEY), tabpfn: Boolean(env.PRIOR_LABS_MCP_TOKEN), sentry: Boolean(env.SENTRY_DSN) } }),
+      features: { serpapi: Boolean(env.SERPAPI_API_KEY), osm: openPlaces.enabled, tabpfn: Boolean(env.PRIOR_LABS_MCP_TOKEN), sentry: Boolean(env.SENTRY_DSN) } }),
   };
 }

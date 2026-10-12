@@ -261,6 +261,8 @@ p { margin:0; }
 .cw-sheet h2 .cw-ja { display:block; }
 .cw-sheet h3 { margin:24px 0 12px; }
 .cw-sheet p { margin:8px 0; }
+.cw-osm-attribution { font-size:0.75rem; line-height:1.4; }
+.cw-osm-attribution a { color:inherit; }
 .cw-sheet fieldset { padding:0; border:0; margin:24px 0; }
 .cw-sheet legend, .cw-field { display:block; font-size:0.875rem; font-weight:700; }
 .cw-field { margin:16px 0; }

@@ -192,6 +192,7 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - Each stage has one muted sentence naming the next action: photo selection, reading, ticket, walk and printed savings.
 
 ### Sheets
+- Flyer sheets for OSM locations show a muted "Place from OpenStreetMap · © OpenStreetMap contributors" line; the copyright text links to https://www.openstreetmap.org/copyright in a new tab.
 - Bottom sheet on phones (top radius 18px), centred 560px dialog on desktop; Ticket Paper; backdrop `rgba(15,20,24,.45)`; focus returns to the opener
 - Sheet titles use Dela Gothic One 22px / 1.2 with balanced wrapping. After Walk length, Appearance offers Light / Dark / Match my device in three equal chip columns. Radio and label stack vertically to keep labels readable at 320px; each chip exceeds the 44px target minimum. Changes apply and save immediately; Save also retains the selection.
 

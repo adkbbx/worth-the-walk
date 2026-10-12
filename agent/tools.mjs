@@ -5,10 +5,11 @@ import { rankSchema, latitude, longitude } from './schemas.mjs';
 import { modelCall } from './queue.mjs';
 
 import { createSerpApi, mapPlace } from './serpapi.mjs';
+import { createOsm } from './osm.mjs';
 import { createTabPFN } from './tabpfn.mjs';
 export { rulesRank } from './tabpfn.mjs';
 
-export function createTools({ fetch = globalThis.fetch, env = process.env, serpapi = createSerpApi({ fetch, env }), tabpfn = createTabPFN({ fetch, env }) } = {}) {
+export function createTools({ fetch = globalThis.fetch, env = process.env, serpapi = createSerpApi({ fetch, env }), osm = createOsm({ fetch, env }), tabpfn = createTabPFN({ fetch, env }) } = {}) {
   const cache = new Map();
   async function json(url, timeout) {
     const response = await fetch(url, { signal: AbortSignal.timeout(timeout) });
@@ -43,6 +44,8 @@ export function createTools({ fetch = globalThis.fetch, env = process.env, serpa
     return mapPlace(result, phones);
   }
 
+  const osmPlace = input => osm.search(input);
+
   const rankFlyers = body => modelCall(() => tabpfn.rank(body));
 
   const tools = {
@@ -51,8 +54,11 @@ export function createTools({ fetch = globalThis.fetch, env = process.env, serpa
     serpapiPlace: createTool({ id: 'serpapi-place', description: 'Find a business near home and compare its printed phone.',
       inputSchema: z.object({ name: z.string().max(300), lat: latitude, lon: longitude, phones: z.array(z.string()).default([]) }),
       outputSchema: z.unknown(), execute: serpapiPlace }),
+    osmPlace: createTool({ id: 'osm-place', description: 'Find a matching Japanese business near home with OpenStreetMap.',
+      inputSchema: z.object({ name: z.string().max(300), lat: latitude, lon: longitude, phones: z.array(z.string()).default([]) }),
+      outputSchema: z.unknown(), execute: osmPlace }),
     rankFlyers: createTool({ id: 'rank-flyers', description: `Classify feature rows in order: ${FEATURES.join(', ')}; target: label.`,
       inputSchema: rankSchema, outputSchema: z.unknown(), execute: rankFlyers }),
   };
-  return { tools, gsiGeocode, serpapiPlace, rankFlyers, serpapi };
+  return { tools, gsiGeocode, serpapiPlace, osmPlace, rankFlyers, serpapi, osm };
 }
