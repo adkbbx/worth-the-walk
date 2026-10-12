@@ -160,15 +160,36 @@ export function groupPages(pages,overrides={}) {
 }
 export function dedupeItems(items) {
   const result=[],name=item=>String(item.name_ja ?? '').normalize('NFKC').replace(/\s/g,'');
+  const core=item=>name(item).replace(/各種|つめかえ用|つめかえ|つめ替え|つめ替|詰め替え|本体|大型|特大/g,'')
+    .replace(/\d+(?:\.\d+)?(?:kg|g|ml|mℓ|ℓ|l|L|錠|包|枚|個入|個|袋入|袋|本|カプセル|cc|食前|食)|×\d+/g,'')
+    .replace(/[\p{Ps}\p{Pe}]/gu,'');
+  const matches=(a,b)=>{
+    if(!a || !b)return false;
+    if(a.includes(b) || b.includes(a))return true;
+    let longest=0,previous=Array(b.length+1).fill(0);
+    for(const char of a) {
+      const row=Array(b.length+1).fill(0);
+      for(let j=0;j<b.length;j++)if(char===b[j]) { row[j+1]=previous[j]+1;longest=Math.max(longest,row[j+1]); }
+      previous=row;
+    }
+    return longest>=4 && longest>=0.6*Math.min(a.length,b.length);
+  };
   const fields=item=>['name_ja','name_en','price_yen','price_tax_incl_yen','regular_yen','regular_label','unit','conditions']
     .filter(key=>Array.isArray(item[key]) ? item[key].length>0 : item[key]!=null && item[key]!=='').length;
+  const taxFits=item=>[1.10,1.08].some(rate=>Math.abs(Math.round(item.price_yen*rate)-item.price_tax_incl_yen)<=1);
   for(const item of items) {
-    const index=result.findIndex(other=>item.price_yen!=null && item.price_yen===other.price_yen &&
+    const index=result.findIndex(other=>item.page===other.page && item.price_yen!=null && other.price_yen!=null &&
       (item.price_tax_incl_yen==null || other.price_tax_incl_yen==null || item.price_tax_incl_yen===other.price_tax_incl_yen) &&
-      name(item) && name(other) && (normText(item.name_ja)===normText(other.name_ja) || name(item).includes(name(other)) || name(other).includes(name(item))));
+      (item.price_yen===other.price_yen || (item.price_tax_incl_yen!=null && other.price_tax_incl_yen!=null &&
+        Math.abs(item.price_yen-other.price_yen)<=0.02*Math.min(item.price_yen,other.price_yen))) &&
+      (matches(core(item),core(other)) || (name(item) && normText(item.name_ja)===normText(other.name_ja))));
     if(index<0) { result.push(item);continue; }
     const other=result[index],more=fields(item)-fields(other),tax=Number(item.price_tax_incl_yen!=null)-Number(other.price_tax_incl_yen!=null);
-    if(more>0 || (more===0 && (tax>0 || (tax===0 && name(item).length>name(other).length))))result[index]=item;
+    if(item.price_yen!==other.price_yen && taxFits(item)!==taxFits(other)) {
+      if(taxFits(item))result[index]=item;
+      continue;
+    }
+    if(more>0 || (more===0 && (tax>0 || (tax===0 && String(item.name_ja ?? '').length>String(other.name_ja ?? '').length))))result[index]=item;
   }
   return result;
 }
@@ -176,6 +197,24 @@ export function dedupeItems(items) {
 export function readingsForMerge(page) {
   return list(page.tiles,Infinity).map((tile,index)=>
     page.detailed && index===0 && tile ? {...tile,items:[]} : tile).filter(Boolean);
+}
+export function itemsForFlyer(pages) {
+  const perPage=pages.map((page,index)=>dedupeItems(readingsForMerge(page)
+    .flatMap(tile=>normalizeTile(tile).items.map(item=>({...item,page:index})))));
+  const counts=perPage.map(items=>{
+    const prices=new Map();
+    for(const item of items)if(item.price_yen!=null)prices.set(item.price_yen,(prices.get(item.price_yen) ?? 0)+1);
+    return prices;
+  });
+  const dropped=new Set();
+  for(let a=0;a<perPage.length;a++)for(let b=a+1;b<perPage.length;b++) {
+    if(perPage[a].length<5 || perPage[b].length<5)continue;
+    let shared=0;
+    for(const [price,count] of counts[a])shared+=Math.min(count,counts[b].get(price) ?? 0);
+    if(shared>=0.6*Math.min(perPage[a].length,perPage[b].length))
+      dropped.add(perPage[a].length>=perPage[b].length ? b : a);
+  }
+  return perPage.flatMap((items,index)=>dropped.has(index) ? [] : items);
 }
 export function mergeFallback(pages) {
   const flyer={...emptyTile(),id:'f-'+pages[0]?.id,pageIds:pages.map(p=>p.id)},categories=new Map();
@@ -192,7 +231,6 @@ export function mergeFallback(pages) {
         const key=JSON.stringify([text,offer.regular_yen,offer.offer_yen,offer.discount_yen,offer.percent_off]);
         if(!text || !offers.has(key)) { offers.add(key);flyer.offers.push({...offer,page}); }
       }
-      flyer.items.push(...tile.items.map(item=>({...item,page})));
       tile.phones.forEach(phone=>phones.add(phone));
       tile.websites.forEach(website=>websites.add(website));
       flyer.comes_to_you ||= tile.comes_to_you;
@@ -201,7 +239,7 @@ export function mergeFallback(pages) {
   });
   let most=0;
   for(const [category,count] of categories)if(count>most) { flyer.category=category;most=count; }
-  flyer.items=dedupeItems(flyer.items);
+  flyer.items=itemsForFlyer(pages);
   flyer.phones=[...phones];flyer.websites=[...websites];
   if(flyer.summary_en)flyer.summary_en=flyer.summary_en.slice(0,120);
   return {...flyer,bucket:bucketOf(flyer),needsLookup:needsLookup(flyer),deadline:null,chain:null};

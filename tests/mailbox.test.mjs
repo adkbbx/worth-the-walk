@@ -1,7 +1,7 @@
 import {test} from 'node:test';import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {runInNewContext} from 'node:vm';
-import {CATEGORIES,OFFER_KINDS,BUCKETS,IN_PERSON,parseJsonLoose,yen,normalizeTile,phoneKey,domainKey,normText,pageKeys,groupPages,dedupeItems,mergeFallback,bucketOf,needsDetail,needsLookup,parseDeadline,finalizeFlyer,storable,printedValue,savings,CHAINS,matchChain,matchBranch,FEATURES,featureRow} from '../src/mailbox.mjs';
+import {CATEGORIES,OFFER_KINDS,BUCKETS,IN_PERSON,parseJsonLoose,yen,normalizeTile,phoneKey,domainKey,normText,pageKeys,groupPages,dedupeItems,itemsForFlyer,mergeFallback,bucketOf,needsDetail,needsLookup,parseDeadline,finalizeFlyer,storable,printedValue,savings,CHAINS,matchChain,matchBranch,FEATURES,featureRow} from '../src/mailbox.mjs';
 
 const tile=raw=>normalizeTile(raw);
 const page=(id,raw)=>({id,tiles:[tile(raw)]});
@@ -339,9 +339,65 @@ test('groupPages matches name plus address and isolates all overridden pages',()
   assert.deepEqual(groupPages(pages,{a:'one',b:'two'}),pages.map(p=>({id:'f-'+p.id,pageIds:[p.id]})));
   assert.deepEqual(groupPages(pages,{a:'one',b:'one'}),[{id:'f-a',pageIds:['a','b']},{id:'f-c',pageIds:['c']},{id:'f-d',pageIds:['d']}]);
 });
-test('dedupeItems keeps the first name and price combination',()=>{
-  const first={name_ja:'テスト・茶',price_yen:158,page:0},same={name_ja:'テスト 茶',price_yen:158,page:1},different={name_ja:'テスト茶',price_yen:198,page:1};
+test('dedupeItems keeps the first same-page name and price combination',()=>{
+  const first={name_ja:'テスト・茶',price_yen:158,page:0},same={name_ja:'テスト 茶',price_yen:158,page:0},different={name_ja:'テスト茶',price_yen:198,page:0};
   assert.deepEqual(dedupeItems([first,same,different]),[first,different]);
+});
+test('itemsForFlyer drops repeated photos sharing eight of ten prices, choosing more items then the earlier page',()=>{
+  const products=(prices,prefix)=>prices.map((price_yen,i)=>({name_ja:prefix+String.fromCharCode(0x4e00+i),price_yen}));
+  const first=page('first',{items:products([100,200,300,400,500,600,700,800,900,1000],'商品')});
+  const second=page('second',{items:products([100,200,300,400,500,600,700,800,1100,1200],'別読')});
+  const before=JSON.stringify([first,second]);
+  assert.deepEqual(itemsForFlyer([first,second]),first.tiles[0].items.map(item=>({...item,page:0})));
+  assert.deepEqual(mergeFallback([first,second]).items,itemsForFlyer([first,second]));
+  assert.equal(JSON.stringify([first,second]),before);
+  second.tiles[0].items.push(...tile({items:products([1300],'追加')}).items);
+  assert.deepEqual(itemsForFlyer([first,second]),second.tiles[0].items.map(item=>({...item,page:1})));
+});
+test('itemsForFlyer retains different pages, small pages, and repeated price multiplicities',()=>{
+  const products=(prices,prefix)=>prices.map((price_yen,i)=>({name_ja:prefix+String.fromCharCode(0x4e00+i),price_yen}));
+  for(const [a,b] of [
+    [products([100,200,300,400,500,600,700,800,900,1000],'食品'),products([1100,1200,1300,1400,1500,1600,1700,1800,1900,2000],'薬品')],
+    [products([100,200,300,400],'食品'),products([100,200,300,400],'薬品')],
+    [products([100,100,100,100,200],'食品'),products([100,200,300,400,500],'薬品')],
+  ]) {
+    const pages=[page('front',{items:a}),page('back',{items:b})];
+    assert.equal(itemsForFlyer(pages).length,a.length+b.length);
+    assert.equal(itemsForFlyer(pages).filter(item=>item.page===1).length,b.length);
+  }
+  const tea={name_ja:'同じ茶',price_yen:108};
+  assert.equal(itemsForFlyer([page('front',{items:[tea]}),page('back',{items:[tea]})]).length,2);
+});
+test('itemsForFlyer merges the Welcia ramen and Balance Power overlapping readings',()=>{
+  const pairs=[
+    [{name_ja:'聘横浜あんかけラーメン',price_yen:328},{name_ja:'横浜 あんかけラーメン 1食前',price_yen:328,price_tax_incl_yen:354}],
+    [{name_ja:'バランスパワー 各種',price_yen:208,price_tax_incl_yen:224},{name_ja:'マドンナコンフォート バランスパワー 6袋入',price_yen:208,price_tax_incl_yen:224}],
+  ];
+  for(const pair of pairs)for(const items of [pair,[...pair].reverse()]) {
+    const result=itemsForFlyer([page('welcia',{items})]);
+    assert.equal(result.length,1);assert.equal(result[0].name_ja,pair[1].name_ja);
+    assert.equal(result[0].price_tax_incl_yen,pair[1].price_tax_incl_yen);
+  }
+});
+test('itemsForFlyer corrects the Taisho misread twin using the printed tax price',()=>{
+  const wrong={name_ja:'大正胃腸薬',name_en:'Taisho',unit:'box',price_yen:1790,price_tax_incl_yen:1977};
+  const right={name_ja:'大正胃腸薬 48包',price_yen:1798,price_tax_incl_yen:1977};
+  for(const items of [[wrong,right],[right,wrong]]) {
+    const result=itemsForFlyer([page('welcia',{items})]);
+    assert.equal(result.length,1);assert.equal(result[0].price_yen,1798);
+  }
+});
+test('itemsForFlyer keeps different sizes, unrelated equal-price products, and conflicting tax prices separate',()=>{
+  const pairs=[
+    [{name_ja:'ストナ',price_yen:880},{name_ja:'ストナ',price_yen:1680}],
+    [{name_ja:'コアラのマーチ',price_yen:108},{name_ja:'アーモンド効果',price_yen:108,price_tax_incl_yen:116}],
+    [{name_ja:'お徳用ウインナー',price_yen:328,price_tax_incl_yen:354},{name_ja:'パンテーン',price_yen:328,price_tax_incl_yen:360}],
+    [{name_ja:'パンテーン',price_yen:328,price_tax_incl_yen:354},{name_ja:'パンテーン つめかえ用',price_yen:328,price_tax_incl_yen:360}],
+  ];
+  for(const items of pairs) {
+    const p=page('welcia',{items});
+    assert.deepEqual(itemsForFlyer([p]),p.tiles[0].items.map(item=>({...item,page:0})));
+  }
 });
 test('dedupeItems keeps richer overlapping tile readings with compatible tax prices',()=>{
   const ramen={name_ja:'横綱あんかけラーメン',price_yen:328},taxRamen={name_ja:'あんかけラーメン',price_yen:328,price_tax_incl_yen:354};

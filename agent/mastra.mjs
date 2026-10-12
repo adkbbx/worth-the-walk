@@ -7,7 +7,7 @@ import { createWorkflow, createStep } from '@mastra/core/workflows';
 import { Observability } from '@mastra/observability';
 import { SentryExporter } from '@mastra/sentry';
 import { z } from 'zod';
-import { parseJsonLoose, normalizeTile, mergeFallback, finalizeFlyer, matchChain, storable, dedupeItems, readingsForMerge } from '../src/mailbox.mjs';
+import { parseJsonLoose, normalizeTile, mergeFallback, finalizeFlyer, matchChain, storable, itemsForFlyer, readingsForMerge } from '../src/mailbox.mjs';
 import { visionModel, textModel, modelInfo } from './models.mjs';
 import { PAGE_PROMPT, TILE_PROMPT, MERGE_PROMPT } from './prompts.mjs';
 import { createTools, rulesRank } from './tools.mjs';
@@ -188,8 +188,7 @@ export function createApp({ fetch, env = process.env, serpapi, osm, tabpfn } = {
             role: 'user', content: JSON.stringify(compact(readings)),
           }], { tracingContext, requestContext, abortSignal }), { priority: 'high' }), { after: 30_000 });
           if (!output.error) merged = normalizeMerged({ ...parseJsonLoose(output.text), items: [] }, pages);
-          if (merged) merged.items = dedupeItems(pages.flatMap((page, index) => readingsForMerge(page)
-            .flatMap(tile => normalizeTile(tile).items.map(item => ({ ...item, page: index })))));
+          if (merged) merged.items = itemsForFlyer(pages);
         } catch { /* Invalid or failed model merges use the existing deterministic rules. */ }
       }
       const flyer = finalizeFlyer({ ...(merged ?? mergeFallback(pages)), id: flyerId, pageIds: pages.map(page => page.id) }, scanDate, matchChain);

@@ -99,6 +99,32 @@ test('two-page flyers and detailed single pages still call the merge model once'
   }
 });
 
+test('model and fallback merges share repeated-page and fuzzy item deduplication', async () => {
+  const items=[
+    {name_ja:'聘横浜あんかけラーメン',price_yen:328},
+    {name_ja:'横浜 あんかけラーメン 1食前',price_yen:328,price_tax_incl_yen:354},
+    {name_ja:'バランスパワー 各種',price_yen:208,price_tax_incl_yen:224},
+    {name_ja:'マドンナコンフォート バランスパワー 6袋入',price_yen:208,price_tax_incl_yen:224},
+    {name_ja:'大正胃腸薬',price_yen:1790,price_tax_incl_yen:1977},
+    {name_ja:'大正胃腸薬 48包',price_yen:1798,price_tax_incl_yen:1977},
+    {name_ja:'コアラのマーチ',price_yen:108},
+    {name_ja:'ストナ',price_yen:880},
+  ];
+  const reading={category:'other',items};
+  const input=mergeInput([reading,reading]);
+  const app=createApp({env:{GRADIENT_MODEL_ACCESS_KEY:'synthetic'},fetch:noFetch});
+  let merges=0;
+  app.mastra.getAgent('flyerMerger').generate=async()=>{
+    merges++;return {text:JSON.stringify({business:{name:'Welcia'},category:'other',summary_en:'Model metadata',items:[{name_ja:'Invented',price_yen:1}]})};
+  };
+  const modeled=await app.mergeFlyer(input);
+  const fallback=await createApp({env,fetch:noFetch}).mergeFlyer(input);
+  assert.equal(merges,1);assert.equal(modeled.summary_en,'Model metadata');
+  assert.deepEqual(modeled.items,fallback.items);
+  assert.deepEqual(modeled.items.map(item=>item.price_yen),[328,208,1798,108,880]);
+  assert.ok(modeled.items.every(item=>item.page===0));
+});
+
 test('a failed model merge still falls back to deterministic readings', async () => {
   const app = createApp({ env: { GRADIENT_MODEL_ACCESS_KEY: 'synthetic' }, fetch: noFetch });
   let merges = 0;
