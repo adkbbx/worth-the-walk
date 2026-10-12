@@ -181,6 +181,7 @@ p { margin:0; }
 .cw-meta, .cw-tip, .cw-print, .cw-progress-line, .cw-done-summary { font:400 0.75rem/1.4 var(--print); color:var(--muted); letter-spacing:.04em; text-transform:uppercase; }
 .cw-ticket-kicker, .cw-ticket-meta, .cw-station, .cw-slot em, .cw-board-next, .cw-board-line, .cw-rally-head p { text-transform:uppercase; }
 .cw-muted, .cw-deal { color:var(--muted); }
+.cw-prices, .cw-entry .cw-meta { font-variant-numeric:tabular-nums; }
 .cw-ja { font:400 0.71875rem/1.4 var(--body); color:var(--muted); letter-spacing:.04em; }
 .cw-wide { width:100%; }
 .cw-primary { min-height:52px; }

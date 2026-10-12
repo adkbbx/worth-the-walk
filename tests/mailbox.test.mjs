@@ -54,6 +54,28 @@ test('sample eggs count once and retain the ticket sticker',()=>{
   assert.equal(stickerHTML(market),'<span class="cw-sticker">Eggs <b>¥158</b> <s><span class="cw-sr">was </span>¥198</s></span>');
 });
 
+test('price-list rows and sheet entries show printed prices without claiming savings',()=>{
+  const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
+  const deals=source.slice(source.indexOf('function dealParts('),source.indexOf('function revokeThumbs('));
+  const row=source.slice(source.indexOf('function stopRow('),source.indexOf('function routeSummary('));
+  const entry=source.slice(source.indexOf('function entryHTML('),source.indexOf('function flyerSheet('));
+  const {priceSummaryHTML,stopRow,entryHTML}=runInNewContext(source.match(/^const money = .*$/m)[0]+deals+row+entry+'\n({priceSummaryHTML,stopRow,entryHTML})',{
+    currentOffers:f=>(f.offers ?? []).map(entry=>({entry})),printedValue,shortText:String,modelText:String,escape:String,capital:String,
+    home:()=>null,stack:()=>'',flyerTitle:()=> 'Drugstore',closeIcon:'',reading:null,locateControl:()=>''
+  });
+  const f={...tile({category:'drugstore',items:[{name_ja:'茶',price_yen:108,price_tax_incl_yen:116.64},{name_ja:'豆腐',price_yen:88},{name_ja:'牛乳',price_yen:198}]}),id:'prices',pageIds:[]};
+  const summary=priceSummaryHTML(f);
+  assert.equal(summary,'<span class="cw-meta cw-prices">3 printed prices · from ¥88</span>');
+  const html=stopRow(f);
+  assert.ok(html.includes(summary));assert.match(html,/data-action="flyer-sheet" data-id="prices"/);assert.doesNotMatch(html,/cw-sticker|No printed deal/);
+  assert.match(entryHTML(f,{entry:f.items[0],index:0,kind:'item'}),/¥108 before tax · ¥117 with tax/);
+  assert.match(entryHTML(f,{entry:f.items[1],index:1,kind:'item'}),/<p class="cw-meta">¥88<\/p>/);
+  assert.equal(priceSummaryHTML({...f,items:[{price_yen:0},{price_yen:null},{price_yen:108}]}),'<span class="cw-meta cw-prices">2 printed prices · from ¥0</span>');
+  assert.equal(priceSummaryHTML({...f,items:f.items.slice(0,1)}),'');
+  assert.match(priceSummaryHTML({...f,items:[{...f.items[0],regular_yen:198},...f.items.slice(1)]}),/cw-sticker/);
+  assert.match(priceSummaryHTML({...f,offers:[{text_en:'Bring this flyer'}]}),/Bring this flyer/);
+});
+
 test('discard cancels only a read start request and empty reads never ask for a start',async()=>{
   const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
   const ask=source.slice(source.indexOf('function askStart('),source.indexOf('async function continueStart('));
@@ -113,7 +135,7 @@ test('stop rows explain absent and unplaced addresses and retain Add address',()
   const source=readFileSync(new URL('../dist/chirashi.mjs',import.meta.url),'utf8');
   const code=source.slice(source.indexOf('function stopRow('),source.indexOf('function groceryRow('));
   const stopRow=runInNewContext(code+'\nstopRow',{home:()=>null,escape:String,stack:()=>'',flyerTitle:()=> 'Place',
-    stickerHTML:()=>'',capital:String,closeIcon:'',locateControl:()=>'',reading:null});
+    priceSummaryHTML:()=>'',capital:String,closeIcon:'',locateControl:()=>'',reading:null});
   const flyer={id:'f',pageIds:['p'],category:'lesson',business:{},location:null};
   for(const [address,message] of [[null,'No address on the flyer'],['Printed address',"Couldn't place this address near your start"]]) {
     const html=stopRow({...flyer,address});assert.ok(html.includes(message));assert.ok(html.includes('Add address'));
@@ -130,7 +152,7 @@ test('needsDetail gates every category by walkable price-list evidence',()=>{
     assert.equal(needsDetail(tile({category,summary_en:'A printed price list.'})),detailed.includes(category),category+' list');
     assert.equal(needsDetail(tile({category,offers:[{text_ja:'１００円 ２００円 ￥３００'}]})),detailed.includes(category),category+' amounts');
     assert.equal(needsDetail(tile({category,offers:[{offer_yen:100},{offer_yen:200},{offer_yen:300}]})),detailed.includes(category),category+' offer prices');
-    assert.equal(needsDetail(tile({category})),false,category+' no list');
+    assert.equal(needsDetail(tile({category})),['supermarket','drugstore'].includes(category),category+' no list');
     assert.equal(needsDetail(tile({category,items,delivery:true})),false,category+' delivery');
     assert.equal(needsDetail(tile({category,items,comes_to_you:true})),false,category+' visiting');
   }
@@ -142,6 +164,9 @@ test('needsDetail gates every category by walkable price-list evidence',()=>{
   assert.equal(needsDetail(tile({category:'shop',summary_en:'A trial for ¥100, normally ¥200.',offers:[{text_ja:'通常200円 体験100円',text_en:'A trial for ¥100, normally ¥200.',regular_yen:200,offer_yen:100}]})),false,'translations do not double-count printed amounts');
   assert.equal(needsDetail(tile({category:'restaurant',items:items.slice(0,1)})),false);
   assert.equal(needsDetail(null),false);
+});
+test('grocery price lists need detail even with no items and a plain summary',()=>{
+  for(const category of ['drugstore','supermarket','cleaning'])assert.equal(needsDetail(tile({category,summary_en:'Everyday essentials for the neighbourhood.',items:[]})),category!=='cleaning');
 });
 
 test('detail readings replace preliminary items while retaining whole-page identity',()=>{
@@ -317,6 +342,24 @@ test('groupPages matches name plus address and isolates all overridden pages',()
 test('dedupeItems keeps the first name and price combination',()=>{
   const first={name_ja:'テスト・茶',price_yen:158,page:0},same={name_ja:'テスト 茶',price_yen:158,page:1},different={name_ja:'テスト茶',price_yen:198,page:1};
   assert.deepEqual(dedupeItems([first,same,different]),[first,different]);
+});
+test('dedupeItems keeps richer overlapping tile readings with compatible tax prices',()=>{
+  const ramen={name_ja:'横綱あんかけラーメン',price_yen:328},taxRamen={name_ja:'あんかけラーメン',price_yen:328,price_tax_incl_yen:354};
+  const chicken={name_ja:'特から',price_yen:448,price_tax_incl_yen:484},fullChicken={name_ja:'ニチレイフーズ 特から 380g',price_yen:448,price_tax_incl_yen:484};
+  const tea={name_ja:'ＡＢＣ 茶',price_yen:108},fullTea={name_ja:'ABC茶 500ml',name_en:'Tea',price_yen:108,unit:'bottle'};
+  for(const pair of [[ramen,taxRamen],[chicken,fullChicken],[tea,fullTea]]) {
+    assert.deepEqual(dedupeItems(pair),[pair[1]]);
+    assert.deepEqual(dedupeItems([...pair].reverse()),[pair[1]]);
+  }
+  const translated={...ramen,name_en:'Ramen'};
+  assert.deepEqual(dedupeItems([translated,taxRamen]),[taxRamen],'tax price wins a field-count tie');
+});
+test('dedupeItems preserves unrelated products and conflicting printed prices',()=>{
+  const items=[{name_ja:'あんかけラーメン',price_yen:328,price_tax_incl_yen:354},
+    {name_ja:'じゅわぁ特から',price_yen:328,price_tax_incl_yen:354},
+    {name_ja:'横綱あんかけラーメン',price_yen:328,price_tax_incl_yen:360},
+    {name_ja:'あんかけラーメン',price_yen:348,price_tax_incl_yen:376}];
+  assert.deepEqual(dedupeItems(items),items);
 });
 test('mergeFallback combines pages, dedupes entries and uses category majority',()=>{
   const pages=[{id:'front',tiles:[tile({business:{name:'テスト教室',kind:'教室'},category:'lesson',summary_en:'Try a lesson.',offers:[{text_ja:'無料・体験',kind:'free_trial',regular_yen:3300,offer_yen:0}],items:[{name_ja:'テスト 茶',price_yen:158}],phones:['0120-000-111'],websites:['https://example.co.jp'],hours:'10:00–18:00',valid_from_text:'10/1'}),tile({category:'shop',items:[{name_ja:'テスト・茶',price_yen:158}],delivery:true})]},{id:'back',tiles:[tile({business:{name:'後のテスト店',branch:'テスト支店'},category:'lesson',address:'東京都テスト区1-2-3',offers:[{text_ja:'無料 体験',kind:'free_trial'},{text_ja:'テスト割引',kind:'discount',discount_yen:500}],items:[{name_ja:'テスト茶',price_yen:198}],phones:['0120-000-111','0120-000-222'],websites:['https://example.co.jp','https://example.org'],hours:'12:00–19:00',valid_to_text:'10/31',comes_to_you:true})]}];

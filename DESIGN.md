@@ -135,6 +135,8 @@ No decorative gradients. Texture only: the ticket's faint diagonal guilloché (`
 - With two or more failures, offer “Retry all failed”. When the entire batch fails, say “None of these pages could be read.” and offer primary “Retry all” plus “Remove these photos”, retaining individual retry controls. Retrying one page preserves the other failed rows and their original numbers; failures can rejoin an active reading queue. Only failed/unread photos remain in recovery storage; successful readings and preliminary detail results retain their existing lifecycle.
 
 ### Printed flyer-sheet rows
+- Items without a printed saving show both printed prices when available, such as "¥108 before tax · ¥117 with tax", with tabular digits; a lone price stays "¥108".
+- Ticket stop rows and walk cards without a sticker show a muted print-face line for two or more priced items, such as "53 printed prices · from ¥88"; the flyer-sheet tap target stays unchanged.
 - Bold English name first; small Japanese reference second with `lang="ja"`; a yellow sticker only when a printed saving exists.
 - One muted uppercase DotGothic16 meta line joins the available printed saving (“¥3,300 off as printed”), offer deadline (“use by 30 Nov”), and conditions with “ · ”. A price without a printed comparison stays in that same line. Model text remains escaped. The separate red savings line is removed.
 - Rows have 1px dashed Rule separators, 16px vertical padding, 4px internal gaps, and no enclosing box. Offer/item index attributes remain unchanged.

@@ -159,12 +159,18 @@ export function groupPages(pages,overrides={}) {
   return [...groups.values()];
 }
 export function dedupeItems(items) {
-  const seen=new Set();
-  return items.filter(item=>{
-    const key=normText(item.name_ja)+'|'+item.price_yen;
-    if(seen.has(key))return false;
-    seen.add(key);return true;
-  });
+  const result=[],name=item=>String(item.name_ja ?? '').normalize('NFKC').replace(/\s/g,'');
+  const fields=item=>['name_ja','name_en','price_yen','price_tax_incl_yen','regular_yen','regular_label','unit','conditions']
+    .filter(key=>Array.isArray(item[key]) ? item[key].length>0 : item[key]!=null && item[key]!=='').length;
+  for(const item of items) {
+    const index=result.findIndex(other=>item.price_yen!=null && item.price_yen===other.price_yen &&
+      (item.price_tax_incl_yen==null || other.price_tax_incl_yen==null || item.price_tax_incl_yen===other.price_tax_incl_yen) &&
+      name(item) && name(other) && (normText(item.name_ja)===normText(other.name_ja) || name(item).includes(name(other)) || name(other).includes(name(item))));
+    if(index<0) { result.push(item);continue; }
+    const other=result[index],more=fields(item)-fields(other),tax=Number(item.price_tax_incl_yen!=null)-Number(other.price_tax_incl_yen!=null);
+    if(more>0 || (more===0 && (tax>0 || (tax===0 && name(item).length>name(other).length))))result[index]=item;
+  }
+  return result;
 }
 // Whole-page readings retain identity; successful detail reads own the item prices.
 export function readingsForMerge(page) {
@@ -208,6 +214,7 @@ export function bucketOf(flyer) {
 }
 export function needsDetail(tile) {
   if(!tile || bucketOf(tile)!=='walk' || !['supermarket','drugstore','cleaning','restaurant','shop'].includes(tile.category))return false;
+  if(['supermarket','drugstore'].includes(tile.category))return true;
   if((tile.items?.length ?? 0)>=2)return true;
   const printed=[tile.summary_en,...(tile.offers ?? []).flatMap(o=>[o.text_ja,o.text_en]),
     ...(tile.items ?? []).flatMap(i=>[i.name_ja,i.name_en,i.unit])].filter(s=>typeof s==='string').join(' ').normalize('NFKC');

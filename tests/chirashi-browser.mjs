@@ -500,6 +500,27 @@ async function nonHappyChecks(sampleState) {
   assert.ok(await unplaced.page.getByRole('button',{name:'Add address',exact:true}).isVisible());
   await unplaced.context.close();
 
+  const prices=await newPhone(), priceFlyer={...structuredClone(sampleState.flyers.find(f => f.category==='supermarket')),id:'printed-prices',pageIds:[],offers:[],items:[
+    {name_en:'Tea',name_ja:'茶',price_yen:108,price_tax_incl_yen:117,conditions:[]},
+    {name_en:'Tofu',name_ja:'豆腐',price_yen:88,conditions:[]},
+    {name_en:'Milk',name_ja:'牛乳',price_yen:198,conditions:[]}
+  ]};
+  await seed(prices.page,{...structuredClone(saved),flyers:[priceFlyer]}); await open(prices.page);
+  const priceRow=prices.page.locator('.cw-stop-row[data-flyer=printed-prices]');
+  assert.equal(await priceRow.locator('.cw-prices').textContent(),'3 printed prices · from ¥88');
+  assert.equal(await priceRow.locator('.cw-sticker').count(),0);
+  await priceRow.locator('[data-action=flyer-sheet]').click();
+  const teaMeta=prices.page.locator('#sheet[open] [data-item-index="0"] .cw-meta');
+  assert.equal(await teaMeta.textContent(),'¥108 before tax · ¥117 with tax');
+  assert.equal(await teaMeta.evaluate(el => getComputedStyle(el).fontVariantNumeric),'tabular-nums');
+  assert.equal(await prices.page.locator('#sheet[open] [data-item-index="1"] .cw-meta').textContent(),'¥88');
+  await prices.page.keyboard.press('Escape');
+  await prices.page.getByRole('button',{name:'Start the walk →',exact:true}).click();
+  await prices.page.locator('.cw-walk-mode').waitFor();
+  assert.equal(await prices.page.locator('.cw-walk-card .cw-prices').textContent(),'3 printed prices · from ¥88');
+  assert.equal(await prices.page.locator('.cw-walk-card .cw-sticker').count(),0);
+  await prices.context.close();
+
   const stationFailure=await newPhone(); let failCoordinates=true;
   await stationFailure.page.route('**/station-coordinates.json',route => failCoordinates ? route.fulfill({status:503,body:''}) : route.continue());
   await open(stationFailure.page); await stationFailure.page.locator('.cw-welcome [data-action=sample]').click();
